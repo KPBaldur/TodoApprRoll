@@ -1,0 +1,277 @@
+<app-navbar></app-navbar>
+
+<div class="container">
+  <div class="header">
+    <h2>Tasks</h2>
+    <!-- Contadores -->
+    <div class="counters">
+      <strong>Pendientes:</strong> {{ pendingCount }}
+      &nbsp;•&nbsp;
+      <strong>Trabajando:</strong> {{ workingCount }}
+    </div>
+  </div>
+
+  <div class="form">
+    <input [(ngModel)]="form.title" placeholder="Title" />
+    <input [(ngModel)]="form.description" placeholder="Description" />
+    <select [(ngModel)]="form.priority">
+      <option value="low">Low</option>
+      <option value="medium">Medium</option>
+      <option value="high">High</option>
+    </select>
+    <button (click)="createTask()">Create</button>
+  </div>
+
+  <!-- Filtro por estado -->
+  <div class="form">
+    <label>Estado:</label>
+    <select [(ngModel)]="selectedStatus">
+      <option value="all">Todas</option>
+      <option value="pending">Pendientes</option>
+      <option value="working">Trabajando</option>
+      <option value="completed">Completadas</option>
+    </select>
+  </div>
+
+  <p *ngIf="loading">Loading...</p>
+  <p class="error" *ngIf="error">{{ error }}</p>
+
+  <!-- Grupo: Pendientes -->
+  <div class="group">
+    <h3>Pendientes ({{ grouped.pending.length }})</h3>
+    <div *ngFor="let t of grouped.pending" class="task">
+      <input [(ngModel)]="t.title" />
+      <input [(ngModel)]="t.description" />
+      <select [(ngModel)]="t.priority">
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+      </select>
+
+      <span>Estado: {{ statusLabel(t.status) }}</span>
+      <select [(ngModel)]="t.status">
+        <option value="pending">Pendiente</option>
+        <option value="working">Trabajando</option>
+        <option value="completed">Completada</option>
+      </select>
+
+      <button (click)="updateTask(t)">Save</button>
+      <button (click)="toggle(t)">{{ nextActionLabel(t.status) }}</button>
+      <button (click)="confirmDelete(t)">Eliminar</button>
+
+      <!-- Switch y contador -->
+      <div class="alarm-inline">
+        <label class="switch">
+          <input
+            type="checkbox"
+            [checked]="!!t.alarm?.enabled"
+            (change)="toggleAlarmEnabled(t, $any($event.target).checked)"
+          />
+          <span>Alarma activada</span>
+        </label>
+        <span class="countdown">Suena en: {{ countdowns[t.id] || '-' }}</span>
+        <button (click)="toggleAlarmUI(t)">Crear alarma</button>
+      </div>
+
+      <!-- Panel de alarma -->
+      <div class="alarm-panel" *ngIf="showAlarmConfig[t.id]">
+        <div class="row">
+          <label>Sonido (MP3):</label>
+          <input type="file" accept=".mp3" (change)="onSoundSelected(t, $event)" />
+          <audio [src]="assetUrl(t.alarm?.soundUrl)" id="audio-{{t.id}}" controls></audio>
+        </div>
+
+        <div class="row">
+          <label>Imagen (GIF):</label>
+          <input type="file" accept=".gif" (change)="onImageSelected(t, $event)" />
+          <img *ngIf="t.alarm?.imageUrl" [src]="assetUrl(t.alarm?.imageUrl)" alt="gif alarma" class="gif-preview" />
+        </div>
+
+        <div class="row">
+          <label>Tipo:</label>
+          <select [ngModel]="t.alarm?.schedule?.type" (ngModelChange)="onScheduleTypeChange(t, $event)">
+            <option [ngValue]="'interval'">Cada intervalo</option>
+            <option [ngValue]="'daily'">Diario</option>
+            <option [ngValue]="'weekly'">Semanal</option>
+            <option [ngValue]="'once'">Una vez</option>
+          </select>
+        </div>
+
+        <div class="row" *ngIf="t.alarm?.schedule?.type === 'interval'">
+          <label>Intervalo (min):</label>
+          <input type="number" min="1" [ngModel]="t.alarm?.schedule?.intervalMinutes" (ngModelChange)="onIntervalChange(t, $event)" />
+        </div>
+
+        <div class="row" *ngIf="t.alarm?.schedule?.type === 'daily'">
+          <label>Hora (HH:mm):</label>
+          <input type="time" [ngModel]="t.alarm?.schedule?.time" (ngModelChange)="onDailyTimeChange(t, $event)" />
+        </div>
+
+        <div class="row" *ngIf="t.alarm?.schedule?.type === 'weekly'">
+          <label>Día:</label>
+          <select [ngModel]="t.alarm?.schedule?.dayOfWeek" (ngModelChange)="onWeeklyDayChange(t, $event)">
+            <option [ngValue]="0">Domingo</option>
+            <option [ngValue]="1">Lunes</option>
+            <option [ngValue]="2">Martes</option>
+            <option [ngValue]="3">Miércoles</option>
+            <option [ngValue]="4">Jueves</option>
+            <option [ngValue]="5">Viernes</option>
+            <option [ngValue]="6">Sábado</option>
+          </select>
+          <label>Hora (HH:mm):</label>
+          <input type="time" [ngModel]="t.alarm?.schedule?.time" (ngModelChange)="onWeeklyTimeChange(t, $event)" />
+        </div>
+
+        <div class="row" *ngIf="t.alarm?.schedule?.type === 'once'">
+          <label>Fecha y hora:</label>
+          <input type="datetime-local" [ngModel]="toLocalDateTime(t.alarm?.schedule?.dateTime)" (ngModelChange)="onOnceDateTimeChange(t, $event)" />
+        </div>
+
+        <div class="row">
+          <button (click)="saveAlarm(t)" [disabled]="!isScheduleValid(t.alarm)">Guardar alarma</button>
+          <span *ngIf="!isScheduleValid(t.alarm)" style="color:#a00; font-size:12px;">Completa la configuración</span>
+        </div>
+      </div>
+
+      <!-- Controles al sonar -->
+      <div class="alarm-active" *ngIf="activeAlarms[t.id]">
+        <img *ngIf="t.alarm?.imageUrl" [src]="t.alarm?.imageUrl" alt="gif activo" />
+        <div class="controls">
+          <button (click)="snooze(t, 5)">Pausar 5 min</button>
+          <button (click)="snooze(t, 10)">Pausar 10 min</button>
+          <button (click)="stop(t)">Detener</button>
+        </div>
+      </div>
+
+      <!-- Subtareas -->
+      <div class="subtasks">
+        <h4>Subtareas</h4>
+        <div class="subtask"
+             *ngFor="let s of t.subtasks"
+             [class.completed]="s.completed">
+          <label>
+            <input type="checkbox" [checked]="s.completed" (change)="toggleSubtask(t, s)" />
+            {{ s.title }}
+          </label>
+        </div>
+        <div class="row">
+          <input [(ngModel)]="newSubtaskTitle[t.id]" placeholder="Nueva subtarea..." />
+          <button (click)="addSubtask(t)">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grupo: Trabajando -->
+  <div class="group">
+    <h3>Trabajando ({{ grouped.working.length }})</h3>
+    <div *ngFor="let t of grouped.working" class="task">
+      <input [(ngModel)]="t.title" />
+      <input [(ngModel)]="t.description" />
+      <select [(ngModel)]="t.priority">
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+      </select>
+
+      <span>Estado: {{ statusLabel(t.status) }}</span>
+      <select [(ngModel)]="t.status">
+        <option value="pending">Pendiente</option>
+        <option value="working">Trabajando</option>
+        <option value="completed">Completada</option>
+      </select>
+
+      <button (click)="updateTask(t)">Save</button>
+      <button (click)="toggle(t)">{{ nextActionLabel(t.status) }}</button>
+      <button (click)="confirmDelete(t)">Eliminar</button>
+
+      <!-- Subtareas -->
+      <div class="subtasks">
+        <h4>Subtareas</h4>
+        <div class="subtask"
+             *ngFor="let s of t.subtasks"
+             [class.completed]="s.completed">
+          <label>
+            <input type="checkbox" [checked]="s.completed" (change)="toggleSubtask(t, s)" />
+            {{ s.title }}
+          </label>
+        </div>
+        <div class="row">
+          <input [(ngModel)]="newSubtaskTitle[t.id]" placeholder="Nueva subtarea..." />
+          <button (click)="addSubtask(t)">+</button>
+        </div>
+        <div class="row">
+          <button (click)="markAllSubtasks(t, true)" [disabled]="!t.subtasks || t.subtasks.length===0">Marcar todas</button>
+          <button (click)="markAllSubtasks(t, false)" [disabled]="!t.subtasks || t.subtasks.length===0">Desmarcar todas</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Filtro por fecha para historial -->
+  <div class="form">
+    <label>Historial (rango de fechas):</label>
+    <input type="date" [(ngModel)]="historyStart" />
+    <span>—</span>
+    <input type="date" [(ngModel)]="historyEnd" />
+    <button (click)="clearHistoryFilter()" [disabled]="!historyStart && !historyEnd">Limpiar</button>
+  </div>
+
+  <!-- Historial: Completadas -->
+  <div class="group">
+    <h3>Historial de Completadas ({{ completedHistory.length }})</h3>
+    <div *ngFor="let t of completedHistory" class="task">
+      <div class="row">
+        <strong>{{ t.title }}</strong>
+        <span>• {{ t.description }}</span>
+      </div>
+      <div class="row">
+        <small>Prioridad: {{ t.priority }}</small>
+        <small>• Terminada: {{ (t.completedAt || t.updatedAt) | date:'short' }}</small>
+      </div>
+
+      <span>Estado: {{ statusLabel(t.status) }}</span>
+      <select [(ngModel)]="t.status">
+        <option value="pending">Pendiente</option>
+        <option value="working">Trabajando</option>
+        <option value="completed">Completada</option>
+      </select>
+
+      <button (click)="updateTask(t)">Save</button>
+      <button (click)="toggle(t)">{{ nextActionLabel(t.status) }}</button>
+
+      <!-- Subtareas -->
+      <div class="subtasks">
+        <h4>Subtareas</h4>
+        <div class="subtask"
+             *ngFor="let s of t.subtasks"
+             [class.completed]="s.completed">
+          <label>
+            <input type="checkbox" [checked]="s.completed" (change)="toggleSubtask(t, s)" />
+            {{ s.title }}
+          </label>
+        </div>
+        <div class="row">
+          <input [(ngModel)]="newSubtaskTitle[t.id]" placeholder="Nueva subtarea..." />
+          <button (click)="addSubtask(t)">+</button>
+        </div>
+        <div class="row">
+          <button (click)="markAllSubtasks(t, true)" [disabled]="!t.subtasks || t.subtasks.length===0">Marcar todas</button>
+          <button (click)="markAllSubtasks(t, false)" [disabled]="!t.subtasks || t.subtasks.length===0">Desmarcar todas</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" *ngIf="showDeleteConfirm">
+  <div class="modal">
+    <h4>Confirmar eliminación</h4>
+    <p>¿Seguro que deseas eliminar la tarea "<strong>{{ taskToDelete?.title }}</strong>"?</p>
+    <div class="actions">
+      <button (click)="performDelete()">Sí, eliminar</button>
+      <button (click)="cancelDelete()">Cancelar</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,15 @@
+<app-navbar></app-navbar>
+<div class="form">
+  <h2>Register</h2>
+  <input [(ngModel)]="name" placeholder="Name" />
+  <input [(ngModel)]="email" placeholder="Email" type="email" />
+  <input [(ngModel)]="password" placeholder="Password" type="password" />
+  <select [(ngModel)]="role">
+    <option value="user">User</option>
+    <option value="admin">Admin</option>
+  </select>
+  <button (click)="submit()">Register</button>
+  @if (error) {
+    <p class="error">{{ error }}</p>
+  }
+</div>

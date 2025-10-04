@@ -1,0 +1,20 @@
+ 
+{
+  "name": "todo-app-roles",
+  "version": "1.0.0",
+  "description": "Gestor de Tareas con Roles - JSON Database Version",
+  "main": "index.js",
+  "scripts": {
+    "dev": "cd backend && npm run dev",
+    "start": "cd backend && npm start",
+    "frontend": "cd frontend && ng serve",
+    "build": "cd backend && npm run build && cd ../frontend && ng build"
+  },
+  "keywords": ["nodejs", "angular", "jwt", "tasks", "roles"],
+  "author": "Tu Nombre",
+  "license": "MIT",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ]
+}

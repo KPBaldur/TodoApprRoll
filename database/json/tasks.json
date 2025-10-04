@@ -1,0 +1,21 @@
+[
+  {
+    "id": "53c9f882-c05e-4357-a2a0-45303d82cef1",
+    "title": "Prueba tarea alarma",
+    "description": "",
+    "status": "pending",
+    "priority": "medium",
+    "userId": "ca92d3eb-bc16-467e-a076-124b03f5bb2d",
+    "createdAt": "2025-10-03T19:05:16.944Z",
+    "updatedAt": "2025-10-03T20:05:42.660Z",
+    "subtasks": [],
+    "alarm": {
+      "enabled": true,
+      "schedule": {
+        "type": "interval",
+        "intervalMinutes": 1
+      },
+      "nextTriggerAt": "2025-10-03T20:06:42.636Z"
+    }
+  }
+]
