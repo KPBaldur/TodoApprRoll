@@ -1,57 +1,53 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../environments/environment.development';
 import { Observable } from 'rxjs';
-import { Task } from '../models/task.model';
 
-interface ListResponse { success: boolean; data: { tasks: Task[]; count: number }; }
-interface ItemResponse { success: boolean; data: { task: Task }; }
-interface SimpleResponse { success: boolean; message?: string; }
+export interface Subtask {
+  title: string;
+  completed?: boolean;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'pending' | 'working' | 'completed' | 'archived';
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
+  subtasks: Subtask[];
+  remember: boolean;
+}
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
-  private readonly api = environment.apiUrl;
+  private baseUrl = 'http://localhost:3000/api/tasks';
 
   constructor(private http: HttpClient) {}
 
-  getTasks(): Observable<ListResponse> {
-    return this.http.get<ListResponse>(`${this.api}/tasks`);
-  }
-  createTask(payload: Partial<Task>): Observable<ItemResponse> {
-    return this.http.post<ItemResponse>(`${this.api}/tasks`, payload);
-  }
-  updateTask(id: string, payload: Partial<Task>): Observable<ItemResponse> {
-    return this.http.put<ItemResponse>(`${this.api}/tasks/${id}`, payload);
-  }
-  toggleTaskStatus(id: string): Observable<ItemResponse> {
-    return this.http.patch<ItemResponse>(`${this.api}/tasks/${id}/toggle`, {});
-  }
-  deleteTask(id: string): Observable<SimpleResponse> {
-    return this.http.delete<SimpleResponse>(`${this.api}/tasks/${id}`);
+  list(status?: Task['status']): Observable<{ success: boolean; data: { tasks: Task[]; count: number } }> {
+    const url = status ? `${this.baseUrl}?status=${status}` : this.baseUrl;
+    return this.http.get<{ success: boolean; data: { tasks: Task[]; count: number } }>(url);
   }
 
-  // ====== ALARMAS ======
-  updateAlarm(id: string, alarm: Partial<Task['alarm']>): Observable<ItemResponse> {
-    return this.http.patch<ItemResponse>(`${this.api}/tasks/${id}/alarm`, { alarm });
+  get(id: string): Observable<{ success: boolean; data: { task: Task } }> {
+    return this.http.get<{ success: boolean; data: { task: Task } }>(`${this.baseUrl}/${id}`);
   }
 
-  uploadAlarmSound(id: string, file: File): Observable<ItemResponse> {
-    const form = new FormData();
-    form.append('sound', file);
-    return this.http.post<ItemResponse>(`${this.api}/tasks/${id}/alarm/sound`, form);
+  create(payload: Partial<Task>): Observable<{ success: boolean; data: { task: Task } }> {
+    return this.http.post<{ success: boolean; data: { task: Task } }>(this.baseUrl, payload);
   }
 
-  uploadAlarmImage(id: string, file: File): Observable<ItemResponse> {
-    const form = new FormData();
-    form.append('image', file);
-    return this.http.post<ItemResponse>(`${this.api}/tasks/${id}/alarm/image`, form);
+  update(id: string, payload: Partial<Task>): Observable<{ success: boolean; data: { task: Task } }> {
+    return this.http.put<{ success: boolean; data: { task: Task } }>(`${this.baseUrl}/${id}`, payload);
   }
 
-  snoozeAlarm(id: string, minutes: number): Observable<ItemResponse> {
-    return this.http.post<ItemResponse>(`${this.api}/tasks/${id}/alarm/snooze`, { minutes });
+  toggle(id: string): Observable<{ success: boolean; data: { task: Task } }> {
+    return this.http.patch<{ success: boolean; data: { task: Task } }>(`${this.baseUrl}/${id}/toggle`, {});
   }
 
-  stopAlarm(id: string): Observable<ItemResponse> {
-    return this.http.post<ItemResponse>(`${this.api}/tasks/${id}/alarm/stop`, {});
+  delete(id: string): Observable<{ success: boolean }> {
+    return this.http.delete<{ success: boolean }>(`${this.baseUrl}/${id}`);
   }
 }

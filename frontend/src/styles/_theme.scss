@@ -1,0 +1,55 @@
+/* Paleta principal - Deep Space Aurora */
+:root {
+  /* Base */
+  --color-bg: #0B132B;        /* Fondo general */
+  --color-panel: #1C2541;     /* Paneles y tarjetas */
+  --color-border: #3A506B;    /* Contornos y separadores */
+  --color-primary: #5F0F40;   /* Acciones principales */
+  --color-accent: #00A8E8;    /* Acentos, hover, detalles */
+  --color-success: #3DDC97;   /* Éxito / energía */
+  --color-text: #F8FAFC;      /* Texto principal */
+  --color-subtext: #CBD5E1;   /* Texto secundario */
+
+  /* Prioridades */
+  --color-low: #A7F3D0;       /* Low Priority */
+  --color-medium: #FDE68A;    /* Medium Priority */
+  --color-high: #F472B6;      /* High Priority */
+
+  /* Complementaria secundaria */
+  --color-gray-neutral: #334155; /* Neutro para archivado/complementos */
+
+  /* Gradientes recomendados */
+  --grad-aurora: linear-gradient(135deg, #0B132B 0%, #1C2541 50%, #3A506B 100%);
+  --grad-nebula: linear-gradient(180deg, #1C2541 0%, #5F0F40 100%);
+  --grad-deep-sky: linear-gradient(90deg, #0B132B 0%, #00A8E8 100%);
+  --grad-event-horizon: linear-gradient(90deg, #1C2541 0%, #3DDC97 100%);
+
+  /* Mapeo para compatibilidad con estilos previos */
+  --bg: var(--color-bg);
+  --surface: var(--color-panel);
+  --surface-2: #152039; /* leve variación para sidebar si lo usas */
+  --border: var(--color-border);
+  --text: var(--color-text);
+  --muted: var(--color-subtext);
+  --primary: var(--color-primary);
+  --primary-dark: #7A2048; /* tono más oscuro para hover */
+
+  /* Prioridades anteriores */
+  --prio-low-bg: var(--color-low);
+  --prio-low-border: #34D399; /* bordes más saturados */
+  --prio-low-text: #064E3B;
+
+  --prio-medium-bg: var(--color-medium);
+  --prio-medium-border: #F59E0B; /* amarillo más intenso para borde */
+  --prio-medium-text: #7C2D12;
+
+  --prio-high-bg: var(--color-high);
+  --prio-high-border: #EC4899; /* rosa intenso para borde */
+  --prio-high-text: #7F1D1D;
+
+  /* Estados (puedes ajustar según tus reglas de negocio) */
+  --st-pending: #F59E0B;      /* Pendiente -> amarillo activo */
+  --st-working: var(--color-success); /* Trabajando -> verde aurora */
+  --st-completed: #10B981;    /* Completada -> verde estelar */
+  --st-archived: var(--color-gray-neutral); /* Archivada -> gris espacial */
+}

@@ -1,6 +1,0 @@
-<nav>
-  <a routerLink="/tasks">Tasks</a>
-  <a routerLink="/login" *ngIf="!auth.isLoggedIn()">Login</a>
-  <a routerLink="/register" *ngIf="!auth.isLoggedIn()">Register</a>
-  <button (click)="logout()" *ngIf="auth.isLoggedIn()">Logout</button>
-</nav>
