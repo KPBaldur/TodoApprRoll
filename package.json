@@ -1,5 +1,8 @@
 {
   "devDependencies": {
     "@angular/cli": "^18.2.7"
+  },
+  "dependencies": {
+    "react-router-dom": "^7.9.4"
   }
 }
