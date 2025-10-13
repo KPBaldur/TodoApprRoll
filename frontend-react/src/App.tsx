@@ -7,6 +7,7 @@ import Sidebar from './components/Sidebar'
 import Toast from './components/Toast'
 import TasksPage from './pages/TasksPage'
 import HistoryPage from './pages/HistoryPage'
+import MediaPage from './pages/MediaPage'
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -26,7 +27,7 @@ function App() {
             <Route path="/" element={<Navigate to="/tasks" replace />} />
             <Route path="/tasks" element={<TasksPage />} />
             <Route path="/history" element={<HistoryPage />} />
-            <Route path="/media" element={<div className="page"><h2>Multimedia</h2><p>En construcción…</p></div>} />
+            <Route path="/media" element={<MediaPage />} />
             <Route path="/alarm" element={<div className="page"><h2>Alarmas</h2><p>En construcción…</p></div>} />
             <Route path="/settings" element={<div className="page"><h2>Configuración</h2><p>En construcción…</p></div>} />
             <Route path="*" element={<Navigate to="/tasks" replace />} />

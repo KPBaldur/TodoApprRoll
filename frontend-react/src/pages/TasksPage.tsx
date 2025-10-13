@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTasks } from '../hooks/useTasks'
 import type { Task } from '../services/taskService'
@@ -161,7 +161,7 @@ export default function TasksPage() {
     await editTask(t.id, { subtasks })
   }
 
-  function autoResize(e: FormEvent<HTMLTextAreaElement>) {
+  function autoResize(e: React.FormEvent<HTMLTextAreaElement>) {
     const ta = e.currentTarget
     ta.style.height = 'auto'
     ta.style.height = `${ta.scrollHeight}px`

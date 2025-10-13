@@ -82,15 +82,18 @@
     "title": "Coordinacion de Mantencion y revision de pistolas Radio Frencuencia",
     "description": "Se debe coordinar una visita para realizar mantencion y revision de Pistolas radiofrecuencia Zebra de altillo.\n3 Equipos radiofrecuencia.",
     "priority": "high",
-    "status": "working",
+    "status": "completed",
     "createdAt": "2025-10-13T12:54:42.406Z",
-    "updatedAt": "2025-10-13T13:19:18.978Z",
+    "updatedAt": "2025-10-13T18:29:14.753Z",
+    "completedAt": "2025-10-13T18:29:09.822Z",
     "subtasks": [
       {
         "title": "Enviar correo de contacto y coordinacion",
-        "completed": false
+        "completed": true
       }
     ],
-    "remember": false
+    "remember": false,
+    "resolution": "",
+    "resolutionImages": []
   }
 ]

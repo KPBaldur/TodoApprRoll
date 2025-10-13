@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "id": "7c3a02f3-f4e5-457b-88ba-cb6786f3396b",
+    "type": "image",
+    "name": "Golden Ship",
+    "path": "/uploads/1760380736047-goldenShip.gif"
+  },
+  {
+    "id": "c04c2cf4-8eee-4566-9530-9f5d4178725f",
+    "type": "audio",
+    "name": "Mambo",
+    "path": "/uploads/1760380767910-mambo.mp3"
+  },
+  {
+    "id": "435d488e-017d-4211-ab7a-be48965d38b8",
+    "type": "image",
+    "name": "helldivers.gif",
+    "path": "/uploads/1760381319031-helldivers.gif"
+  }
+]

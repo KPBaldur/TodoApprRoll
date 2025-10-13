@@ -30,11 +30,18 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | undefined>()
   const [filters, setFilters] = useState<Filters>({})
+  // NUEVO: lista completa para conteos globales
+  const [allTasks, setAllTasks] = useState<Task[]>([])
 
   async function reload() {
     setLoading(true)
     setError(undefined)
     try {
+      // Cargar SIEMPRE todas las tareas para conteos globales
+      const resAll = await listTasks()
+      setAllTasks(resAll.data.tasks || [])
+
+      // Cargar tareas visibles según filtros actuales (como ya hacías)
       const res = await listTasks({ status: filters.status, q: filters.q })
       setTasks(res.data.tasks || [])
     } catch (e: any) {
@@ -75,11 +82,12 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
 
   const counts: Counts = useMemo(() => {
     const c: Counts = { pending: 0, working: 0, completed: 0, archived: 0 }
-    for (const t of tasks) {
+    // AHORA: calcular desde allTasks (no desde tasks filtradas)
+    for (const t of allTasks) {
       if (t.status in c) c[t.status as keyof Counts]++
     }
     return c
-  }, [tasks])
+  }, [allTasks])
 
   const value: TasksContextType = {
     tasks, loading, error,
