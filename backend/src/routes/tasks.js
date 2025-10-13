@@ -6,8 +6,10 @@ const {
   createTask,
   updateTask,
   toggleTaskStatus,
-  deleteTask
-} = require('../controllers/taskcontroller');
+  deleteTask,
+  archiveTask,
+  unarchiveTask
+} = require('../controllers/taskController');
 
 // Listar
 router.get('/', getTasks);
@@ -19,6 +21,9 @@ router.post('/', createTask);
 router.put('/:id', updateTask);
 // Cambiar estado (ciclo pending -> working -> completed -> pending)
 router.patch('/:id/toggle', toggleTaskStatus);
+// Archivar y restaurar
+router.patch('/:id/archive', archiveTask);
+router.patch('/:id/unarchive', unarchiveTask);
 // Eliminar
 router.delete('/:id', deleteTask);
 

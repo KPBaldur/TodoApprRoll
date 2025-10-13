@@ -8,7 +8,7 @@ type SortBy = 'title' | 'priority' | 'status' | 'createdAt' | 'updatedAt'
 type SortDir = 'asc' | 'desc'
 
 export default function TasksPage() {
-  const { tasks, loading, error, createTask, editTask, completeTask, deleteTask, applyFilters, filters, reload } = useTasks()
+  const { tasks, loading, error, createTask, editTask, completeTask, deleteTask, applyFilters, filters, reload, archiveTask, unarchiveTask } = useTasks()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -22,9 +22,19 @@ export default function TasksPage() {
   const [sortDir, setSortDir] = useState<SortDir>('desc')
 
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editModel, setEditModel] = useState<{ title: string; description: string; priority: Task['priority']; subtasks: { title: string; completed: boolean }[] }>({ title: '', description: '', priority: 'medium', subtasks: [] })
+  const [editModel, setEditModel] = useState<{
+    title: string;
+    description: string;
+    priority: Task['priority'];
+    subtasks: { title: string; completed: boolean }[];
+    // Nuevos campos en el modelo de edición
+    resolution: string;
+    resolutionImages: string[];
+  }>({ title: '', description: '', priority: 'medium', subtasks: [], resolution: '', resolutionImages: [] })
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('')
   const [subtaskModal, setSubtaskModal] = useState<{ open: boolean; task: Task | null; title: string }>({ open: false, task: null, title: '' })
+  // Nuevo estado para añadir URLs de imágenes de resolución
+  const [newResolutionImageUrl, setNewResolutionImageUrl] = useState('')
 
   const [newTask, setNewTask] = useState<Partial<Task>>({ title: '', description: '', priority: 'medium', remember: false })
   const [createOpen, setCreateOpen] = useState<boolean>(() => {
@@ -43,6 +53,8 @@ export default function TasksPage() {
   const filtered = useMemo(() => {
     let list = [...tasks]
     if (statusFilter !== 'all') list = list.filter(t => t.status === statusFilter)
+    // Si el filtro es "all", ocultamos completadas y archivadas para mostrar solo activas
+    if (statusFilter === 'all') list = list.filter(t => t.status !== 'completed' && t.status !== 'archived')
     if (priorityFilter !== 'all') list = list.filter(t => t.priority === priorityFilter)
     const q = searchText.trim().toLowerCase()
     if (q) list = list.filter(t => (t.title || '').toLowerCase().includes(q))
@@ -102,13 +114,23 @@ export default function TasksPage() {
 
   function startEdit(t: Task) {
     setEditingId(t.id)
-    setEditModel({ title: t.title, description: t.description || '', priority: t.priority, subtasks: (t.subtasks || []).map(s => ({ title: s.title, completed: !!s.completed })) })
+    setEditModel({
+      title: t.title,
+      description: t.description || '',
+      priority: t.priority,
+      subtasks: (t.subtasks || []).map(s => ({ title: s.title, completed: !!s.completed })),
+      // Cargar resolución si existe
+      resolution: t.resolution || '',
+      resolutionImages: Array.isArray(t.resolutionImages) ? t.resolutionImages : []
+    })
     setNewSubtaskTitle('')
+    setNewResolutionImageUrl('')
   }
   function cancelEdit() {
     setEditingId(null)
-    setEditModel({ title: '', description: '', priority: 'medium', subtasks: [] })
+    setEditModel({ title: '', description: '', priority: 'medium', subtasks: [], resolution: '', resolutionImages: [] })
     setNewSubtaskTitle('')
+    setNewResolutionImageUrl('')
   }
   async function saveEdit(original: Task) {
     if (!editingId) return
@@ -118,10 +140,15 @@ export default function TasksPage() {
       priority: editModel.priority,
       subtasks: editModel.subtasks
     }
-    if (!payload.title || payload.title.length < 3) return
+    // Solo enviar resolución si la tarea está completada
+    if (original.status === 'completed') {
+      payload.resolution = (editModel.resolution || '').trim()
+      payload.resolutionImages = editModel.resolutionImages
+    }
+    if (!payload.title || (payload.title as string).length < 3) return
     await editTask(editingId, payload)
     setEditingId(null)
-    setEditModel({ title: '', description: '', priority: 'medium', subtasks: [] })
+    setEditModel({ title: '', description: '', priority: 'medium', subtasks: [], resolution: '', resolutionImages: [] })
   }
 
   async function toggleSubtask(t: Task, index: number, completed: boolean) {
@@ -273,6 +300,8 @@ export default function TasksPage() {
                 <>
                   <button className="btn" onClick={() => completeTask(t.id)}>Cambiar estado</button>
                   <button className="btn" onClick={() => startEdit(t)}>Editar</button>
+                  {t.status === 'completed' && <button className="btn" onClick={() => archiveTask(t.id)}>Archivar</button>}
+                  {t.status === 'archived' && <button className="btn" onClick={() => unarchiveTask(t.id)}>Restaurar</button>}
                   <button className="btn danger" onClick={() => { if (confirm('¿Seguro que deseas eliminar esta tarea?')) deleteTask(t.id) }}>Eliminar</button>
                 </>
               )}
@@ -298,6 +327,33 @@ export default function TasksPage() {
                       <button className="btn" onClick={() => { if (newSubtaskTitle.trim()) setEditModel({ ...editModel, subtasks: [...editModel.subtasks, { title: newSubtaskTitle.trim(), completed: false }] }); setNewSubtaskTitle('') }}>Añadir</button>
                     </div>
                   </div>
+                  {/* Bloque de resolución: visible solo si la tarea está completada */}
+                  {t.status === 'completed' && (
+                    <div className="panel" style={{ marginTop: 10 }}>
+                      <div className="panel-body" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+                        <label>
+                          Resolución
+                          <textarea className="textarea-auto" value={editModel.resolution} onChange={(e) => setEditModel({ ...editModel, resolution: e.target.value })} onInput={autoResize} rows={3} placeholder="Describe cómo se resolvió la tarea"></textarea>
+                        </label>
+                        <div>
+                          <div style={{ fontWeight: 600, marginBottom: 6 }}>Imágenes de resolución (URLs)</div>
+                          <div style={{ display: 'grid', gap: 8 }}>
+                            {(editModel.resolutionImages || []).map((url, i) => (
+                              <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                <img src={url} alt={`img-${i}`} style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--color-border)' }} />
+                                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{url}</span>
+                                <button className="btn" onClick={() => setEditModel({ ...editModel, resolutionImages: editModel.resolutionImages.filter((_, idx) => idx !== i) })}>Eliminar</button>
+                              </div>
+                            ))}
+                            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                              <input type="text" value={newResolutionImageUrl} onChange={(e) => setNewResolutionImageUrl(e.target.value)} placeholder="Pega la URL de la imagen…" />
+                              <button className="btn" onClick={() => { const u = newResolutionImageUrl.trim(); if (u) setEditModel({ ...editModel, resolutionImages: [...editModel.resolutionImages, u] }); setNewResolutionImageUrl('') }}>Añadir imagen</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </>
               ) : (
                 <>
@@ -315,6 +371,36 @@ export default function TasksPage() {
                   <div className="subtasks-add">
                     <button className="btn" onClick={() => openSubtaskModal(t)}>Añadir subtarea</button>
                   </div>
+                  {/* Visualización de resolución solo para completadas */}
+                  {t.status === 'completed' && (
+                    <div className="panel" style={{ marginTop: 10 }}>
+                      <div className="panel-body">
+                        {t.resolution && <div style={{ marginBottom: 8 }}><strong>Resolución:</strong> {t.resolution}</div>}
+                        {(t.resolutionImages && t.resolutionImages.length > 0) && (
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {t.resolutionImages.map((url, i) => (
+                              <img key={i} src={url} alt={`res-${i}`} style={{ width: 96, height: 96, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--color-border)' }} />
+                            ))}
+                          </div>
+                        )}
+                        {/* Botón rápido para editar resolución */}
+                        <div style={{ marginTop: 8 }}>
+                          {/* Bloque de resolución: título, descripción y botón */}
+                          {t.status === 'completed' && (
+                            <div className="resolution-block">
+                              <div className="resolution-title">Resolución</div>
+                              <div className="resolution-description">
+                                {t.resolution ? t.resolution : 'Sin resolución aún.'}
+                              </div>
+                              <div className="resolution-actions">
+                                <button className="btn" onClick={() => startEdit(t)}>Añadir/Editar resolución</button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>

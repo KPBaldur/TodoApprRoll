@@ -1,7 +1,5 @@
-/**
- * Controlador de Tareas
- */
-const Task = require('../models/task');
+// Controlador de Tareas
+const Task = require('../models/Task');
 
 const getTasks = async (req, res, next) => {
   try {
@@ -24,8 +22,8 @@ const getTaskById = async (req, res, next) => {
 
 const createTask = async (req, res, next) => {
   try {
-    const { title, description, priority, status, subtasks, remember } = req.body;
-    const task = await Task.create({ title, description, priority, status, subtasks, remember });
+    const { title, description, priority, status, subtasks, remember, resolution, resolutionImages } = req.body;
+    const task = await Task.create({ title, description, priority, status, subtasks, remember, resolution, resolutionImages });
     res.status(201).json({ success: true, message: 'Tarea creada', data: { task } });
   } catch (err) { next(err); }
 };
@@ -41,6 +39,9 @@ const updateTask = async (req, res, next) => {
     if (typeof body.status !== 'undefined') payload.status = body.status;
     if (typeof body.subtasks !== 'undefined') payload.subtasks = body.subtasks;
     if (typeof body.remember !== 'undefined') payload.remember = body.remember;
+    // Nuevos campos
+    if (typeof body.resolution !== 'undefined') payload.resolution = body.resolution;
+    if (typeof body.resolutionImages !== 'undefined') payload.resolutionImages = body.resolutionImages;
 
     const task = await Task.update(id, payload);
     res.json({ success: true, message: 'Tarea actualizada', data: { task } });
@@ -63,11 +64,35 @@ const deleteTask = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+const archiveTask = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const task = await Task.findById(id);
+    if (!task) return res.status(404).json({ success: false, message: 'Tarea no encontrada' });
+    if (task.status !== 'completed') return res.status(400).json({ success: false, message: 'Solo se pueden archivar tareas completadas' });
+    const archived = await Task.update(id, { status: 'archived' });
+    res.json({ success: true, message: 'Tarea archivada', data: { task: archived } });
+  } catch (err) { next(err); }
+};
+
+const unarchiveTask = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const task = await Task.findById(id);
+    if (!task) return res.status(404).json({ success: false, message: 'Tarea no encontrada' });
+    if (task.status !== 'archived') return res.status(400).json({ success: false, message: 'Solo se pueden restaurar tareas archivadas' });
+    const restored = await Task.update(id, { status: 'completed' });
+    res.json({ success: true, message: 'Tarea restaurada', data: { task: restored } });
+  } catch (err) { next(err); }
+};
+
 module.exports = {
   getTasks,
   getTaskById,
   createTask,
   updateTask,
   toggleTaskStatus,
-  deleteTask
+  deleteTask,
+  archiveTask,
+  unarchiveTask
 };

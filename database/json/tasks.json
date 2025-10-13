@@ -27,12 +27,13 @@
     "title": "Monitorear Perfil Empleado",
     "description": "Se debe monitorear perfil de empleado debido a que pierde configuracion de empleado para beneficio de ventas.",
     "priority": "low",
-    "status": "completed",
+    "status": "pending",
     "createdAt": "2025-10-07T19:46:36.117Z",
-    "updatedAt": "2025-10-12T22:33:09.682Z",
-    "completedAt": "2025-10-12T22:33:09.682Z",
+    "updatedAt": "2025-10-13T17:47:04.379Z",
     "subtasks": [],
-    "remember": false
+    "remember": false,
+    "resolution": "",
+    "resolutionImages": []
   },
   {
     "id": "0d49b788-d9f2-4521-a8d6-ecd21ba0e2ae",
@@ -61,25 +62,32 @@
     "title": "Cotizacion Pantalla Lenovo",
     "description": "Realizar cotizacion de pantalla y ventiladores Lenovo.",
     "priority": "high",
-    "status": "completed",
+    "status": "working",
     "createdAt": "2025-10-07T19:51:10.971Z",
-    "updatedAt": "2025-10-13T01:10:59.686Z",
-    "completedAt": "2025-10-13T01:10:59.686Z",
-    "subtasks": [],
+    "updatedAt": "2025-10-13T14:37:05.762Z",
+    "subtasks": [
+      {
+        "title": "Recepcionar pantalla",
+        "completed": false
+      },
+      {
+        "title": "Instalacion de pantalla",
+        "completed": false
+      }
+    ],
     "remember": false
   },
   {
-    "id": "f553dbc0-6c38-489e-86c9-bd05a2c0f091",
-    "title": "Tarea de Pruebas",
-    "description": "BLA BLA BLA",
-    "priority": "medium",
-    "status": "completed",
-    "createdAt": "2025-10-12T22:05:30.410Z",
-    "updatedAt": "2025-10-13T01:29:35.711Z",
-    "completedAt": "2025-10-12T22:31:48.999Z",
+    "id": "aec87993-80a4-425c-bd09-673bd9dc05df",
+    "title": "Coordinacion de Mantencion y revision de pistolas Radio Frencuencia",
+    "description": "Se debe coordinar una visita para realizar mantencion y revision de Pistolas radiofrecuencia Zebra de altillo.\n3 Equipos radiofrecuencia.",
+    "priority": "high",
+    "status": "working",
+    "createdAt": "2025-10-13T12:54:42.406Z",
+    "updatedAt": "2025-10-13T13:19:18.978Z",
     "subtasks": [
       {
-        "title": "Prueba de subtarea",
+        "title": "Enviar correo de contacto y coordinacion",
         "completed": false
       }
     ],

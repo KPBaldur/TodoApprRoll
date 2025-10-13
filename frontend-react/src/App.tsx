@@ -1,11 +1,12 @@
 import './styles/global.css'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useState } from 'react'
+import { TasksProvider } from './context/TasksContext'
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
-import TasksPage from './pages/TasksPage'
-import { TasksProvider } from './context/TasksContext'
 import Toast from './components/Toast'
+import TasksPage from './pages/TasksPage'
+import HistoryPage from './pages/HistoryPage'
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -24,7 +25,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/tasks" replace />} />
             <Route path="/tasks" element={<TasksPage />} />
-            <Route path="/history" element={<div className="page"><h2>Historial</h2><p>En construcción…</p></div>} />
+            <Route path="/history" element={<HistoryPage />} />
             <Route path="/media" element={<div className="page"><h2>Multimedia</h2><p>En construcción…</p></div>} />
             <Route path="/alarm" element={<div className="page"><h2>Alarmas</h2><p>En construcción…</p></div>} />
             <Route path="/settings" element={<div className="page"><h2>Configuración</h2><p>En construcción…</p></div>} />

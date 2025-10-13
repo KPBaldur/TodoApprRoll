@@ -12,6 +12,9 @@ export type Task = {
   completedAt?: string
   subtasks: Subtask[]
   remember: boolean
+  // Nuevos campos
+  resolution?: string
+  resolutionImages?: string[]
 }
 
 export async function listTasks(params?: { status?: Task['status']; q?: string }) {
@@ -31,6 +34,13 @@ export async function editTask(id: string, payload: Partial<Task>) {
 
 export async function completeTask(id: string) {
   return patch<{ success: boolean; data: { task: Task } }>(`/api/tasks/${id}/toggle`)
+}
+
+export async function archiveTask(id: string) {
+  return patch<{ success: boolean; data: { task: Task } }>(`/api/tasks/${id}/archive`)
+}
+export async function unarchiveTask(id: string) {
+  return patch<{ success: boolean; data: { task: Task } }>(`/api/tasks/${id}/unarchive`)
 }
 
 export async function deleteTask(id: string) {

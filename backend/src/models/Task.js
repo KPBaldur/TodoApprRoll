@@ -19,6 +19,9 @@ class Task {
     this.completedAt = data.completedAt; // ISO string
     this.subtasks = Array.isArray(data.subtasks) ? data.subtasks : [];
     this.remember = !!data.remember;
+    // Nuevos campos de resolución
+    this.resolution = data.resolution || '';
+    this.resolutionImages = Array.isArray(data.resolutionImages) ? data.resolutionImages : [];
   }
 
   touch() {
@@ -56,6 +59,24 @@ class Task {
       }
     }
 
+    // Validación de resolución
+    if (this.resolution || (this.resolutionImages && this.resolutionImages.length > 0)) {
+      if (this.status !== 'completed') {
+        errors.push('La resolución (y sus imágenes) solo pueden establecerse cuando la tarea está completada');
+      }
+    }
+    if (typeof this.resolutionImages !== 'undefined') {
+      if (!Array.isArray(this.resolutionImages)) {
+        errors.push('resolutionImages debe ser un arreglo');
+      } else {
+        for (const img of this.resolutionImages) {
+          if (typeof img !== 'string' || img.trim().length === 0) {
+            errors.push('Cada imagen de resolución debe ser una URL (string) válida');
+            break;
+          }
+        }
+      }
+    }
     return { isValid: errors.length === 0, errors };
   }
 
@@ -97,8 +118,14 @@ class Task {
 
     const updated = new Task({ ...existing, ...cleanUpdate });
     if (statusChange) {
-      if (cleanUpdate.status === 'completed') updated.completedAt = new Date().toISOString();
-      else updated.completedAt = undefined;
+      if (cleanUpdate.status === 'completed') {
+        updated.completedAt = new Date().toISOString();
+      } else if (existing.status === 'completed' && cleanUpdate.status === 'archived') {
+        // Preservar la fecha de completado cuando se archiva
+        updated.completedAt = existing.completedAt;
+      } else {
+        updated.completedAt = undefined;
+      }
     }
 
     // Validar

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { Task } from '../services/taskService'
-import { listTasks, createTask as createTaskApi, editTask as editTaskApi, completeTask as completeTaskApi, deleteTask as deleteTaskApi } from '../services/taskService'
+import { listTasks, createTask as createTaskApi, editTask as editTaskApi, completeTask as completeTaskApi, deleteTask as deleteTaskApi, archiveTask as archiveTaskApi,
+unarchiveTask as unarchiveTaskApi } from '../services/taskService'
 
 type Filters = { status?: Task['status']; priority?: Task['priority']; q?: string }
 
@@ -18,6 +19,8 @@ type TasksContextType = {
   editTask: (id: string, payload: Partial<Task>) => Promise<void>
   completeTask: (id: string) => Promise<void>
   deleteTask: (id: string) => Promise<void>
+  archiveTask: (id: string) => Promise<void>
+  unarchiveTask: (id: string) => Promise<void>
 }
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined)
@@ -61,6 +64,14 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     await deleteTaskApi(id)
     await reload()
   }
+  async function archiveTask(id: string) {
+    await archiveTaskApi(id)
+    await reload()
+  }
+  async function unarchiveTask(id: string) {
+    await unarchiveTaskApi(id)
+    await reload()
+  }
 
   const counts: Counts = useMemo(() => {
     const c: Counts = { pending: 0, working: 0, completed: 0, archived: 0 }
@@ -74,12 +85,12 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     tasks, loading, error,
     filters, counts,
     reload, applyFilters,
-    createTask, editTask, completeTask, deleteTask
+    createTask, editTask, completeTask, deleteTask,
+    archiveTask, unarchiveTask
   }
 
   return (<TasksContext.Provider value={value}>{children}</TasksContext.Provider>)
 }
-
 export function useTasksContext() {
   const ctx = useContext(TasksContext)
   if (!ctx) throw new Error('useTasksContext must be used within TasksProvider')

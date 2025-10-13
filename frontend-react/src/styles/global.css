@@ -186,3 +186,26 @@ input[type="text"], textarea, select {
 .prio-btn.high   { background: var(--btn-filter-priority-high);   border-color: var(--prio-high-border);   color: var(--prio-high-text); }
 .prio-btn:hover { box-shadow: 0 6px 12px rgba(0, 168, 232, 0.25); transform: translateY(-1px); }
 .prio-btn.active { outline: 2px solid var(--color-accent); box-shadow: 0 0 0 3px rgba(0, 168, 232, 0.25) inset; }
+
+.resolution-block {
+  margin-top: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 12px;
+  background: transparent; /* evita fondo negro */
+}
+
+.resolution-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.resolution-description {
+  margin-bottom: 10px;
+  white-space: pre-wrap; /* respeta saltos de línea */
+}
+
+.resolution-actions {
+  display: flex;
+  justify-content: flex-start;
+}
