@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 
 const tasksRoutes = require('./routes/tasks');
@@ -18,7 +19,10 @@ app.use(express.json());
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/config', configRoutes);
-app.use('/uploads', require('express').static(uploadsDir));
+
+// Exponer la carpeta de cargas
+app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
+app.use('/api/alarms', require('./routes/alarms'));
 
 // Manejo de errores (siempre al final)
 app.use(errorHandler);

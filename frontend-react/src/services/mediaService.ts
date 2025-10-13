@@ -14,14 +14,17 @@ export async function listMedia(): Promise<MediaItem[]> {
   return json.data.media as MediaItem[];
 }
 
-export async function uploadMedia(file: File, name?: string): Promise<MediaItem> {
-  const fd = new FormData();
-  fd.append('file', file);
-  if (name) fd.append('name', name);
-  const res = await fetch(`${BASE}/upload`, { method: 'POST', body: fd });
-  const json = await res.json();
-  if (!json.success) throw new Error(json.message || 'Error al subir archivo');
-  return json.data.item as MediaItem;
+export async function uploadMedia(file: File, name?: string) {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (name) formData.append('name', name);
+
+    const res = await fetch('/api/media/upload', {
+        method: 'POST',
+        body: formData,
+    });
+    if (!res.ok) throw new Error('Error al subir archivo multimedia');
+    return res.json();
 }
 
 // Alta por JSON (URL existente)

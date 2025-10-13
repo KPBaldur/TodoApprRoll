@@ -8,6 +8,7 @@ import Toast from './components/Toast'
 import TasksPage from './pages/TasksPage'
 import HistoryPage from './pages/HistoryPage'
 import MediaPage from './pages/MediaPage'
+import AlarmPage from './pages/AlarmPage' // <-- import estático
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -28,7 +29,7 @@ function App() {
             <Route path="/tasks" element={<TasksPage />} />
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/media" element={<MediaPage />} />
-            <Route path="/alarm" element={<div className="page"><h2>Alarmas</h2><p>En construcción…</p></div>} />
+            <Route path="/alarm" element={<AlarmPage />} />
             <Route path="/settings" element={<div className="page"><h2>Configuración</h2><p>En construcción…</p></div>} />
             <Route path="*" element={<Navigate to="/tasks" replace />} />
           </Routes>

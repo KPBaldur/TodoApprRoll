@@ -39,5 +39,7 @@ module.exports = {
   async getMedia() { return readJson('media.json'); },
   async saveMedia(media) { return writeJson('media.json', media); },
   async getConfig() { return readJson('config.json'); },
-  async saveConfig(config) { return writeJson('config.json', config); }
-};
+  async saveConfig(config) { return writeJson('config.json', config); },
+  async getAlarms() { return readJson('alarms.json'); },
+  async saveAlarms(alarms) { return writeJson('alarms.json', alarms); }
+}
