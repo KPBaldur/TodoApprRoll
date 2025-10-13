@@ -23,8 +23,8 @@
   --prio-medium-border: #F59E0B;
   --prio-medium-text: var(--color-text);
 
-  --prio-high-bg: #F472B6;
-  --prio-high-border: #EC4899;
+  --prio-high-bg: #FCA5A5;
+  --prio-high-border: #DC2626;
   --prio-high-text: var(--color-text);
 
   /* Status colors */

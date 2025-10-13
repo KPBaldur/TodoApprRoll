@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTasks } from '../hooks/useTasks'
 import type { Task } from '../services/taskService'
+import SubtaskModal from '../components/SubtaskModal'
 
 type SortBy = 'title' | 'priority' | 'status' | 'createdAt' | 'updatedAt'
 type SortDir = 'asc' | 'desc'
@@ -23,8 +24,12 @@ export default function TasksPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editModel, setEditModel] = useState<{ title: string; description: string; priority: Task['priority']; subtasks: { title: string; completed: boolean }[] }>({ title: '', description: '', priority: 'medium', subtasks: [] })
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('')
+  const [subtaskModal, setSubtaskModal] = useState<{ open: boolean; task: Task | null; title: string }>({ open: false, task: null, title: '' })
 
   const [newTask, setNewTask] = useState<Partial<Task>>({ title: '', description: '', priority: 'medium', remember: false })
+  const [createOpen, setCreateOpen] = useState<boolean>(() => {
+    try { return localStorage.getItem('createFormOpen') === '1' } catch { return false }
+  })
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -129,6 +134,16 @@ export default function TasksPage() {
     await editTask(t.id, { subtasks: next })
   }
 
+  function openSubtaskModal(t: Task) { setSubtaskModal({ open: true, task: t, title: '' }) }
+  function closeSubtaskModal() { setSubtaskModal({ open: false, task: null, title: '' }) }
+  async function submitSubtaskModal() {
+    const title = subtaskModal.title.trim()
+    if (subtaskModal.task && title) {
+      await addSubtaskInline(subtaskModal.task, title)
+      closeSubtaskModal()
+    }
+  }
+
   return (
     <section className="page">
       <h2 className="page-title">Tareas</h2>
@@ -172,33 +187,33 @@ export default function TasksPage() {
         </label>
       </div>
 
-      <div style={{ background: '#111827', padding: 12, borderRadius: 8, border: '1px solid #1f2937', marginBottom: 16 }}>
-        <h3 style={{ marginTop: 0 }}>Crear tarea</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <label>
-            Título
-            <input value={newTask.title || ''} onChange={(e) => setNewTask({ ...newTask, title: e.target.value })} type="text" placeholder="Título de la tarea" />
-          </label>
-          <label>
-            Prioridad
-            <select value={newTask.priority || 'medium'} onChange={(e) => setNewTask({ ...newTask, priority: e.target.value as any })}>
-              <option value="low">Baja</option>
-              <option value="medium">Media</option>
-              <option value="high">Alta</option>
-            </select>
-          </label>
-          <label style={{ gridColumn: '1 / -1' }}>
-            Descripción
-            <textarea className="textarea-auto" value={newTask.description || ''} onChange={(e) => setNewTask({ ...newTask, description: e.target.value })} onInput={autoResize} rows={3} placeholder="Descripción (opcional)"></textarea>
-          </label>
-          <label>
-            <input type="checkbox" checked={!!newTask.remember} onChange={(e) => setNewTask({ ...newTask, remember: e.target.checked })} /> Recordatorio
-          </label>
-          <div style={{ textAlign: 'right' }}>
-            <button className="btn" onClick={handleCreate} disabled={!canSave()}>Guardar</button>
-          </div>
-        </div>
+  <details className="panel collapsible" open={createOpen} onToggle={(e) => { const open = (e.target as HTMLDetailsElement).open; setCreateOpen(open); try { localStorage.setItem('createFormOpen', open ? '1' : '0') } catch {} }}>
+    <summary>Crear tarea</summary>
+    <div className="panel-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      <label>
+        Título
+        <input value={newTask.title || ''} onChange={(e) => setNewTask({ ...newTask, title: e.target.value })} type="text" placeholder="Título de la tarea" />
+      </label>
+      <label>
+        Prioridad
+        <select value={newTask.priority || 'medium'} onChange={(e) => setNewTask({ ...newTask, priority: e.target.value as any })}>
+          <option value="low">Baja</option>
+          <option value="medium">Media</option>
+          <option value="high">Alta</option>
+        </select>
+      </label>
+      <label style={{ gridColumn: '1 / -1' }}>
+        Descripción
+        <textarea className="textarea-auto" value={newTask.description || ''} onChange={(e) => setNewTask({ ...newTask, description: e.target.value })} onInput={autoResize} rows={3} placeholder="Descripción (opcional)"></textarea>
+      </label>
+      <label>
+        <input type="checkbox" checked={!!newTask.remember} onChange={(e) => setNewTask({ ...newTask, remember: e.target.checked })} /> Recordatorio
+      </label>
+      <div style={{ textAlign: 'right' }}>
+        <button className="btn" onClick={handleCreate} disabled={!canSave()}>Guardar</button>
       </div>
+    </div>
+  </details>
 
       <h3 className="section-title">Tareas activas</h3>
 
@@ -263,7 +278,7 @@ export default function TasksPage() {
                     ))}
                   </ul>
                   <div className="subtasks-add">
-                    <button className="btn" onClick={() => addSubtaskInline(t, prompt('Título de la subtarea') || '')}>Añadir subtarea</button>
+                    <button className="btn" onClick={() => openSubtaskModal(t)}>Añadir subtarea</button>
                   </div>
                 </>
               )}
@@ -275,6 +290,13 @@ export default function TasksPage() {
       {filtered.length === 0 && (
         <p style={{ opacity: 0.8 }}>No hay tareas. Crea una nueva arriba y pulsa "Guardar".</p>
       )}
+      <SubtaskModal
+        open={subtaskModal.open}
+        value={subtaskModal.title}
+        onChange={(v) => setSubtaskModal({ ...subtaskModal, title: v })}
+        onSubmit={submitSubtaskModal}
+        onClose={closeSubtaskModal}
+      />
     </section>
   )
 }

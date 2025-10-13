@@ -1,5 +1,6 @@
 import './styles/global.css'
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useState } from 'react'
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 import TasksPage from './pages/TasksPage'
@@ -7,15 +8,18 @@ import { TasksProvider } from './context/TasksContext'
 import Toast from './components/Toast'
 
 function App() {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   return (
     <TasksProvider>
       <header className="app-header">
-        <Header />
+        <Header onToggleSidebar={() => setSidebarOpen(s => !s)} />
       </header>
       <div className="layout">
-        <aside className="app-sidebar">
-          <Sidebar />
-        </aside>
+        {/* Backdrop for mobile drawer */}
+        <div className={`sidebar-backdrop ${sidebarOpen ? 'show' : ''}`} onClick={() => setSidebarOpen(false)} />
+
+        {/* Sidebar component controls its own <aside> wrapper */}
+        <Sidebar open={sidebarOpen} onNavigateClose={() => setSidebarOpen(false)} />
         <main className="content">
           <Routes>
             <Route path="/" element={<Navigate to="/tasks" replace />} />
