@@ -33,5 +33,9 @@
   --st-completed: #10B981;
   --st-archived: #334155;
 
+  --btn-filter-priority-low: #59AA4D;
+  --btn-filter-priority-medium: #FFA500;
+  --btn-filter-priority-high: #DC2626;
+
   --header-height: 60px;
 }

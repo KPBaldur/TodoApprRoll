@@ -175,3 +175,14 @@ input[type="text"], textarea, select {
   background: linear-gradient(90deg, rgba(0, 168, 232, 0.18) 0%, rgba(95, 15, 64, 0.25) 100%);
   box-shadow: 0 0 12px rgba(0, 168, 232, 0.35);
 }
+
+/* Priority filter buttons */
+.priority-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin: 16px 0; }
+.prio-btn { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 6px; min-height: 100px; width: 100%; text-align: left; padding: 12px 16px; border-radius: 12px; border: 1.5px solid var(--color-border); background: rgba(255,255,255,0.02); color: var(--color-text); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18); cursor: pointer; transition: transform 0.12s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease; }
+.prio-btn .prio-header { font-weight: 700; margin-bottom: 6px; }
+.prio-btn .prio-counters { display: flex; gap: 12px; font-size: 0.9rem; opacity: 0.9; }
+.prio-btn.low    { background: var(--btn-filter-priority-low);    border-color: var(--prio-low-border);    color: var(--prio-low-text); }
+.prio-btn.medium { background: var(--btn-filter-priority-medium); border-color: var(--prio-medium-border); color: var(--prio-medium-text); }
+.prio-btn.high   { background: var(--btn-filter-priority-high);   border-color: var(--prio-high-border);   color: var(--prio-high-text); }
+.prio-btn:hover { box-shadow: 0 6px 12px rgba(0, 168, 232, 0.25); transform: translateY(-1px); }
+.prio-btn.active { outline: 2px solid var(--color-accent); box-shadow: 0 0 0 3px rgba(0, 168, 232, 0.25) inset; }

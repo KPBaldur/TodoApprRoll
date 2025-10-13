@@ -57,6 +57,14 @@ export default function TasksPage() {
     return list
   }, [tasks, statusFilter, priorityFilter, searchText, sortBy, sortDir])
 
+  const prioCounts = useMemo(() => {
+    return {
+      low:    { pending: tasks.filter(t => t.priority === 'low'    && t.status === 'pending').length, working: tasks.filter(t => t.priority === 'low'    && t.status === 'working').length },
+      medium: { pending: tasks.filter(t => t.priority === 'medium' && t.status === 'pending').length, working: tasks.filter(t => t.priority === 'medium' && t.status === 'working').length },
+      high:   { pending: tasks.filter(t => t.priority === 'high'   && t.status === 'pending').length, working: tasks.filter(t => t.priority === 'high'   && t.status === 'working').length },
+    }
+  }, [tasks])
+
   function onFilterChange(next: Task['status'] | 'all') {
     setStatusFilter(next)
     const statusParam = next !== 'all' ? next : null
@@ -65,6 +73,9 @@ export default function TasksPage() {
   }
   function onPriorityChange(next: Task['priority' ] | 'all') {
     setPriorityFilter(next)
+  }
+  function onPriorityToggle(p: Task['priority']) {
+    setPriorityFilter(prev => prev === p ? 'all' : p)
   }
   function onSearch(text: string) {
     setSearchText(text)
@@ -214,6 +225,30 @@ export default function TasksPage() {
       </div>
     </div>
   </details>
+
+      <div className="priority-filters">
+        <button type="button" className={`prio-btn low ${priorityFilter === 'low' ? 'active' : ''}`} onClick={() => onPriorityToggle('low')}>
+          <div className="prio-header">Prioridad baja</div>
+          <div className="prio-counters">
+            <span>Pendientes: {prioCounts.low.pending}</span>
+            <span>En curso: {prioCounts.low.working}</span>
+          </div>
+        </button>
+        <button type="button" className={`prio-btn medium ${priorityFilter === 'medium' ? 'active' : ''}`} onClick={() => onPriorityToggle('medium')}>
+          <div className="prio-header">Prioridad media</div>
+          <div className="prio-counters">
+            <span>Pendientes: {prioCounts.medium.pending}</span>
+            <span>En curso: {prioCounts.medium.working}</span>
+          </div>
+        </button>
+        <button type="button" className={`prio-btn high ${priorityFilter === 'high' ? 'active' : ''}`} onClick={() => onPriorityToggle('high')}>
+          <div className="prio-header">Prioridad alta</div>
+          <div className="prio-counters">
+            <span>Pendientes: {prioCounts.high.pending}</span>
+            <span>En curso: {prioCounts.high.working}</span>
+          </div>
+        </button>
+      </div>
 
       <h3 className="section-title">Tareas activas</h3>
 
