@@ -6,6 +6,7 @@ const tasksRoutes = require('./routes/tasks');
 const mediaRoutes = require('./routes/media');
 const configRoutes = require('./routes/config');
 const errorHandler = require('./middleware/error');
+const { uploadsDir } = require('./middleware/upload'); // usa la misma carpeta que multer
 
 const app = express();
 
@@ -19,7 +20,7 @@ app.use('/api/media', mediaRoutes);
 app.use('/api/config', configRoutes);
 
 // Exponer la carpeta de cargas
-app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
+app.use('/uploads', express.static(uploadsDir)); // sirviendo backend/uploads
 
 app.use('/api/alarms', require('./routes/alarms'));
 

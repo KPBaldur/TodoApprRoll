@@ -12,6 +12,14 @@ export default function MediaPage() {
   const [urlName, setUrlName] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'audio'>('all');
   const [nameQuery, setNameQuery] = useState('');
+  const [brokenIds, setBrokenIds] = useState<Record<string, boolean>>({});
+  function handleMediaError(id: string) {
+    setBrokenIds(prev => ({ ...prev, [id]: true }));
+  }
+
+  // Resolver para rutas de /uploads -> backend
+  const backendBase = (import.meta.env?.VITE_BACKEND_URL as string) || (import.meta.env.DEV ? 'http://localhost:3000' : '');
+  const resolveMediaPath = (p: string) => p?.startsWith('/uploads/') ? `${backendBase}${p}` : p;
 
   async function reload() {
     setLoading(true); setError(undefined);
@@ -151,9 +159,19 @@ export default function MediaPage() {
             <div className="details" style={{ display: 'grid', gap: 8 }}>
               <div style={{ opacity: 0.8, fontSize: 12 }}>Path: {item.path}</div>
               {item.type === 'audio' ? (
-                <audio src={item.path} controls />
+                <audio src={resolveMediaPath(item.path)} controls onError={() => handleMediaError(item.id)} />
               ) : (
-                <img src={item.path} alt={item.name} style={{ maxWidth: 260, borderRadius: 8, border: '1px solid var(--color-border)' }} />
+                <img
+                  src={resolveMediaPath(item.path)}
+                  alt={item.name}
+                  onError={() => handleMediaError(item.id)}
+                  style={{ maxWidth: 260, borderRadius: 8, border: '1px solid var(--color-border)' }}
+                />
+              )}
+              {brokenIds[item.id] && (
+                <div style={{ color: 'salmon', fontSize: 12 }}>
+                  Archivo no encontrado (404). Vuelve a subirlo o actualiza su URL.
+                </div>
               )}
             </div>
           </li>
