@@ -23,10 +23,66 @@ export function AlarmProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | undefined>()
   const [activeAlarm, setActiveAlarm] = useState<Alarm | null>(null)
-
+  const [nowTick, setNowTick] = useState(0)
   const nowRef = useRef<number>(Date.now())
-  const [nowTick, setNowTick] = useState(0) // fuerza re-render por tiempo
   const timerAnchorsRef = useRef<Record<string, number>>({})
+
+  // NUEVO: refs persistentes para evitar cierres obsoletos y re-renders
+  const activeRef = useRef<Alarm | null>(null)
+  const alarmsRef = useRef<Alarm[]>([])
+  const tickingRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  
+
+  // Mantener la lista en una ref (no depender de renders)
+  useEffect(() => {
+    alarmsRef.current = alarms
+  }, [alarms])
+
+  function triggerAlarm(alarm: Alarm) {
+    activeRef.current = alarm
+    setActiveAlarm(alarm)
+    // Reinicia ancla para el siguiente ciclo
+    timerAnchorsRef.current = { ...timerAnchorsRef.current, [alarm.id]: Date.now() }
+  }
+
+  function stopAlarm() {
+    const current = activeRef.current
+    if (current) {
+      timerAnchorsRef.current = { ...timerAnchorsRef.current, [current.id]: Date.now() }
+    }
+    activeRef.current = null
+    setActiveAlarm(null)
+  }
+
+  // Evaluación estable (usa refs, no estado)
+  function checkAlarms() {
+    if (activeRef.current) return // no disparar otra mientras hay una activa
+    const list = alarmsRef.current
+    for (const alarm of list) {
+      if (!alarm.enabled) continue
+      const remaining = nextTriggerMs(alarm)
+      if (remaining !== undefined && remaining <= 1000) {
+        triggerAlarm(alarm)
+        break
+      }
+    }
+  }
+
+  // REEMPLAZO: único setInterval global sin dependencias
+  useEffect(() => {
+    if (tickingRef.current) return // evita recrear el intervalo
+    tickingRef.current = setInterval(() => {
+      nowRef.current = Date.now()
+      checkAlarms()
+    }, 1000)
+    return () => {
+      if (tickingRef.current) {
+        clearInterval(tickingRef.current)
+        tickingRef.current = null
+      }
+    }
+  }, [])
 
   // Carga inicial de alarmas (backend con respaldo en localStorage)
   async function reload() {
@@ -87,31 +143,8 @@ export function AlarmProvider({ children }: { children: React.ReactNode }) {
     }
     return undefined
   }
-
-  function triggerAlarm(alarm: Alarm) {
-    setActiveAlarm(alarm)
-    // Reinicia ancla para el siguiente ciclo
-    timerAnchorsRef.current = { ...timerAnchorsRef.current, [alarm.id]: Date.now() }
-  }
-
-  function stopAlarm() {
-    if (activeAlarm) {
-      timerAnchorsRef.current = { ...timerAnchorsRef.current, [activeAlarm.id]: Date.now() }
-    }
-    setActiveAlarm(null)
-  }
-
-  // Monitor de alarmas: chequea cada segundo y dispara cuando corresponde
-  function checkAlarms() {
-    if (activeAlarm) return // no disparar otra mientras hay una activa
-    alarms.forEach(alarm => {
-      if (!alarm.enabled) return
-      const remaining = nextTriggerMs(alarm)
-      if (remaining !== undefined && remaining <= 1000) {
-        triggerAlarm(alarm)
-      }
-    })
-  }
+  
+  
 
   useEffect(() => {
     const id = setInterval(checkAlarms, 1000)
@@ -174,7 +207,7 @@ export function AlarmProvider({ children }: { children: React.ReactNode }) {
   return (
     <AlarmContext.Provider value={value}>
       {children}
-      {/* Popup global */}
+      {/* Popup global existente */}
       {activeAlarm && (
         <div
           className="alarm-overlay"

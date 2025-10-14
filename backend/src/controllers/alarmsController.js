@@ -26,7 +26,7 @@ const list = async (req, res, next) => {
 // add (crear alarma)
 const add = async (req, res, next) => {
   try {
-    const { name, time, enabled = true, mediaId, intervalMinutes, repeat } = req.body || {};
+    const { name, time, enabled = true, mediaId, intervalMinutes } = req.body || {};
     if (!name || typeof name !== 'string') {
       return res.status(400).json({ success: false, message: 'El nombre es requerido' });
     }
@@ -47,8 +47,7 @@ const add = async (req, res, next) => {
       time: time || '',
       enabled: !!enabled,
       mediaId: await ensureValidMediaId(mediaId),
-      intervalMinutes: intervalMinutes !== undefined ? Number(intervalMinutes) : undefined,
-      repeat: repeat !== undefined ? !!repeat : true
+      intervalMinutes: intervalMinutes !== undefined ? Number(intervalMinutes) : undefined
     };
     alarms.push(alarm);
     await Storage.saveAlarms(alarms);
@@ -61,7 +60,7 @@ const add = async (req, res, next) => {
 const update = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, time, enabled, mediaId, intervalMinutes, repeat } = req.body || {};
+    const { name, time, enabled, mediaId, intervalMinutes } = req.body || {};
 
     const alarms = await Storage.getAlarms();
     const idx = alarms.findIndex(a => a.id === id);
@@ -86,10 +85,6 @@ const update = async (req, res, next) => {
         return res.status(400).json({ success: false, message: 'intervalMinutes debe ser un número mayor a 0' });
       }
       alarms[idx].intervalMinutes = v;
-    }
-
-    if (repeat !== undefined) {
-      alarms[idx].repeat = !!repeat;
     }
 
     await Storage.saveAlarms(alarms);

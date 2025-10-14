@@ -10,36 +10,44 @@ import TasksPage from './pages/TasksPage'
 import HistoryPage from './pages/HistoryPage'
 import MediaPage from './pages/MediaPage'
 import AlarmPage from './pages/AlarmPage' // <-- import estático
+import { ReminderProvider } from './context/ReminderContext'
+import ReminderPopup from './components/ReminderPopup'
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   return (
-    <AlarmProvider>
-    <TasksProvider>
-      <header className="app-header">
-        <Header onToggleSidebar={() => setSidebarOpen(s => !s)} />
-      </header>
-      <div className="layout">
-        {/* Backdrop for mobile drawer */}
-        <div className={`sidebar-backdrop ${sidebarOpen ? 'show' : ''}`} onClick={() => setSidebarOpen(false)} />
+    <ReminderProvider>
+      {/* Mantengo tus Providers existentes dentro para no romper la UI actual */}
+      <AlarmProvider>
+        <TasksProvider>
+          <header className="app-header">
+            <Header onToggleSidebar={() => setSidebarOpen(s => !s)} />
+          </header>
+          <div className="layout">
+            {/* Backdrop for mobile drawer */}
+            <div className={`sidebar-backdrop ${sidebarOpen ? 'show' : ''}`} onClick={() => setSidebarOpen(false)} />
 
-        {/* Sidebar component controls its own <aside> wrapper */}
-        <Sidebar open={sidebarOpen} onNavigateClose={() => setSidebarOpen(false)} />
-        <main className="content">
-          <Routes>
-            <Route path="/" element={<Navigate to="/tasks" replace />} />
-            <Route path="/tasks" element={<TasksPage />} />
-            <Route path="/history" element={<HistoryPage />} />
-            <Route path="/media" element={<MediaPage />} />
-            <Route path="/alarm" element={<AlarmPage />} />
-            <Route path="/settings" element={<div className="page"><h2>Configuración</h2><p>En construcción…</p></div>} />
-            <Route path="*" element={<Navigate to="/tasks" replace />} />
-          </Routes>
-        </main>
-      </div>
-      <Toast />
-    </TasksProvider>
-    </AlarmProvider>
+            {/* Sidebar component controls its own <aside> wrapper */}
+            <Sidebar open={sidebarOpen} onNavigateClose={() => setSidebarOpen(false)} />
+            <main className="content">
+              <Routes>
+                <Route path="/" element={<Navigate to="/tasks" replace />} />
+                <Route path="/tasks" element={<TasksPage />} />
+                <Route path="/history" element={<HistoryPage />} />
+                <Route path="/media" element={<MediaPage />} />
+                <Route path="/alarm" element={<AlarmPage />} />
+                <Route path="/settings" element={<div className="page"><h2>Configuración</h2><p>En construcción…</p></div>} />
+                <Route path="*" element={<Navigate to="/tasks" replace />} />
+              </Routes>
+            </main>
+          </div>
+          <Toast />
+        </TasksProvider>
+      </AlarmProvider>
+
+      {/* Popup global montado fuera de las rutas */}
+      <ReminderPopup />
+    </ReminderProvider>
   )
 }
 

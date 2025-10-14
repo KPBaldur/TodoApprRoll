@@ -1,11 +1,13 @@
 export type Alarm = {
   id: string;
   name: string;
-  time: string; // ej. '2025-10-13T08:30'
+  time?: string; // opcional
   enabled: boolean;
   mediaId?: string;
   intervalMinutes?: number;
-  repeat?: boolean;
+  nextTrigger?: number;
+  mediaUrl?: string;
+  audioInstance?: HTMLAudioElement;
 };
 
 const BASE = '/api/alarms';

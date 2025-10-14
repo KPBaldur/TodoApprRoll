@@ -1,11 +1,18 @@
 [
   {
-    "id": "236494a0-899e-46cc-abdc-dda1283a724b",
-    "name": "Sin título",
+    "id": "d7790f96-1425-456b-b8e6-310fd131fcc5",
+    "name": "Revisar OMS",
     "time": "",
     "enabled": true,
     "mediaId": null,
-    "repeat": true,
+    "intervalMinutes": 30
+  },
+  {
+    "id": "956854f9-6d5d-4eda-801a-e4c93cc76522",
+    "name": "Prueba de alarma.",
+    "time": "",
+    "enabled": false,
+    "mediaId": null,
     "intervalMinutes": 1
   }
 ]

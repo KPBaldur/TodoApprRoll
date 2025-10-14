@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import type { Alarm } from '../services/alarmService';
 import { useAlarm } from '../context/AlarmContext';
 
 export default function AlarmPage() {
-  const { alarms, loading, error, nextTriggerMs, updateAlarm, deleteAlarm, createAlarm } = useAlarm();
+  const { alarms, loading, error, nextTriggerMs, updateAlarm, deleteAlarm, createAlarm, triggerAlarm } = useAlarm();
 
   // Form state
   const [name, setName] = useState('');
@@ -29,8 +29,27 @@ export default function AlarmPage() {
     clearEdit(id);
   }
 
-  // nextTriggerMs proviene del contexto global
+  async function handleUpdate(id: string, patch: Partial<Alarm>) {
+    await updateAlarm(id, patch);
+  }
 
+  async function handleDelete(id: string) {
+    await deleteAlarm(id);
+  }
+
+  async function handleCreate() {
+    const intervalMinutes = Number(intervalMinutesStr) || 1;
+    await createAlarm({
+      name: name.trim() || 'Sin título',
+      enabled,
+      intervalMinutes,
+    });
+    setName('');
+    setEnabled(true);
+    setIntervalMinutesStr('');
+  }
+
+  // nextTriggerMs proviene del contexto global
   function formatDuration(ms?: number): string {
     if (ms === undefined) return '—';
     if (ms <= 0) return '0s';
@@ -42,10 +61,6 @@ export default function AlarmPage() {
     if (m > 0) return `${m}m ${s}s`;
     return `${s}s`;
   }
-
-  // La monitorización y carga inicial ahora están centralizadas en el contexto
-
-  // El popup y el control de parada están en el contexto global
 
   return (
     <section className="page">
@@ -107,9 +122,9 @@ export default function AlarmPage() {
                 {alarm.enabled ? 'Desactivar' : 'Activar'}
               </button>
               <button className="btn danger" onClick={() => handleDelete(alarm.id)}>Eliminar</button>
+              <button className="btn" onClick={() => triggerAlarm(alarm)}>Probar Alarma</button>
             </div>
             <div className="details" style={{ display: 'grid', gap: 8 }}>
-              {/* Nombre controlado */}
               <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <span style={{ opacity: 0.8 }}>Nombre:</span>
                 <input
@@ -119,7 +134,6 @@ export default function AlarmPage() {
                 />
               </label>
 
-              {/* Intervalo controlado */}
               <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <span style={{ opacity: 0.8 }}>Recordatorio (minutos):</span>
                 <input
@@ -139,7 +153,6 @@ export default function AlarmPage() {
                 />
               </label>
 
-              {/* Botón Guardar cambios + indicador */}
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <button
                   className="btn btn-primary"
@@ -155,7 +168,6 @@ export default function AlarmPage() {
                 )}
               </div>
 
-              {/* Timer visible */}
               <div style={{ opacity: 0.8, fontSize: 12 }}>
                 Próximo en: {formatDuration(nextTriggerMs(alarm))}
               </div>
@@ -166,32 +178,4 @@ export default function AlarmPage() {
       {alarms.length === 0 && <p style={{ opacity: 0.8 }}>No hay alarmas aún.</p>}
     </section>
   );
-
-  // Crear una nueva alarma desde el formulario superior
-  async function handleUpdate(id: string, patch: Partial<Alarm>) {
-    await updateAlarm(id, patch);
-  }
-
-  async function handleDelete(id: string) {
-    await deleteAlarm(id);
-  }
-
-  async function handleCreate() {
-    const intervalMinutes =
-      intervalMinutesStr.trim() === ''
-        ? undefined
-        : Math.max(1, parseInt(intervalMinutesStr, 10) || 1);
-
-    await createAlarm({
-      name: name.trim() || 'Sin título',
-      time: '',
-      enabled,
-      intervalMinutes,
-    });
-
-    // Limpia el formulario
-    setName('');
-    setEnabled(true);
-    setIntervalMinutesStr('');
-  }
 }
