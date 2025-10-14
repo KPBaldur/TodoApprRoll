@@ -1,24 +1,11 @@
 [
   {
-    "id": "51e9069e-b540-40c7-bb90-64f927f26163",
-    "name": "Prueba",
-    "time": "",
-    "enabled": true,
-    "mediaId": "c04c2cf4-8eee-4566-9530-9f5d4178725f"
-  },
-  {
-    "id": "323d492a-f0f3-4128-97b9-5b462ddf3937",
+    "id": "236494a0-899e-46cc-abdc-dda1283a724b",
     "name": "Sin título",
     "time": "",
-    "enabled": false,
-    "intervalMinutes": 1
-  },
-  {
-    "id": "a58569df-4a01-435f-9373-01de3fc68f55",
-    "name": "Prueba",
-    "time": "",
     "enabled": true,
-    "intervalMinutes": 1,
-    "mediaId": "3be155bd-8551-4218-bca2-aadcaed4d4c6"
+    "mediaId": null,
+    "repeat": true,
+    "intervalMinutes": 1
   }
 ]

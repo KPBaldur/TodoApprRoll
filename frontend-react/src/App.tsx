@@ -2,6 +2,7 @@ import './styles/global.css'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useState } from 'react'
 import { TasksProvider } from './context/TasksContext'
+import { AlarmProvider } from './context/AlarmContext'
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 import Toast from './components/Toast'
@@ -13,6 +14,7 @@ import AlarmPage from './pages/AlarmPage' // <-- import estático
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   return (
+    <AlarmProvider>
     <TasksProvider>
       <header className="app-header">
         <Header onToggleSidebar={() => setSidebarOpen(s => !s)} />
@@ -37,6 +39,7 @@ function App() {
       </div>
       <Toast />
     </TasksProvider>
+    </AlarmProvider>
   )
 }
 

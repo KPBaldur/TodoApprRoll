@@ -16,5 +16,11 @@
     "type": "audio",
     "name": "mambo.mp3",
     "path": "/uploads/1760388130893-mambo.mp3"
+  },
+  {
+    "id": "0313cff1-dd31-4097-845b-f119439afc7c",
+    "type": "image",
+    "name": "Golden Ship 2",
+    "path": "/uploads/1760404873791-goldenShip.gif"
   }
 ]

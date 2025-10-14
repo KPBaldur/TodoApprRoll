@@ -5,6 +5,7 @@ export type Alarm = {
   enabled: boolean;
   mediaId?: string;
   intervalMinutes?: number;
+  repeat?: boolean;
 };
 
 const BASE = '/api/alarms';

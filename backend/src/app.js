@@ -6,7 +6,6 @@ const tasksRoutes = require('./routes/tasks');
 const mediaRoutes = require('./routes/media');
 const configRoutes = require('./routes/config');
 const errorHandler = require('./middleware/error');
-const path = require('path');
 const { uploadsDir } = require('./middleware/upload');
 
 const app = express();

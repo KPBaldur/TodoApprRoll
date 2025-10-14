@@ -1,23 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { Alarm } from '../services/alarmService';
-import { listAlarms, createAlarm, updateAlarm, deleteAlarm } from '../services/alarmService';
-import type { MediaItem } from '../services/mediaService';
-import { listMedia } from '../services/mediaService';
+import { useAlarm } from '../context/AlarmContext';
 
 export default function AlarmPage() {
-  const [alarms, setAlarms] = useState<Alarm[]>([]);
-  const [media, setMedia] = useState<MediaItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | undefined>();
+  const { alarms, loading, error, nextTriggerMs, updateAlarm, deleteAlarm, createAlarm } = useAlarm();
 
   // Form state
   const [name, setName] = useState('');
-  const [time, setTime] = useState(''); // datetime-local
   const [enabled, setEnabled] = useState(true);
-  const [mediaId, setMediaId] = useState<string | undefined>(undefined);
   const [intervalMinutesStr, setIntervalMinutesStr] = useState(''); // nuevo estado para minutos
-
-  const audioMedia = useMemo(() => media.filter(m => m.type === 'audio'), [media]);
 
   // Buffer de ediciones por alarma (id -> patch parcial)
   const [pendingEdits, setPendingEdits] = useState<Record<string, Partial<Alarm>>>({});
@@ -34,74 +25,11 @@ export default function AlarmPage() {
   async function handleSave(id: string) {
     const patch = pendingEdits[id];
     if (!patch) return;
-    try {
-      setLoading(true);
-      const updated = await updateAlarm(id, patch);
-      setAlarms(list => list.map(a => (a.id === id ? updated : a)));
-      clearEdit(id);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
+    await updateAlarm(id, patch);
+    clearEdit(id);
   }
 
-  const [now, setNow] = useState<number>(Date.now()); // estado para refrescar el timer
-  const [timerAnchors, setTimerAnchors] = useState<Record<string, number>>({}); // anclas por alarma
-
-  // Inicializa ancla para nuevas alarmas habilitadas (sin sobreescribir las existentes)
-  useEffect(() => {
-    setTimerAnchors(prev => {
-      const next = { ...prev };
-      for (const a of alarms) {
-        if (a.enabled && next[a.id] === undefined) {
-          next[a.id] = Date.now();
-        }
-      }
-      return next;
-    });
-  }, [alarms]);
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000); // refresca cada segundo
-    return () => clearInterval(id);
-  }, []);
-
-  function parseLocalDateTime(s: string): number | undefined {
-    const str = (s || '').trim();
-    if (!str) return undefined;
-    const d = new Date(str);
-    const ms = d.getTime();
-    return Number.isFinite(ms) ? ms : undefined;
-  }
-
-  function nextTriggerMs(alarm: Alarm): number | undefined {
-    const nowMs = now;
-    const timeMs = parseLocalDateTime(alarm.time || '');
-    const intervalMs = alarm.intervalMinutes ? alarm.intervalMinutes * 60 * 1000 : undefined;
-
-    // Caso: hay fecha base
-    if (timeMs !== undefined) {
-      let next = timeMs;
-      if (intervalMs && next <= nowMs) {
-        const diff = nowMs - next;
-        const cycles = Math.floor(diff / intervalMs) + 1;
-        next += cycles * intervalMs;
-      }
-      return next > nowMs ? next - nowMs : undefined;
-    }
-
-    // Caso: solo intervalo, sin fecha -> usar ancla
-    if (intervalMs) {
-      const anchor = timerAnchors[alarm.id] ?? nowMs; // si no hay ancla, comienza ahora
-      const elapsed = nowMs - anchor;
-      const remaining = intervalMs - (elapsed % intervalMs);
-      return remaining;
-    }
-
-    return undefined;
-  }
+  // nextTriggerMs proviene del contexto global
 
   function formatDuration(ms?: number): string {
     if (ms === undefined) return '—';
@@ -115,94 +43,9 @@ export default function AlarmPage() {
     return `${s}s`;
   }
 
-  // Estado para controlar alarma activa y audio
-  type ActiveAlarm = Alarm & { audioInstance?: HTMLAudioElement; mediaUrl?: string };
-  const [activeAlarm, setActiveAlarm] = useState<ActiveAlarm | null>(null);
-  
-  // Monitor de alarmas: chequea cada segundo y dispara cuando corresponde
-  useEffect(() => {
-      // Si hay una alarma activa, no disparamos otra hasta que se detenga
-      if (activeAlarm) return;
-  
-      const checkAlarms = () => {
-          alarms.forEach(alarm => {
-              if (!alarm.enabled) return;
-  
-              const remaining = nextTriggerMs(alarm);
-              if (remaining !== undefined && remaining <= 1000) {
-                  triggerAlarm(alarm);
-              }
-          });
-      };
-  
-      const interval = setInterval(checkAlarms, 1000);
-      return () => clearInterval(interval);
-  }, [alarms, now, activeAlarm]);
-  
-  // Carga inicial de alarmas y multimedia
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        setLoading(true);
-        setError(undefined);
-        const [alarmsData, mediaData] = await Promise.all([listAlarms(), listMedia()]);
-        if (!cancelled) {
-          setAlarms(alarmsData);
-          setMedia(mediaData);
-        }
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        setError(msg);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+  // La monitorización y carga inicial ahora están centralizadas en el contexto
 
-  function triggerAlarm(alarm: Alarm) {
-      // Busca el media asociado (audio o imagen/gif)
-      const mediaItem = media.find(m => m.id === alarm.mediaId);
-
-      // Imagen/GIF para mostrar en popup si aplica
-      const isImage = !!mediaItem && (mediaItem.type?.startsWith('image') || mediaItem.type?.includes('gif'));
-      const mediaUrl = isImage ? mediaItem?.path : undefined;
-
-      // Audio en loop si aplica
-      const isAudio = !!mediaItem && mediaItem.type?.startsWith('audio');
-      if (isAudio && mediaItem?.path) {
-          const audio = new Audio(mediaItem.path);
-          audio.loop = true;
-          audio.play().catch(err => {
-              console.error('Error al reproducir audio:', err);
-          });
-
-          setActiveAlarm({
-              ...alarm,
-              audioInstance: audio,
-              mediaUrl,
-          });
-      } else {
-          // Sin audio: igual mostramos popup
-          setActiveAlarm({
-              ...alarm,
-              mediaUrl,
-          });
-      }
-  }
-  
-  function stopAlarm() {
-      if (activeAlarm?.audioInstance) {
-          try {
-              activeAlarm.audioInstance.pause();
-              activeAlarm.audioInstance.currentTime = 0;
-          } catch (_) {
-              // noop
-          }
-      }
-      setActiveAlarm(null);
-  }
+  // El popup y el control de parada están en el contexto global
 
   return (
     <section className="page">
@@ -215,28 +58,6 @@ export default function AlarmPage() {
         <div className="panel" style={{ marginTop: 8 }}>
           <div className="panel-body" style={{ display: 'grid', gap: 8 }}>
             <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Nombre de la alarma…" />
-            <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <span style={{ opacity: 0.8 }}>Fecha y hora:</span>
-              <input type="datetime-local" value={time} onChange={e => setTime(e.target.value)} />
-            </label>
-            <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <span style={{ opacity: 0.8 }}>Sonido (opcional):</span>
-              <select
-                value={mediaId ?? ''}
-                onChange={e => {
-                  const val = e.target.value;
-                  setMediaId(val === '' ? undefined : val);
-                }}
-                style={{ minWidth: 200 }}
-              >
-                <option value="">Sin sonido</option>
-                {audioMedia.map(m => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
-            </label>
             <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <span style={{ opacity: 0.8 }}>Recordatorio (minutos):</span>
               <input
@@ -298,16 +119,6 @@ export default function AlarmPage() {
                 />
               </label>
 
-              {/* Fecha y hora controlado */}
-              <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <span style={{ opacity: 0.8 }}>Fecha y hora:</span>
-                <input
-                  type="datetime-local"
-                  value={(getEdit(alarm.id).time ?? alarm.time) || ''}
-                  onChange={e => setEdit(alarm.id, { time: e.target.value })}
-                />
-              </label>
-
               {/* Intervalo controlado */}
               <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <span style={{ opacity: 0.8 }}>Recordatorio (minutos):</span>
@@ -348,37 +159,6 @@ export default function AlarmPage() {
               <div style={{ opacity: 0.8, fontSize: 12 }}>
                 Próximo en: {formatDuration(nextTriggerMs(alarm))}
               </div>
-              <div style={{ opacity: 0.8, fontSize: 12 }}>
-                Sonido:{' '}
-                {alarm.mediaId
-                  ? audioMedia.find(m => m.id === alarm.mediaId)?.name ||
-                    '(no encontrado)'
-                  : 'Sin sonido'}
-              </div>
-              <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <span style={{ opacity: 0.8 }}>Sonido:</span>
-                <select
-                  value={alarm.mediaId ?? ''}
-                  onChange={e => {
-                    const val = e.target.value;
-                    handleUpdate(alarm.id, { mediaId: val === '' ? undefined : val });
-                  }}
-                  style={{ minWidth: 200 }}
-                >
-                  <option value="">Sin sonido</option>
-                  {audioMedia.map(m => (
-                    <option key={m.id} value={m.id}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div style={{ opacity: 0.8, fontSize: 12 }}>
-                Próximo en: {formatDuration(nextTriggerMs(alarm))}
-              </div>
-              <div style={{ opacity: 0.8, fontSize: 12 }}>
-                Sonido: {alarm.mediaId ? audioMedia.find(m => m.id === alarm.mediaId)?.name || '(no encontrado)' : 'Sin sonido'}
-              </div>
             </div>
           </li>
         ))}
@@ -389,73 +169,29 @@ export default function AlarmPage() {
 
   // Crear una nueva alarma desde el formulario superior
   async function handleUpdate(id: string, patch: Partial<Alarm>) {
-    try {
-      setLoading(true);
-      setError(undefined);
-      const updated = await updateAlarm(id, patch);
-      setAlarms(list => list.map(a => (a.id === id ? updated : a)));
-
-      // Reinicia el ancla si se cambió hora, intervalo o se activó la alarma
-      if (
-        ('time' in patch) ||
-        ('intervalMinutes' in patch) ||
-        ('enabled' in patch && patch.enabled)
-      ) {
-        setTimerAnchors(prev => ({ ...prev, [id]: Date.now() }));
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
+    await updateAlarm(id, patch);
   }
 
   async function handleDelete(id: string) {
-    try {
-      setLoading(true);
-      setError(undefined);
-      await deleteAlarm(id);
-      setAlarms(list => list.filter(a => a.id !== id));
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
+    await deleteAlarm(id);
   }
 
   async function handleCreate() {
-    try {
-      setLoading(true);
-      setError(undefined);
+    const intervalMinutes =
+      intervalMinutesStr.trim() === ''
+        ? undefined
+        : Math.max(1, parseInt(intervalMinutesStr, 10) || 1);
 
-      const intervalMinutes =
-        intervalMinutesStr.trim() === ''
-          ? undefined
-          : Math.max(1, parseInt(intervalMinutesStr, 10) || 1);
+    await createAlarm({
+      name: name.trim() || 'Sin título',
+      time: '',
+      enabled,
+      intervalMinutes,
+    });
 
-      const created = await createAlarm({
-        name: name.trim() || 'Sin título',
-        time,
-        enabled,
-        mediaId,
-        intervalMinutes,
-      });
-
-      setAlarms(list => [...list, created]);
-
-      // Limpia el formulario
-      setName('');
-      setTime('');
-      setEnabled(true);
-      setMediaId(undefined);
-      setIntervalMinutesStr('');
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
+    // Limpia el formulario
+    setName('');
+    setEnabled(true);
+    setIntervalMinutesStr('');
   }
 }
