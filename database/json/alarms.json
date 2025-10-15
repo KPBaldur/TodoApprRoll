@@ -1,18 +1,11 @@
 [
   {
-    "id": "d7790f96-1425-456b-b8e6-310fd131fcc5",
-    "name": "Revisar OMS",
-    "time": "",
-    "enabled": true,
-    "mediaId": null,
-    "intervalMinutes": 30
-  },
-  {
-    "id": "956854f9-6d5d-4eda-801a-e4c93cc76522",
-    "name": "Prueba de alarma.",
+    "id": "9f8a00a1-7a61-44cf-aab0-d8af5011866f",
+    "name": "Prueba 05",
     "time": "",
     "enabled": false,
-    "mediaId": null,
-    "intervalMinutes": 1
+    "mediaId": "b362deff-4e36-4c1f-9ed3-ec6fc2a7fe7e",
+    "intervalMinutes": 1,
+    "snoozedUntil": null
   }
 ]
