@@ -1,14 +1,32 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { Alarm } from '../services/alarmService';
 import { useAlarm } from '../context/AlarmContext';
+import { listMedia } from '../services/mediaService';
 
 export default function AlarmPage() {
-  const { alarms, loading, error, nextTriggerMs, updateAlarm, deleteAlarm, createAlarm, triggerAlarm } = useAlarm();
-
+  const { alarms, loading, error, nextTriggerMs, updateAlarm, deleteAlarm, createAlarm, triggerAlarm, snoozeAlarm } = useAlarm();
+  
   // Form state
   const [name, setName] = useState('');
   const [enabled, setEnabled] = useState(true);
   const [intervalMinutesStr, setIntervalMinutesStr] = useState(''); // nuevo estado para minutos
+
+  const [media, setMedia] = useState<any[]>([])
+  const [mediaId, setMediaId] = useState('')
+
+  useEffect(() => {
+    async function loadMedia() {
+      try {
+        const mediaData = await listMedia()
+        console.log('Medios cargados:', mediaData) // ← verificación solicitada
+        setMedia(mediaData)
+      } catch (err) {
+        console.error('Error al cargar medios:', err)
+      }
+    }
+    loadMedia()
+  }, [])
+
 
   // Buffer de ediciones por alarma (id -> patch parcial)
   const [pendingEdits, setPendingEdits] = useState<Record<string, Partial<Alarm>>>({});
@@ -38,15 +56,17 @@ export default function AlarmPage() {
   }
 
   async function handleCreate() {
-    const intervalMinutes = Number(intervalMinutesStr) || 1;
+    const intervalMinutes = Math.min(Number(intervalMinutesStr) || 1, 120);
     await createAlarm({
       name: name.trim() || 'Sin título',
       enabled,
       intervalMinutes,
+      mediaId: mediaId || undefined,
     });
     setName('');
     setEnabled(true);
     setIntervalMinutesStr('');
+    setMediaId('');
   }
 
   // nextTriggerMs proviene del contexto global
@@ -75,6 +95,25 @@ export default function AlarmPage() {
             <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Nombre de la alarma…" />
             <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <span style={{ opacity: 0.8 }}>Recordatorio (minutos):</span>
+              {/* 🎧 Audio para nueva alarma */}
+              <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <span style={{ opacity: 0.8 }}>Audio:</span>
+                <select
+                  value={mediaId}
+                  onChange={(e) => setMediaId(e.target.value)}
+                  style={{ flex: 1 }}
+                >
+                  <option value="">Sin sonido</option>
+                  {media
+                    .filter(m => m.type === 'audio')
+                    .map(m => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                </select>
+              </label>
+
               <input
                 type="number"
                 min={1}
@@ -123,6 +162,9 @@ export default function AlarmPage() {
               </button>
               <button className="btn danger" onClick={() => handleDelete(alarm.id)}>Eliminar</button>
               <button className="btn" onClick={() => triggerAlarm(alarm)}>Probar Alarma</button>
+              {/* Acciones de Snooze (opcional para probar rápido) */}
+              <button className="btn" onClick={() => snoozeAlarm(alarm.id, 5)}>Snooze 5 min</button>
+              <button className="btn" onClick={() => snoozeAlarm(alarm.id, 10)}>Snooze 10 min</button>
             </div>
             <div className="details" style={{ display: 'grid', gap: 8 }}>
               <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -136,6 +178,25 @@ export default function AlarmPage() {
 
               <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <span style={{ opacity: 0.8 }}>Recordatorio (minutos):</span>
+                {/* 🎵 Selector de Audio */}
+                <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <span style={{ opacity: 0.8 }}>Audio:</span>
+                  <select
+                    value={getEdit(alarm.id).mediaId ?? alarm.mediaId ?? ''}
+                    onChange={(e) => setEdit(alarm.id, { mediaId: e.target.value })}
+                    style={{ flex: 1 }}
+                  >
+                    <option value="">Sin sonido</option>
+                    {media
+                      .filter(m => m.type === 'audio')
+                      .map(m => (
+                        <option key={m.id} value={m.id}>
+                          {m.name}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+
                 <input
                   type="number"
                   min={1}
