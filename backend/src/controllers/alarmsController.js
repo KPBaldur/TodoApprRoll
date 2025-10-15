@@ -47,7 +47,8 @@ const add = async (req, res, next) => {
       time: time || '',
       enabled: !!enabled,
       mediaId: await ensureValidMediaId(mediaId),
-      intervalMinutes: intervalMinutes !== undefined ? Number(intervalMinutes) : undefined
+      intervalMinutes: intervalMinutes !== undefined ? Number(intervalMinutes) : undefined,
+      snoozedUntil: null // inicializamos el nuevo campo opcional
     };
     alarms.push(alarm);
     await Storage.saveAlarms(alarms);
@@ -105,4 +106,25 @@ const remove = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { list, add, update, remove };
+// PATCH /api/alarms/:id/snooze
+const snooze = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { snoozedUntil } = req.body || {};
+
+    if (typeof snoozedUntil !== 'string' || Number.isNaN(new Date(snoozedUntil).getTime())) {
+      return res.status(400).json({ success: false, message: 'snoozedUntil debe ser una fecha ISO válida' });
+    }
+
+    const alarms = await Storage.getAlarms();
+    const idx = alarms.findIndex(a => a.id === id);
+    if (idx === -1) return res.status(404).json({ success: false, message: 'Alarma no encontrada' });
+
+    alarms[idx].snoozedUntil = new Date(snoozedUntil).toISOString();
+    await Storage.saveAlarms(alarms);
+
+    res.json({ success: true, message: 'Snooze actualizado', data: { alarm: alarms[idx] } });
+  } catch (err) { next(err); }
+};
+
+module.exports = { list, add, update, remove, snooze };
