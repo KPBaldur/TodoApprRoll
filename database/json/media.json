@@ -16,5 +16,11 @@
     "type": "audio",
     "name": "Mambo",
     "path": "/uploads/1760529828662-mambo.mp3"
+  },
+  {
+    "id": "d99bcb10-f87a-49e3-885c-38663e0bedec",
+    "type": "image",
+    "name": "Waifu",
+    "path": "/uploads/1760559193581-Mitsuri.gif"
   }
 ]

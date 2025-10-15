@@ -142,37 +142,55 @@ export default function MediaPage() {
       <ul className="task-list">
         {visibleItems.map(item => (
           <li key={item.id} className="task-item">
-            <div className="title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span className={`badge status ${item.type}`}>{item.type}</span>
-              <input
-                type="text"
-                defaultValue={item.name}
-                onBlur={(e) => {
-                  const next = e.target.value.trim();
-                  if (next && next !== item.name) handleRename(item.id, next);
-                }}
-                style={{ flex: 1 }}
-                title="Escribe y quita el foco para renombrar"
-              />
-              <button className="btn danger" onClick={() => handleDelete(item.id)}>Eliminar</button>
-            </div>
-            <div className="details" style={{ display: 'grid', gap: 8 }}>
-              <div style={{ opacity: 0.8, fontSize: 12 }}>Path: {item.path}</div>
-              {item.type === 'audio' ? (
-                <audio src={resolveMediaPath(item.path)} controls onError={() => handleMediaError(item.id)} />
-              ) : (
-                <img
-                  src={resolveMediaPath(item.path)}
-                  alt={item.name}
-                  onError={() => handleMediaError(item.id)}
-                  style={{ maxWidth: 260, borderRadius: 8, border: '1px solid var(--color-border)' }}
-                />
-              )}
-              {brokenIds[item.id] && (
-                <div style={{ color: 'salmon', fontSize: 12 }}>
-                  Archivo no encontrado (404). Vuelve a subirlo o actualiza su URL.
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(160px, 260px) 1fr', gap: 12, alignItems: 'center' }}>
+              {/* Columna izquierda: preview (imagen/gif/audio) */}
+              <div>
+                {item.type === 'audio' ? (
+                  <audio
+                    src={resolveMediaPath(item.path)}
+                    controls
+                    onError={() => handleMediaError(item.id)}
+                    style={{ width: '100%' }}
+                  />
+                ) : (
+                  <img
+                    src={resolveMediaPath(item.path)}
+                    alt={item.name}
+                    onError={() => handleMediaError(item.id)}
+                    style={{ width: '100%', maxWidth: 260, borderRadius: 8, border: '1px solid var(--color-border)' }}
+                  />
+                )}
+                {brokenIds[item.id] && (
+                  <div style={{ color: 'salmon', fontSize: 12, marginTop: 6 }}>
+                    Archivo no encontrado (404). Vuelve a subirlo o actualiza su URL.
+                  </div>
+                )}
+              </div>
+
+              {/* Columna derecha: edición y acciones */}
+              <div style={{ display: 'grid', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span className={`badge status ${item.type}`}>{item.type}</span>
+                  <input
+                    type="text"
+                    defaultValue={item.name}
+                    onBlur={(e) => {
+                      const next = e.target.value.trim();
+                      if (next && next !== item.name) handleRename(item.id, next);
+                    }}
+                    style={{ flex: 1 }}
+                    title="Escribe y quita el foco para renombrar"
+                  />
                 </div>
-              )}
+
+                <div style={{ opacity: 0.8, fontSize: 12 }}>
+                  Path: {item.path}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button className="btn danger" onClick={() => handleDelete(item.id)}>Eliminar</button>
+                </div>
+              </div>
             </div>
           </li>
         ))}

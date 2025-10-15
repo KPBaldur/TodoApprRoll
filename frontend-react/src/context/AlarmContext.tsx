@@ -276,41 +276,80 @@ export function AlarmProvider({ children }: { children: React.ReactNode }) {
     <AlarmContext.Provider value={value}>
       {children}
       {activeAlarm && (
+      <div
+        className="alarm-overlay"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}
+      >
         <div
-          className="alarm-overlay"
+          className="alarm-popup"
           style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
+            background: 'var(--color-bg)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 12,
+            padding: 16,
+            width: 'min(560px, 92vw)',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+            textAlign: 'center',
           }}
         >
-          <div
-            className="alarm-popup"
-            style={{
-              background: 'var(--color-bg)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 12,
-              padding: 16,
-              width: 'min(560px, 92vw)',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-            }}
-          >
-            <div style={{ display: 'grid', gap: 12 }}>
-              <div style={{ fontSize: 20, fontWeight: 700 }}>⏰ {activeAlarm.name}</div>
-              <div style={{ opacity: 0.8 }}>Alarma activada</div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                <button className="btn" onClick={stopAlarm}>Detener</button>
-                <button className="btn" onClick={() => snoozeAlarm(activeAlarm.id, 5)}>Posponer 5 min</button>
-                <button className="btn" onClick={() => snoozeAlarm(activeAlarm.id, 10)}>Posponer 10 min</button>
-              </div>
+          <div style={{ display: 'grid', gap: 12 }}>
+            <div style={{ fontSize: 20, fontWeight: 700 }}>⏰ {activeAlarm.name}</div>
+            <div style={{ opacity: 0.8 }}>Alarma activada</div>
+
+            {/* 🖼️ Imagen o GIF asociada */}
+            {(() => {
+              const mediaItem = mediaRef.current.find(m => m.id === activeAlarm.imageId);
+              if (!mediaItem) return null;
+
+              let src = mediaItem.path;
+              if (!src.startsWith('http')) {
+                if (src.startsWith('/uploads/')) {
+                  src = `${API_BASE}${src}`;
+                } else {
+                  src = `${API_BASE}/uploads/${src}`;
+                }
+              }
+
+              if (mediaItem.type === 'image' || mediaItem.type === 'gif') {
+                return (
+                  <img
+                    src={src}
+                    alt={mediaItem.name}
+                    style={{ maxHeight: 260, borderRadius: 8, objectFit: 'contain', margin: '0 auto' }}
+                  />
+                );
+              }
+              if (mediaItem.type === 'video') {
+                return (
+                  <video
+                    src={src}
+                    autoPlay
+                    loop
+                    muted
+                    style={{ maxHeight: 260, borderRadius: 8, objectFit: 'contain', margin: '0 auto' }}
+                  />
+                );
+              }
+              return null;
+            })()}
+
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 12 }}>
+              <button className="btn" onClick={stopAlarm}>Detener</button>
+              <button className="btn" onClick={() => snoozeAlarm(activeAlarm.id, 5)}>Posponer 5 min</button>
+              <button className="btn" onClick={() => snoozeAlarm(activeAlarm.id, 10)}>Posponer 10 min</button>
             </div>
           </div>
         </div>
-      )}
+      </div>
+    )}
     </AlarmContext.Provider>
   )
 }

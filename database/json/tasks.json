@@ -53,18 +53,20 @@
     "priority": "medium",
     "status": "pending",
     "createdAt": "2025-10-07T19:50:37.450Z",
-    "updatedAt": "2025-10-07T19:50:37.450Z",
+    "updatedAt": "2025-10-15T20:01:33.084Z",
     "subtasks": [],
-    "remember": false
+    "remember": false,
+    "resolution": "",
+    "resolutionImages": []
   },
   {
     "id": "abd384f8-16ac-4f99-a2c5-36da8c0a43e1",
     "title": "Cotizacion Pantalla Lenovo",
     "description": "Realizar cotizacion de pantalla y ventiladores Lenovo.",
     "priority": "high",
-    "status": "pending",
+    "status": "working",
     "createdAt": "2025-10-07T19:51:10.971Z",
-    "updatedAt": "2025-10-14T19:19:01.684Z",
+    "updatedAt": "2025-10-15T20:06:28.981Z",
     "subtasks": [
       {
         "title": "Recepcionar pantalla",

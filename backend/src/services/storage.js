@@ -41,5 +41,11 @@ module.exports = {
   async getConfig() { return readJson('config.json'); },
   async saveConfig(config) { return writeJson('config.json', config); },
   async getAlarms() { return readJson('alarms.json'); },
-  async saveAlarms(alarms) { return writeJson('alarms.json', alarms); }
+  async saveAlarms(alarms) { return writeJson('alarms.json', alarms); },
+  async getHistory() { return readJson('history.json'); },
+  async appendHistory(event) {
+    const items = await readJson('history.json');
+    items.push(event);
+    await writeJson('history.json', items);
+  }
 }

@@ -18,6 +18,7 @@ app.use(express.json());
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/config', configRoutes);
+app.use('/api/history', require('./routes/history'));
 
 // Exponer la carpeta de cargas
 app.use('/uploads', express.static(uploadsDir));

@@ -298,7 +298,21 @@ export default function TasksPage() {
                 </>
               ) : (
                 <>
-                  <button className="btn" onClick={() => completeTask(t.id)}>Cambiar estado</button>
+                  {/* Selector de ESTADO disponible fuera de edición */}
+                  <label>
+                    Estado:
+                    <select
+                      value={t.status}
+                      onChange={(e) => editTask(t.id, { status: e.target.value as Task['status'] })}
+                    >
+                      <option value="pending">Pendiente</option>
+                      <option value="working">En curso</option>
+                      <option value="completed">Completada</option>
+                      <option value="archived">Archivada</option>
+                    </select>
+                  </label>
+
+                  {/* La prioridad SOLO se cambia en modo edición */}
                   <button className="btn" onClick={() => startEdit(t)}>Editar</button>
                   {t.status === 'completed' && <button className="btn" onClick={() => archiveTask(t.id)}>Archivar</button>}
                   {t.status === 'archived' && <button className="btn" onClick={() => unarchiveTask(t.id)}>Restaurar</button>}
@@ -309,6 +323,21 @@ export default function TasksPage() {
             <div className="details">
               {editingId === t.id ? (
                 <>
+                  {/* Selector de PRIORIDAD al editar */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8, marginBottom: 8 }}>
+                    <label>
+                      Prioridad:
+                      <select
+                        value={editModel.priority}
+                        onChange={(e) => setEditModel({ ...editModel, priority: e.target.value as Task['priority'] })}
+                      >
+                        <option value="low">Baja</option>
+                        <option value="medium">Media</option>
+                        <option value="high">Alta</option>
+                      </select>
+                    </label>
+                  </div>
+
                   <div className="description">
                     <textarea className="textarea-auto" value={editModel.description} onChange={(e) => setEditModel({ ...editModel, description: e.target.value })} onInput={autoResize} />
                   </div>

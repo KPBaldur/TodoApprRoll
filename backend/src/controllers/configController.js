@@ -17,6 +17,11 @@ const setConfig = async (req, res, next) => {
     const incoming = req.body || {};
     const merged = { ...current, ...incoming };
     await Storage.saveConfig(merged);
+    await Storage.appendHistory({
+      time: Date.now(),
+      type: 'config.update',
+      detail: { changedKeys: Object.keys(incoming || {}) }
+    });
     res.json({ success: true, message: 'Configuración actualizada', data: { config: merged } });
   } catch (err) { next(err); }
 };

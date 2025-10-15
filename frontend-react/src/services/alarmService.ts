@@ -4,6 +4,7 @@ export type Alarm = {
   time?: string; // opcional
   enabled: boolean;
   mediaId?: string;
+  imageId?: string;
   intervalMinutes?: number;
   nextTrigger?: number;
   mediaUrl?: string;

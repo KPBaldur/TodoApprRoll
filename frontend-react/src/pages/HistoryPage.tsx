@@ -1,20 +1,51 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTasks } from '../hooks/useTasks'
 
 export default function HistoryPage() {
   const { tasks, loading, error, applyFilters, reload, unarchiveTask, deleteTask } = useTasks()
+  const [events, setEvents] = useState<HistoryEvent[]>([])
 
   useEffect(() => {
     applyFilters({ status: 'archived' })
     reload()
+    fetch('/api/history').then(r => r.json()).then(json => {
+      if (json?.success) setEvents(json.data.history || [])
+    }).catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const archived = useMemo(() => tasks.filter(t => t.status === 'archived'), [tasks])
 
+  type HistoryEvent = {
+    time: number
+    type: string
+    detail?: Record<string, unknown> | string
+  }
+
   return (
     <section className="page">
       <h2 className="page-title">Historial</h2>
+      {events.length > 0 && (
+        <div className="panel" style={{ marginBottom: 12 }}>
+          <div className="panel-body">
+            <div className="section-title">Eventos del sistema</div>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {events.slice(-10).reverse().map((e, idx) => (
+                <li key={idx} style={{ padding: 6, borderBottom: '1px solid var(--color-border)' }}>
+                  <strong>{new Date(e.time).toLocaleString()}</strong> — {e.type}
+                  {e.detail && (
+                  <div style={{ opacity: 0.85, fontSize: '0.9em' }}>
+                    {typeof e.detail === 'string'
+                      ? e.detail
+                      : JSON.stringify(e.detail, null, 2)}
+                  </div>
+                )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
       {loading && <p>Cargando…</p>}
       {error && <p style={{ color: 'salmon' }}>{error}</p>}
       <ul className="task-list">

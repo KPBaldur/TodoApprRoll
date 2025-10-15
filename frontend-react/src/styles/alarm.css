@@ -1,0 +1,87 @@
+@import './theme.css';
+
+.alarm-item {
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  /* separa visualmente cada “card” */
+  margin: 4px 0;
+}
+
+/* banda lateral según estado para distinguir cada alarma */
+.alarm-item.is-on  { border-left: 6px solid var(--color-success); }
+.alarm-item.is-off { border-left: 6px solid var(--color-danger); }
+
+.alarm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.alarm-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+}
+.status-dot.on { background: var(--color-success); }
+.status-dot.off { background: var(--color-danger); }
+
+.alarm-icon { font-size: 1rem; opacity: 0.9; }
+
+.alarm-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;           /* más separación entre botones */
+  flex-wrap: wrap;     /* evita desbordes en pantallas pequeñas */
+  justify-content: flex-end;
+}
+.btn.small { padding: 6px 10px; font-size: 0.9rem; }
+
+.alarm-info {
+  margin-top: 10px;
+  display: grid;
+  gap: 6px;
+}
+.next-time { opacity: 0.8; font-size: 0.9rem; }
+
+.alarm-edit {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+  animation: fadeIn 180ms ease-out;
+}
+.alarm-edit select,
+.alarm-edit input { width: 100%; }
+
+.edit-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+/* Fade-in para modo edición */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .alarm-header { flex-direction: column; align-items: flex-start; }
+  .alarm-controls { width: 100%; justify-content: flex-start; }
+}

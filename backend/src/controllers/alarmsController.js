@@ -26,7 +26,7 @@ const list = async (req, res, next) => {
 // add (crear alarma)
 const add = async (req, res, next) => {
   try {
-    const { name, time, enabled = true, mediaId, intervalMinutes } = req.body || {};
+    const { name, time, enabled = true, mediaId, imageId,intervalMinutes } = req.body || {};
     if (!name || typeof name !== 'string') {
       return res.status(400).json({ success: false, message: 'El nombre es requerido' });
     }
@@ -47,6 +47,7 @@ const add = async (req, res, next) => {
       time: time || '',
       enabled: !!enabled,
       mediaId: await ensureValidMediaId(mediaId),
+      imageId: await ensureValidMediaId(imageId),
       intervalMinutes: intervalMinutes !== undefined ? Number(intervalMinutes) : undefined,
       snoozedUntil: null // inicializamos el nuevo campo opcional
     };
@@ -61,7 +62,7 @@ const add = async (req, res, next) => {
 const update = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, time, enabled, mediaId, intervalMinutes } = req.body || {};
+    const { name, time, enabled, mediaId, imageId, intervalMinutes } = req.body || {};
 
     const alarms = await Storage.getAlarms();
     const idx = alarms.findIndex(a => a.id === id);
@@ -78,6 +79,10 @@ const update = async (req, res, next) => {
     if (enabled !== undefined) alarms[idx].enabled = !!enabled;
     if (mediaId !== undefined) {
       alarms[idx].mediaId = await ensureValidMediaId(mediaId);
+    }
+
+    if (imageId !== undefined) {
+      alarms[idx].imageId = await ensureValidMediaId(imageId);
     }
 
     if (intervalMinutes !== undefined) {
@@ -126,5 +131,6 @@ const snooze = async (req, res, next) => {
     res.json({ success: true, message: 'Snooze actualizado', data: { alarm: alarms[idx] } });
   } catch (err) { next(err); }
 };
+
 
 module.exports = { list, add, update, remove, snooze };

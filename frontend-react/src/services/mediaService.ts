@@ -1,6 +1,6 @@
 export type MediaItem = {
   id: string;
-  type: 'audio' | 'image' | 'gif' | 'mp3' | 'file';
+  type: 'audio' | 'image' | 'video' | 'file';
   name: string;
   path: string; // p.e. /uploads/123-file.mp3 o URL externa
 };
@@ -10,11 +10,18 @@ const BASE = '/api/media';
 export async function listMedia(): Promise<MediaItem[]> {
   const res = await fetch(`${BASE}`);
   const json = await res.json();
+
   if (!json.success) throw new Error(json.message || 'Error al listar media');
-  return json.data.media as MediaItem[];
+  return (json.data.media as MediaItem[]).filter(m =>
+  ['audio', 'image', 'video'].includes(m.type));
 }
 
 export async function uploadMedia(file: File, name?: string) {
+  const allowedTypes = ['audio/', 'image/', 'video/'];
+  if (!allowedTypes.some(prefix => file.type.startsWith(prefix))) {
+    throw new Error(`Tipo de archivo no permitido: ${file.type}`);
+  }
+
   const formData = new FormData();
   formData.append('file', file);
   if (name) formData.append('name', name);
@@ -23,6 +30,7 @@ export async function uploadMedia(file: File, name?: string) {
     method: 'POST',
     body: formData,
   });
+
   if (!res.ok) throw new Error('Error al subir archivo multimedia');
   return res.json();
 }
@@ -54,4 +62,16 @@ export async function deleteMedia(id: string): Promise<void> {
   const res = await fetch(`${BASE}/${id}`, { method: 'DELETE' });
   const json = await res.json();
   if (!json.success) throw new Error(json.message || 'Error al eliminar');
+}
+
+export function filterMediaByType(media: MediaItem[], type: 'audio' | 'image' | 'video'): MediaItem[]{
+  return media.filter(m => m.type === type);
+}
+
+const API_BASE = import.meta.env.VITE_aPI_URL || '';
+
+export function getMediaUrl(media: MediaItem): string {
+  if (!media.path) return '';
+  if (media.path.startsWith('http')) return media.path;
+  return `${API_BASE}${media.path}`;
 }

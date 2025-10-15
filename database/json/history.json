@@ -1,0 +1,23 @@
+[
+  {
+    "time": 1760557258397,
+    "type": "config.update",
+    "detail": {
+      "changedKeys": [
+        "theme",
+        "ui",
+        "authLocal"
+      ]
+    }
+  },
+  {
+    "time": 1760557347800,
+    "type": "config.update",
+    "detail": {
+      "changedKeys": [
+        "theme",
+        "ui"
+      ]
+    }
+  }
+]

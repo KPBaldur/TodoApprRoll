@@ -10,14 +10,18 @@ const { uploadsDir } = require('../middleware/upload');
 
 function detectTypeByFile(file) {
   const mime = file?.mimetype || '';
+
   if (mime.startsWith('audio/')) return 'audio';
   if (mime.startsWith('image/')) return 'image';
+  if (mime.startsWith('video/')) return 'video';
+  if (mime.endsWith('/gif')) return 'image';
   return 'file';
 }
 function detectTypeByPath(p) {
   const ext = (p || '').toLowerCase();
   if (ext.endsWith('.mp3') || ext.endsWith('.wav') || ext.endsWith('.ogg')) return 'audio';
   if (ext.endsWith('.gif') || ext.endsWith('.png') || ext.endsWith('.jpg') || ext.endsWith('.jpeg') || ext.endsWith('.webp')) return 'image';
+  if (ext.endsWith('.mp4')) return 'video';
   return 'file';
 }
 
@@ -48,6 +52,20 @@ const upload = async (req, res, next) => {
   try {
     const file = req.file;
     if (!file) return res.status(400).json({ success: false, message: 'No se recibió archivo' });
+
+    // Validacion de seguridad de tipo de archivo
+    const validMimes = [
+      'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg',
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'video/mp4'
+    ];
+
+    if (!validMimes.includes(file.mimetype)) {
+      return res.status(400).json({
+        success: false,
+        message: `Tipo de archivo no permitido (${file.mimetype}). Solo se aceptan mp3, wav, ogg, jpg, png, gif, webp, mp4`
+      });
+    }
 
     const customName = req.body?.name;
     const type = detectTypeByFile(file);
