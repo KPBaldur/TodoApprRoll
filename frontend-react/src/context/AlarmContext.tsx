@@ -1,6 +1,10 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import type { Alarm } from '../services/alarmService'
 import { listAlarms, createAlarm as createAlarmApi, updateAlarm as updateAlarmApi, deleteAlarm as deleteAlarmApi } from '../services/alarmService'
+import { listMedia } from '../services/mediaService'
+import { updateSnooze } from '../services/alarmService' // integrar API de snooze
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 type AlarmContextValue = {
   alarms: Alarm[]
@@ -10,6 +14,7 @@ type AlarmContextValue = {
   nextTriggerMs: (alarm: Alarm) => number | undefined
   triggerAlarm: (alarm: Alarm) => void
   stopAlarm: () => void
+  snoozeAlarm: (id: string, minutes: number) => Promise<void> // firma nueva
   createAlarm: (payload: Omit<Alarm, 'id'>) => Promise<Alarm>
   updateAlarm: (id: string, patch: Partial<Omit<Alarm, 'id'>>) => Promise<Alarm>
   deleteAlarm: (id: string) => Promise<void>
@@ -23,41 +28,102 @@ export function AlarmProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | undefined>()
   const [activeAlarm, setActiveAlarm] = useState<Alarm | null>(null)
-  const [nowTick, setNowTick] = useState(0)
+
   const nowRef = useRef<number>(Date.now())
   const timerAnchorsRef = useRef<Record<string, number>>({})
-
-  // NUEVO: refs persistentes para evitar cierres obsoletos y re-renders
   const activeRef = useRef<Alarm | null>(null)
   const alarmsRef = useRef<Alarm[]>([])
+  const mediaRef = useRef<any[]>([])
+  const activeAudioRef = useRef<HTMLAudioElement | null>(null)
   const tickingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  
+  const [tick, setTick] = useState(0)
 
-  // Mantener la lista en una ref (no depender de renders)
+  // 🔁 Mantener la lista de alarmas actualizada en la ref
   useEffect(() => {
     alarmsRef.current = alarms
   }, [alarms])
 
+  // 🔔 Reproduce el audio asociado a la alarma
   function triggerAlarm(alarm: Alarm) {
+    console.log("🚨 Se intentará activar alarma:", alarm)
+    console.log("🎵 mediaRef.current:", mediaRef.current)
+    console.log("🔍 alarm.mediaId:", alarm.mediaId)
+
     activeRef.current = alarm
     setActiveAlarm(alarm)
-    // Reinicia ancla para el siguiente ciclo
+
+    const mediaItem = mediaRef.current.find(m => m.id === alarm.mediaId)
+    const isAudio = mediaItem?.type?.startsWith('audio')
+    const mediaUrl = isAudio 
+      ? (mediaItem.path.startsWith('/uploads/')
+        ? `${API_BASE}${mediaItem.path}`
+        : `${API_BASE}/uploads/${mediaItem.path}`)
+      : undefined
+
+    if (isAudio && mediaUrl) {
+      const audio = new Audio(mediaUrl)
+      audio.loop = true
+      audio.volume = 0.9
+      audio.play().catch(err => console.error('Error al reproducir audio:', err))
+      activeAudioRef.current = audio
+    }
+
+    // Reinicia ancla de tiempo para el siguiente ciclo
     timerAnchorsRef.current = { ...timerAnchorsRef.current, [alarm.id]: Date.now() }
   }
 
+  // 🔇 Detiene la alarma y reinicia su ancla
   function stopAlarm() {
     const current = activeRef.current
     if (current) {
-      timerAnchorsRef.current = { ...timerAnchorsRef.current, [current.id]: Date.now() }
+      timerAnchorsRef.current = {
+        ...timerAnchorsRef.current,
+        [current.id]: Date.now() // Reinicia ancla de tiempo
+      }
     }
+
+    const audio = activeAudioRef.current
+    if (audio) {
+      audio.pause()
+      audio.currentTime = 0
+      activeAudioRef.current = null
+    }
+
     activeRef.current = null
     setActiveAlarm(null)
   }
 
-  // Evaluación estable (usa refs, no estado)
+  // 🔔 Snooze la alarma por X minutos
+    async function snoozeAlarm(id: string, minutes: number): Promise<void> {
+    const current = alarmsRef.current.find(a => a.id === id)
+    if (!current) return
+
+    // Detenemos el audio y el popup
+    stopAlarm()
+
+    // Calculamos la nueva hora de snooze
+    const snoozeTime = new Date(Date.now() + minutes * 60000)
+    const snoozeIso = snoozeTime.toISOString()
+
+    try {
+      // Persistir en backend
+      await updateSnooze(id, snoozeIso)
+
+      // Actualizar en estado local
+      setAlarms(prev =>
+        prev.map(a => a.id === id ? { ...a, snoozedUntil: snoozeIso } : a)
+      )
+
+      console.log(`😴 Alarma "${current.name}" pospuesta hasta ${snoozeIso}`)
+    } catch (err) {
+      console.error('Error al persistir el snooze:', err)
+    }
+  }
+
+  // 🔍 Verifica si alguna alarma debe activarse
   function checkAlarms() {
-    if (activeRef.current) return // no disparar otra mientras hay una activa
+    if (activeRef.current) return // Evita múltiples activaciones simultáneas
     const list = alarmsRef.current
     for (const alarm of list) {
       if (!alarm.enabled) continue
@@ -69,11 +135,12 @@ export function AlarmProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // REEMPLAZO: único setInterval global sin dependencias
+  // ⏱️ Intervalo global — controla tiempo, refresca UI y evalúa alarmas
   useEffect(() => {
-    if (tickingRef.current) return // evita recrear el intervalo
+    if (tickingRef.current) return
     tickingRef.current = setInterval(() => {
       nowRef.current = Date.now()
+      setTick(t => (t + 1) % 1000000) // Fuerza render cada segundo
       checkAlarms()
     }, 1000)
     return () => {
@@ -84,14 +151,18 @@ export function AlarmProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  // Carga inicial de alarmas (backend con respaldo en localStorage)
+  // 🔄 Carga inicial de alarmas y medios
   async function reload() {
     try {
       setLoading(true)
       setError(undefined)
-      const data = await listAlarms()
-      setAlarms(data)
-      localStorage.setItem('alarms', JSON.stringify(data))
+      const [alarmsData, mediaData] = await Promise.all([
+        listAlarms(),
+        listMedia()
+      ])
+      setAlarms(alarmsData)
+      mediaRef.current = mediaData
+      localStorage.setItem('alarms', JSON.stringify(alarmsData))
     } catch (err) {
       const cached = localStorage.getItem('alarms')
       if (cached) {
@@ -106,7 +177,7 @@ export function AlarmProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => { reload() }, [])
 
-  // Inicializa ancla para nuevas alarmas habilitadas (sin sobreescribir existentes)
+  // Inicializa anclas para alarmas activas
   useEffect(() => {
     const next = { ...timerAnchorsRef.current }
     const now = Date.now()
@@ -118,20 +189,22 @@ export function AlarmProvider({ children }: { children: React.ReactNode }) {
     timerAnchorsRef.current = next
   }, [alarms])
 
-  // Pulso global de tiempo
-  useEffect(() => {
-    const id = setInterval(() => {
-      nowRef.current = Date.now()
-      setNowTick(t => (t + 1) % 1_000_000)
-    }, 1000)
-    return () => clearInterval(id)
-  }, [])
-
-  // Cálculo de próximo disparo por intervalo
+  // 🧮 Cálculo del tiempo restante
   function nextTriggerMs(alarm: Alarm): number | undefined {
     const nowMs = nowRef.current
     if (!alarm.enabled) return undefined
-    if (activeAlarm && activeAlarm.id === alarm.id) return 0 // congelar mientras popup
+    if (activeAlarm && activeAlarm.id === alarm.id) return 0
+
+    // Si está snoozeada y el tiempo aún no llega, respetar snooze
+    if (alarm.snoozedUntil) {
+      const at = Date.parse(alarm.snoozedUntil)
+      if (!Number.isNaN(at)) {
+        const diff = at - nowMs
+        if (diff > 0) return diff
+        // si ya pasó la hora de snooze, continuar con la lógica habitual
+      }
+    }
+
     const intervalMs = alarm.intervalMinutes ? alarm.intervalMinutes * 60 * 1000 : undefined
     if (intervalMs) {
       const anchor = timerAnchorsRef.current[alarm.id] ?? nowMs
@@ -143,16 +216,8 @@ export function AlarmProvider({ children }: { children: React.ReactNode }) {
     }
     return undefined
   }
-  
-  
 
-  useEffect(() => {
-    const id = setInterval(checkAlarms, 1000)
-    return () => clearInterval(id)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [alarms, activeAlarm, nowTick])
-
-  // CRUD con actualización de anclas y persistencia
+  // 🧱 CRUD con persistencia
   async function createAlarm(payload: Omit<Alarm, 'id'>): Promise<Alarm> {
     const created = await createAlarmApi(payload)
     setAlarms(list => {
@@ -198,16 +263,18 @@ export function AlarmProvider({ children }: { children: React.ReactNode }) {
     nextTriggerMs,
     triggerAlarm,
     stopAlarm,
+    snoozeAlarm, // expone función para UI/popup
     createAlarm,
     updateAlarm,
     deleteAlarm,
     reload,
   }
 
+
+  // 🪟 Popup visual de alarma
   return (
     <AlarmContext.Provider value={value}>
       {children}
-      {/* Popup global existente */}
       {activeAlarm && (
         <div
           className="alarm-overlay"
@@ -229,7 +296,7 @@ export function AlarmProvider({ children }: { children: React.ReactNode }) {
               borderRadius: 12,
               padding: 16,
               width: 'min(560px, 92vw)',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
+              boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
             }}
           >
             <div style={{ display: 'grid', gap: 12 }}>
@@ -237,6 +304,8 @@ export function AlarmProvider({ children }: { children: React.ReactNode }) {
               <div style={{ opacity: 0.8 }}>Alarma activada</div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
                 <button className="btn" onClick={stopAlarm}>Detener</button>
+                <button className="btn" onClick={() => snoozeAlarm(activeAlarm.id, 5)}>Posponer 5 min</button>
+                <button className="btn" onClick={() => snoozeAlarm(activeAlarm.id, 10)}>Posponer 10 min</button>
               </div>
             </div>
           </div>
