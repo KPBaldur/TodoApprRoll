@@ -1,9 +1,9 @@
 {
   "theme": {
     "mode": "dark",
-    "primary": "#7317fd",
+    "primary": "#5F0F40",
     "accent": "#00A8E8",
-    "success": "#2283bf",
+    "success": "#3d5ddb",
     "danger": "#EF4444",
     "bgStart": "#0B132B",
     "bgEnd": "#3A506B",

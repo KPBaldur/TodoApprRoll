@@ -1,22 +1,12 @@
 [
   {
-    "id": "5ee38520-0716-465d-8927-facc3b350c50",
-    "name": "Prueba de alarma",
+    "id": "add96b62-f838-4038-a635-fcccf98f1bc4",
+    "name": "Revisar Pedidor OMS",
     "time": "",
     "enabled": true,
     "mediaId": "b362deff-4e36-4c1f-9ed3-ec6fc2a7fe7e",
     "imageId": "d430c367-e34f-434b-a5d3-72b5186e1e4c",
-    "intervalMinutes": 20,
-    "snoozedUntil": null
-  },
-  {
-    "id": "3e73f7f8-2843-402f-aad5-2e2017becf4b",
-    "name": "Prrueba de Alarma",
-    "time": "",
-    "enabled": true,
-    "mediaId": "b362deff-4e36-4c1f-9ed3-ec6fc2a7fe7e",
-    "imageId": "7925abbd-ac8d-43ae-8579-4110d2d2de95",
-    "intervalMinutes": 5,
+    "intervalMinutes": 30,
     "snoozedUntil": null
   }
 ]

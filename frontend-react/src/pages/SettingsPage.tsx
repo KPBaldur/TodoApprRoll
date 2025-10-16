@@ -26,15 +26,16 @@ export default function SettingsPage() {
   }
 
   return (
-    <section className="page">
+    <section className="page settings-page">
       <h2 className="page-title">Configuración</h2>
 
-      <div className="panel" style={{ marginBottom: 16 }}>
+      <div className="panel settings-panel">
         <div className="panel-body">
           <div className="section-title">Tema</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <label>
-              Modo:
+
+          <div className="settings-grid">
+            <label className="form-field">
+              <span className="form-label">Modo:</span>
               <select value={mode} onChange={(e) => setMode(e.target.value as AppThemeMode)}>
                 <option value="light">Claro</option>
                 <option value="dark">Oscuro</option>
@@ -42,42 +43,49 @@ export default function SettingsPage() {
               </select>
             </label>
 
-            <label>
-              Color principal:
-              <input type="color" value={theme.primary || '#5F0F40'} onChange={(e) => onColorChange('primary', e.target.value)} />
+            <label className="form-field">
+              <span className="form-label">Color principal:</span>
+              <input type="color" value={theme.primary || '#5F0F40'}
+                    onChange={(e) => onColorChange('primary', e.target.value)} />
             </label>
 
-            <label>
-              Color acento:
-              <input type="color" value={theme.accent || '#00A8E8'} onChange={(e) => onColorChange('accent', e.target.value)} />
+            <label className="form-field">
+              <span className="form-label">Color acento:</span>
+              <input type="color" value={theme.accent || '#00A8E8'}
+                    onChange={(e) => onColorChange('accent', e.target.value)} />
             </label>
 
-            <label>
-              Color éxito:
-              <input type="color" value={theme.success || '#3DDC97'} onChange={(e) => onColorChange('success', e.target.value)} />
+            <label className="form-field">
+              <span className="form-label">Color éxito:</span>
+              <input type="color" value={theme.success || '#3DDC97'}
+                    onChange={(e) => onColorChange('success', e.target.value)} />
             </label>
 
-            <label>
-              Fondo inicio:
-              <input type="color" value={theme.bgStart || '#0B132B'} onChange={(e) => onColorChange('bgStart', e.target.value)} />
+            <label className="form-field">
+              <span className="form-label">Fondo inicio:</span>
+              <input type="color" value={theme.bgStart || '#0B132B'}
+                    onChange={(e) => onColorChange('bgStart', e.target.value)} />
             </label>
 
-            <label>
-              Fondo fin:
-              <input type="color" value={theme.bgEnd || '#3A506B'} onChange={(e) => onColorChange('bgEnd', e.target.value)} />
+            <label className="form-field">
+              <span className="form-label">Fondo fin:</span>
+              <input type="color" value={theme.bgEnd || '#3A506B'}
+                    onChange={(e) => onColorChange('bgEnd', e.target.value)} />
             </label>
 
-            <label style={{ gridColumn: '1 / -1' }}>
-              Imagen de fondo (URL):
-              <input type="text" placeholder="/uploads/mi-fondo.jpg o URL completa" value={theme.backgroundImage || ''} onChange={(e) => onColorChange('backgroundImage', e.target.value)} />
+            <label className="form-field full">
+              <span className="form-label">Imagen de fondo (URL):</span>
+              <input type="text" placeholder="/uploads/mi-fondo.jpg o URL completa"
+                    value={theme.backgroundImage || ''}
+                    onChange={(e) => onColorChange('backgroundImage', e.target.value)} />
             </label>
           </div>
-        </div>
-      </div>
 
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button className="btn" onClick={onSave}>Guardar</button>
-        <button className="btn danger" onClick={onRestore}>Restaurar predeterminada</button>
+          <div className="settings-actions">
+            <button className="btn" onClick={onSave}>Guardar</button>
+            <button className="btn danger" onClick={onRestore}>Restaurar predeterminada</button>
+          </div>
+        </div>
       </div>
     </section>
   )

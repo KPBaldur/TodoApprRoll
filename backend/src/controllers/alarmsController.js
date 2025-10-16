@@ -26,7 +26,7 @@ const list = async (req, res, next) => {
 // add (crear alarma)
 const add = async (req, res, next) => {
   try {
-    const { name, time, enabled = true, mediaId, imageId,intervalMinutes } = req.body || {};
+    const { name, time, enabled = true, mediaId, imageId, intervalMinutes } = req.body || {};
     if (!name || typeof name !== 'string') {
       return res.status(400).json({ success: false, message: 'El nombre es requerido' });
     }
@@ -62,7 +62,8 @@ const add = async (req, res, next) => {
 const update = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, time, enabled, mediaId, imageId, intervalMinutes } = req.body || {};
+    const { name, time, enabled, mediaId, imageId, intervalMinutes, snoozedUntil } = req.body || {};
+
 
     const alarms = await Storage.getAlarms();
     const idx = alarms.findIndex(a => a.id === id);
@@ -91,6 +92,18 @@ const update = async (req, res, next) => {
         return res.status(400).json({ success: false, message: 'intervalMinutes debe ser un número mayor a 0' });
       }
       alarms[idx].intervalMinutes = v;
+    }
+
+    if (snoozedUntil !== undefined) {
+      if (snoozedUntil === null || snoozedUntil === '') {
+        alarms[idx].snoozedUntil = null;
+      } else {
+        const t = Date.parse(snoozedUntil);
+        if (Number.isNaN(t)) {
+          return res.status(400).json({ success: false, message: 'snoozedUntil debe ser una fecha ISO válida o null' });
+        }
+        alarms[idx].snoozedUntil = new Date(t).toISOString();
+      }
     }
 
     await Storage.saveAlarms(alarms);

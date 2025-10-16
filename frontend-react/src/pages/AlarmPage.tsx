@@ -123,13 +123,28 @@ export default function AlarmPage() {
   }
 
   async function saveEdit(id: string) {
-    await updateAlarm(id, {
+    // Busca la alarma original para comparar
+    const original = alarms.find(a => a.id === id);
+    if (!original) return;
+
+    // Construye el patch normal de edición
+    const patch: any = {
       mediaId: editModel.mediaId || undefined,
       imageId: editModel.imageId || undefined,
       intervalMinutes: editModel.intervalMinutes,
-    });
+    };
+
+    // 🚨 Punto clave:
+    // si el usuario cambió el intervalo, limpiamos el snooze
+    if (original.intervalMinutes !== editModel.intervalMinutes) {
+      patch.snoozedUntil = null;
+    }
+
+    await updateAlarm(id, patch);
     setEditingId(null);
   }
+
+  
 
   return (
     <section className="page">
@@ -256,6 +271,15 @@ export default function AlarmPage() {
                 <button className="btn small" onClick={() => toggleEnable(alarm.id)}>
                   {alarm.enabled ? 'Desactivar' : 'Activar'}
                 </button>
+                {alarm.snoozedUntil && Date.parse(alarm.snoozedUntil) > Date.now() && (
+                  <button
+                    className="btn small"
+                    onClick={() => updateAlarm(alarm.id, { snoozedUntil: null })}
+                    title={`Snooze hasta ${new Date(alarm.snoozedUntil).toLocaleString()}`}
+                  >
+                    Cancelar snooze
+                  </button>
+                )}
                 <button className="btn danger small" onClick={() => deleteAlarm(alarm.id)}>Eliminar</button>
                 <button className="btn small" onClick={() => triggerAlarm(alarm)}>Probar</button>
                 <button className="btn small" onClick={() => snoozeAlarm(alarm.id, 5)}>Snooze 5m</button>

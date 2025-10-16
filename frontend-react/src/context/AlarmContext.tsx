@@ -233,13 +233,22 @@ export function AlarmProvider({ children }: { children: React.ReactNode }) {
 
   async function updateAlarm(id: string, patch: Partial<Omit<Alarm, 'id'>>): Promise<Alarm> {
     const updated = await updateAlarmApi(id, patch)
+
     setAlarms(list => {
       const next = list.map(a => (a.id === id ? updated : a))
       localStorage.setItem('alarms', JSON.stringify(next))
       return next
     })
-    if (("intervalMinutes" in patch) || ("enabled" in patch && patch.enabled)) {
+
+    if (
+      ("intervalMinutes" in patch) ||
+      ("enabled" in patch && patch.enabled) ||
+      ("snoozedUntil" in patch) // ⬅️ nuevo: al cancelar o ajustar snooze
+    ) {
       timerAnchorsRef.current = { ...timerAnchorsRef.current, [id]: Date.now() }
+      // forzamos actualización visual inmediata
+      nowRef.current = Date.now()
+      setTick(t => (t + 1) % 1000000)
     }
     return updated
   }

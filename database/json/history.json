@@ -19,5 +19,15 @@
         "ui"
       ]
     }
+  },
+  {
+    "time": 1760617555434,
+    "type": "config.update",
+    "detail": {
+      "changedKeys": [
+        "theme",
+        "ui"
+      ]
+    }
   }
 ]
