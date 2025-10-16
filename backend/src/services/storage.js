@@ -1,51 +1,42 @@
 const fs = require('fs');
 const path = require('path');
 
-const baseDir = path.join(__dirname, '../../../database/json');
+const dataDir = process.env.DATA_DIR || path.join(process.cwd(), 'database/json');
+fs.mkdirSync(dataDir, { recursive: true });
 
-function ensureDir() {
-  if (!fs.existsSync(baseDir)) {
-    fs.mkdirSync(baseDir, { recursive: true });
+function file(p) { return path.join(dataDir, p); }
+
+async function readJson(p, fallback) {
+  const f = file(p);
+  try {
+    const raw = await fs.promises.readFile(f, 'utf8');
+    return JSON.parse(raw);
+  } catch {
+    // Semilla inicial si no existe
+    if (fallback !== undefined) {
+      await fs.promises.writeFile(f, JSON.stringify(fallback, null, 2));
+      return fallback;
+    }
+    return [];
   }
 }
 
-function ensureFile(file, defaultContent) {
-  ensureDir();
-  const filePath = path.join(baseDir, file);
-  if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, JSON.stringify(defaultContent, null, 2), 'utf8');
-  }
-  return filePath;
+async function writeJson(p, data) {
+  const f = file(p);
+  await fs.promises.writeFile(f, JSON.stringify(data, null, 2));
 }
 
-async function readJson(file) {
-  const filePath = ensureFile(file, file === 'config.json' ? {} : []);
-  const content = await fs.promises.readFile(filePath, 'utf8');
-  return JSON.parse(content || (file === 'config.json' ? '{}' : '[]'));
-}
-
-async function writeJson(file, data) {
-  ensureDir();
-  const filePath = ensureFile(file, file === 'config.json' ? {} : []);
-  await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8');
-}
+// Ejemplos concretos según tu código:
+async function getAlarms() { return readJson('alarms.json', []); }
+async function saveAlarms(arr) { return writeJson('alarms.json', arr); }
+async function getMedia() { return readJson('media.json', []); }
+async function saveMedia(arr) { return writeJson('media.json', arr); }
+async function getTasks() { return readJson('tasks.json', []); }
+async function saveTasks(arr) { return writeJson('tasks.json', arr); }
 
 module.exports = {
-  readJson,
-  writeJson,
-  // Helpers específicos
-  async getTasks() { return readJson('tasks.json'); },
-  async saveTasks(tasks) { return writeJson('tasks.json', tasks); },
-  async getMedia() { return readJson('media.json'); },
-  async saveMedia(media) { return writeJson('media.json', media); },
-  async getConfig() { return readJson('config.json'); },
-  async saveConfig(config) { return writeJson('config.json', config); },
-  async getAlarms() { return readJson('alarms.json'); },
-  async saveAlarms(alarms) { return writeJson('alarms.json', alarms); },
-  async getHistory() { return readJson('history.json'); },
-  async appendHistory(event) {
-    const items = await readJson('history.json');
-    items.push(event);
-    await writeJson('history.json', items);
-  }
-}
+  getAlarms, saveAlarms,
+  getMedia, saveMedia,
+  getTasks, saveTasks,
+  dataDir,
+};

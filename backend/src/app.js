@@ -10,6 +10,9 @@ const { uploadsDir } = require('./middleware/upload');
 
 const app = express();
 
+const { uploadsDir } = require('./middleware/upload');
+app.use('/uploads', express.static(uploadsDir));
+
 // Middlewares base
 app.use(cors());
 app.use(express.json());

@@ -1,27 +1,17 @@
-// Middleware de subida de archivos (multer)
-const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
+const multer = require('multer');
 
-const uploadsDir = path.join(__dirname, '../../uploads');
-
-function ensureUploadsDir() {
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-  }
-}
-ensureUploadsDir();
+const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'uploads');
+fs.mkdirSync(uploadsDir, { recursive: true });
 
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadsDir);
-  },
-  filename: function (req, file, cb) {
-    // Sanear nombre: timestamp-original
-    const safeOriginal = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+  destination: (_req, _file, cb) => cb(null, uploadsDir),
+  filename: (_req, file, cb) => {
     const ts = Date.now();
-    cb(null, `${ts}-${safeOriginal}`);
-  }
+    const safe = file.originalname.replace(/\s+/g, '-');
+    cb(null, `${ts}-${safe}`);
+  },
 });
 
 const upload = multer({ storage });
