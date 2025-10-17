@@ -24,24 +24,28 @@ const app = express();
 
 // CORS - DEBE ir ANTES que helmet y otros middlewares
 const defaultAllowedOrigins = [
-	'https://todo-app-roll-82i8hiskw-kpbaldurs-projects.vercel.app',
+	'https://todo-appr-roll-82ishiskw-kpbaldurs-projects.vercel.app',
 	'http://localhost:5173'
 ];
 const allowedOrigins = (process.env.CORS_ORIGINS
 	? process.env.CORS_ORIGINS.split(',').map(o => o.trim()).filter(Boolean)
 	: defaultAllowedOrigins);
 
-app.use(cors({
-	origin: (origin, callback) => {
-		// Permitir llamadas sin header Origin (p.ej. health checks, curl)
-		if (!origin) return callback(null, true);
-		if (allowedOrigins.includes(origin)) return callback(null, true);
-		return callback(new Error('Not allowed by CORS'));
-	},
-	credentials: true,
-	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-	allowedHeaders: ['Content-Type', 'Authorization']
-}));
+  app.use(cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+  
+      const isAllowed = allowedOrigins.some(o =>
+        typeof o === "string" ? o === origin : o.test(origin)
+      );
+  
+      if (isAllowed) callback(null, true);
+      else callback(new Error(`Not allowed by CORS: ${origin}`));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+  }));
 
 // Seguridad y parsing - DESPUÉS de CORS
 app.use(helmet({ 
