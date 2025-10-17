@@ -1,8 +1,8 @@
 /**
  * Modelo de Tarea: define estructura, validación y operaciones
  */
-const { v4: uuidv4 } = require('uuid');
-const Storage = require('../services/storage');
+import { v4 as uuidv4 } from 'uuid';
+import Storage from '../services/storage.js';
 
 const VALID_STATUSES = ['pending', 'working', 'completed', 'archived'];
 const VALID_PRIORITIES = ['low', 'medium', 'high'];
@@ -163,4 +163,4 @@ class Task {
   }
 }
 
-module.exports = Task;
+export default Task;

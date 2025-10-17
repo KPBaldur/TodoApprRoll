@@ -1,5 +1,9 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const dataDir = process.env.DATA_DIR || path.join(process.cwd(), 'database/json');
 fs.mkdirSync(dataDir, { recursive: true });
@@ -33,10 +37,16 @@ async function getMedia() { return readJson('media.json', []); }
 async function saveMedia(arr) { return writeJson('media.json', arr); }
 async function getTasks() { return readJson('tasks.json', []); }
 async function saveTasks(arr) { return writeJson('tasks.json', arr); }
+async function getConfig() { return readJson('config.json', { theme: { mode: 'dark' } }); }
+async function saveConfig(obj) { return writeJson('config.json', obj); }
+async function getHistory() { return readJson('history.json', []); }
+async function saveHistory(arr) { return writeJson('history.json', arr); }
 
-module.exports = {
+export default {
   getAlarms, saveAlarms,
   getMedia, saveMedia,
   getTasks, saveTasks,
+  getConfig, saveConfig,
+  getHistory, saveHistory,
   dataDir,
 };

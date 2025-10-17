@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express';
+import { getConfig, setConfig } from '../controllers/configController.js';
+
 const router = express.Router();
-const { getConfig, setConfig } = require('../controllers/configController');
 
 router.get('/', getConfig);
 router.put('/', setConfig);
 router.patch('/', setConfig);
 
-module.exports = router;
+export default router;

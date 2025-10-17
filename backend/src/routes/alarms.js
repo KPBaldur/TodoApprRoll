@@ -1,6 +1,7 @@
-const express = require('express');
+import express from 'express';
+import alarms from '../controllers/alarmsController.js';
+
 const router = express.Router();
-const alarms = require('../controllers/alarmsController');
 
 router.get('/', alarms.list);
 router.post('/', alarms.add);
@@ -9,4 +10,4 @@ router.delete('/:id', alarms.remove);
 // Registrar snooze
 router.patch('/:id/snooze', alarms.snooze);
 
-module.exports = router;
+export default router;

@@ -1,5 +1,5 @@
 // Controlador de Tareas
-const Task = require('../models/Task');
+import Task from '../models/Task.js';
 
 const getTasks = async (req, res, next) => {
   try {
@@ -86,7 +86,7 @@ const unarchiveTask = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = {
+export {
   getTasks,
   getTaskById,
   createTask,

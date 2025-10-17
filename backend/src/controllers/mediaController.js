@@ -2,11 +2,11 @@
  * Controlador de Biblioteca Multimedia
  * Persistencia en media.json con items { id, type: 'audio'|'image'|'gif'|'mp3', name, path }
  */
-const { v4: uuidv4 } = require('uuid');
-const Storage = require('../services/storage');
-const fs = require('fs');
-const path = require('path');
-const { uploadsDir } = require('../middleware/upload');
+import { v4 as uuidv4 } from 'uuid';
+import Storage from '../services/storage.js';
+import fs from 'fs';
+import path from 'path';
+import { uploadsDir } from '../middleware/upload.js';
 
 function detectTypeByFile(file) {
   const mime = file?.mimetype || '';
@@ -120,4 +120,4 @@ const rename = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { list, add, upload, remove, rename };
+export { list, add, upload, remove, rename };

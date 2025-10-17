@@ -2,8 +2,8 @@
  * Controlador de Alarmas
  * Persistencia en alarms.json con items { id, name, time, enabled, mediaId? }
  */
-const { v4: uuidv4 } = require('uuid');
-const Storage = require('../services/storage');
+import { v4 as uuidv4 } from 'uuid';
+import Storage from '../services/storage.js';
 
 async function ensureValidMediaId(mediaId) {
     if (!mediaId) return null;
@@ -146,4 +146,4 @@ const snooze = async (req, res, next) => {
 };
 
 
-module.exports = { list, add, update, remove, snooze };
+export default { list, add, update, remove, snooze };
