@@ -1,3 +1,4 @@
+import { get, post, put, del, postForm } from './api'
 export type MediaItem = {
   id: string;
   type: 'audio' | 'image' | 'video' | 'file';
@@ -8,8 +9,7 @@ export type MediaItem = {
 const BASE = '/api/media';
 
 export async function listMedia(): Promise<MediaItem[]> {
-  const res = await fetch(`${BASE}`);
-  const json = await res.json();
+  const json = await get<{ success: boolean; data: { media: MediaItem[] }; message?: string }>(`${BASE}`)
 
   if (!json.success) throw new Error(json.message || 'Error al listar media');
   return (json.data.media as MediaItem[]).filter(m =>
@@ -26,49 +26,34 @@ export async function uploadMedia(file: File, name?: string) {
   formData.append('file', file);
   if (name) formData.append('name', name);
 
-  const res = await fetch('/api/media/upload', {
-    method: 'POST',
-    body: formData,
-  });
-
-  if (!res.ok) throw new Error('Error al subir archivo multimedia');
-  return res.json();
+  const json = await postForm<{ success: boolean; data: { item: MediaItem } }>('/api/media/upload', formData)
+  if (!json.success) throw new Error('Error al subir archivo multimedia');
+  return json
 }
 
 // Alta por JSON (URL existente)
 export async function addMediaByUrl(path: string, name: string, type?: MediaItem['type']): Promise<MediaItem> {
-  const res = await fetch(`${BASE}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ path, name, type }),
-  });
-  const json = await res.json();
-  if (!json.success) throw new Error(json.message || 'Error al registrar URL');
+  const json = await post<{ success: boolean; data: { item: MediaItem } }>(`${BASE}`, { path, name, type })
+  if (!json.success) throw new Error('Error al registrar URL');
   return json.data.item as MediaItem;
 }
 
 export async function renameMedia(id: string, name: string): Promise<MediaItem> {
-  const res = await fetch(`${BASE}/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name }),
-  });
-  const json = await res.json();
-  if (!json.success) throw new Error(json.message || 'Error al renombrar');
+  const json = await put<{ success: boolean; data: { item: MediaItem } }>(`${BASE}/${id}`, { name })
+  if (!json.success) throw new Error('Error al renombrar');
   return json.data.item as MediaItem;
 }
 
 export async function deleteMedia(id: string): Promise<void> {
-  const res = await fetch(`${BASE}/${id}`, { method: 'DELETE' });
-  const json = await res.json();
-  if (!json.success) throw new Error(json.message || 'Error al eliminar');
+  const json = await del<{ success: boolean }>(`${BASE}/${id}`)
+  if (!json.success) throw new Error('Error al eliminar');
 }
 
 export function filterMediaByType(media: MediaItem[], type: 'audio' | 'image' | 'video'): MediaItem[]{
   return media.filter(m => m.type === type);
 }
 
-const API_BASE = import.meta.env.VITE_aPI_URL || '';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export function getMediaUrl(media: MediaItem): string {
   if (!media.path) return '';

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { get } from '../services/api'
 import { useTasks } from '../hooks/useTasks'
 
 export default function HistoryPage() {
@@ -8,9 +9,10 @@ export default function HistoryPage() {
   useEffect(() => {
     applyFilters({ status: 'archived' })
     reload()
-    fetch('/api/history').then(r => r.json()).then(json => {
-      if (json?.success) setEvents(json.data.history || [])
-    }).catch(() => {})
+    get<{ success: boolean; data: { history: HistoryEvent[] } }>('/api/history')
+      .then(json => {
+        if (json?.success) setEvents(json.data.history || [])
+      }).catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
