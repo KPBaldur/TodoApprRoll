@@ -1,26 +1,31 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: process.env.VITE_API_URL_DEV || 'http://localhost:3000',
-        changeOrigin: true,
-        secure: false,
+export default defineConfig(({ mode }) => {
+  const isProd = mode === 'production'
+  const apiUrl = isProd
+    ? process.env.VITE_API_URL || 'https://todoapproll.onrender.com'
+    : process.env.VITE_API_URL_DEV || 'http://localhost:3000'
+
+  return {
+    plugins: [react()],
+    server: {
+      port: 5173,
+      proxy: {
+        '/api': {
+          target: apiUrl,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/uploads': {
+          target: apiUrl,
+          changeOrigin: true,
+          secure: false,
+        },
       },
-      '/uploads': {
-        target: process.env.VITE_API_URL_DEV || 'http://localhost:3000',
-        changeOrigin: true,
-        secure: false,
-      }
-    }
-  },
-  define: {
-    'import.meta.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL),
-    'import.meta.env.VITE_API_URL_DEV': JSON.stringify(process.env.VITE_API_URL_DEV)
+    },
+    define: {
+      'import.meta.env.VITE_API_URL': JSON.stringify(apiUrl),
+    },
   }
 })

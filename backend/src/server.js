@@ -23,29 +23,47 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // CORS - DEBE ir ANTES que helmet y otros middlewares
+console.log('CORS_ORIGINS from env:', process.env.CORS_ORIGINS);
+
 const defaultAllowedOrigins = [
-	'https://todo-appr-roll-82ishiskw-kpbaldurs-projects.vercel.app',
+	/\.vercel\.app$/,  // Permite cualquier subdominio de Vercel
 	'http://localhost:5173'
 ];
+
 const allowedOrigins = (process.env.CORS_ORIGINS
 	? process.env.CORS_ORIGINS.split(',').map(o => o.trim()).filter(Boolean)
 	: defaultAllowedOrigins);
 
-  app.use(cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-  
-      const isAllowed = allowedOrigins.some(o =>
-        typeof o === "string" ? o === origin : o.test(origin)
-      );
-  
-      if (isAllowed) callback(null, true);
-      else callback(new Error(`Not allowed by CORS: ${origin}`));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-  }));
+app.use(cors({
+  origin: (origin, callback) => {
+    console.log('CORS check for origin:', origin);
+    
+    if (!origin) {
+      console.log('No origin header, allowing request');
+      return callback(null, true);
+    }
+
+    const isAllowed = allowedOrigins.some(o => {
+      if (typeof o === "string") {
+        return o === origin;
+      } else if (o instanceof RegExp) {
+        return o.test(origin);
+      }
+      return false;
+    });
+
+    if (isAllowed) {
+      console.log('Origin allowed:', origin);
+      callback(null, true);
+    } else {
+      console.log('Origin REJECTED:', origin, 'Allowed origins:', allowedOrigins);
+      callback(new Error(`Not allowed by CORS: ${origin}`));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
 // Seguridad y parsing - DESPUÉS de CORS
 app.use(helmet({ 
