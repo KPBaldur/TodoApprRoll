@@ -2,19 +2,18 @@ services:
   - type: web
     name: todoapp-backend
     env: node
-    plan: free
     rootDir: backend
-    buildCommand: npm ci
-    startCommand: node src/server.js
+    buildCommand: npm install
+    startCommand: npm start
     envVars:
       - key: SESSION_SECRET
-        sync: false
-      - key: CORS_ORIGINS
-        sync: false
+        value: 529e4003014a1dce7f4bf40b5ba91038
       - key: ADMIN_USER
-        sync: false
+        value: BaldurDev
       - key: ADMIN_PASS_HASH
-        sync: false
+        value: $2b$12$LQv3c1yqBWVH...
+      - key: CORS_ORIGINS
+        value: https://todoapp-frontend.vercel.app,http://localhost:5173
       - key: NODE_ENV
         value: production
       - key: DATA_DIR
