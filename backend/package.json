@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Backend de TodoApp (Node + Express + JSON)",
   "main": "src/server.js",
+  "type": "module",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js"
@@ -10,6 +11,7 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-rate-limit": "^8.1.0",
     "express-session": "^1.18.2",

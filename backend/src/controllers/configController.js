@@ -2,7 +2,7 @@
  * Controlador de Configuración visual y preferencias
  * Persistencia en config.json
  */
-const Storage = require('../services/storage');
+import Storage from '../services/storage.js';
 
 const getConfig = async (req, res, next) => {
   try {
@@ -26,4 +26,4 @@ const setConfig = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { getConfig, setConfig };
+export { getConfig, setConfig };
