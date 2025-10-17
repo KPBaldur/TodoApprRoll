@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import { list, add, upload, remove, rename } from '../controllers/mediaController.js';
+import { upload as uploadMw } from '../middleware/upload.js';
+
 const router = express.Router();
-const { list, add, upload, remove, rename } = require('../controllers/mediaController');
-const { upload: uploadMw } = require('../middleware/upload');
 
 // Listar todo
 router.get('/', list);
@@ -14,4 +15,4 @@ router.put('/:id', rename);
 // Eliminar por id
 router.delete('/:id', remove);
 
-module.exports = router;
+export default router;

@@ -8,15 +8,19 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: process.env.VITE_API_URL_DEV || 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
       },
       '/uploads': {
-        target: 'http://localhost:3000',
+        target: process.env.VITE_API_URL_DEV || 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
       }
     }
+  },
+  define: {
+    'process.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL),
+    'process.env.VITE_API_URL_DEV': JSON.stringify(process.env.VITE_API_URL_DEV)
   }
 })

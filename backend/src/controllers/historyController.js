@@ -1,4 +1,4 @@
-const Storage = require('../services/storage');
+import Storage from '../services/storage.js';
 
 const getHistory = async (req, res, next) => {
   try {
@@ -7,4 +7,4 @@ const getHistory = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { getHistory };
+export { getHistory };
