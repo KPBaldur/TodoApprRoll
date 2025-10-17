@@ -22,13 +22,9 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Seguridad y parsing
-app.use(helmet());
-app.use(express.json());
-
-// CORS
+// CORS - DEBE ir ANTES que helmet y otros middlewares
 const defaultAllowedOrigins = [
-	'https://todoapp-roll-foi68rhtk-kpbaldurs-projects.vercel.app',
+	'https://todo-app-roll-82i8hiskw-kpbaldurs-projects.vercel.app',
 	'http://localhost:5173'
 ];
 const allowedOrigins = (process.env.CORS_ORIGINS
@@ -46,6 +42,13 @@ app.use(cors({
 	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 	allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Seguridad y parsing - DESPUÉS de CORS
+app.use(helmet({ 
+	crossOriginResourcePolicy: false, 
+	crossOriginEmbedderPolicy: false 
+}));
+app.use(express.json());
 
 // Sesiones
 app.use(session({
