@@ -1,3 +1,4 @@
+import { get, post, put, del, patch } from './api'
 export type Alarm = {
   id: string;
   name: string;
@@ -15,48 +16,31 @@ export type Alarm = {
 const BASE = '/api/alarms';
 
 export async function listAlarms(): Promise<Alarm[]> {
-  const res = await fetch(`${BASE}`);
-  const json = await res.json();
-  if (!json.success) throw new Error(json.message || 'Error al listar alarmas');
+  const json = await get<{ success: boolean; data: { alarms: Alarm[] } }>(`${BASE}`)
+  if (!json.success) throw new Error('Error al listar alarmas');
   return json.data.alarms as Alarm[];
 }
 
 export async function createAlarm(payload: Omit<Alarm, 'id'>): Promise<Alarm> {
-  const res = await fetch(`${BASE}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  const json = await res.json();
-  if (!json.success) throw new Error(json.message || 'Error al crear alarma');
+  const json = await post<{ success: boolean; data: { alarm: Alarm } }>(`${BASE}`, payload)
+  if (!json.success) throw new Error('Error al crear alarma');
   return json.data.alarm as Alarm;
 }
 
 export async function updateAlarm(id: string, partial: Partial<Omit<Alarm, 'id'>>): Promise<Alarm> {
-  const res = await fetch(`${BASE}/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(partial),
-  });
-  const json = await res.json();
-  if (!json.success) throw new Error(json.message || 'Error al actualizar alarma');
+  const json = await put<{ success: boolean; data: { alarm: Alarm } }>(`${BASE}/${id}`, partial)
+  if (!json.success) throw new Error('Error al actualizar alarma');
   return json.data.alarm as Alarm;
 }
 
 export async function deleteAlarm(id: string): Promise<void> {
-  const res = await fetch(`${BASE}/${id}`, { method: 'DELETE' });
-  const json = await res.json();
-  if (!json.success) throw new Error(json.message || 'Error al eliminar alarma');
+  const json = await del<{ success: boolean }>(`${BASE}/${id}`)
+  if (!json.success) throw new Error('Error al eliminar alarma');
 }
 
 // Nuevo: actualizar snooze (persistencia en backend)
 export async function updateSnooze(id: string, snoozedUntil: string): Promise<Alarm> {
-  const res = await fetch(`${BASE}/${id}/snooze`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ snoozedUntil }),
-  });
-  const json = await res.json();
-  if (!json.success) throw new Error(json.message || 'Error al actualizar snooze');
+  const json = await patch<{ success: boolean; data: { alarm: Alarm } }>(`${BASE}/${id}/snooze`, { snoozedUntil })
+  if (!json.success) throw new Error('Error al actualizar snooze');
   return json.data.alarm as Alarm;
 }

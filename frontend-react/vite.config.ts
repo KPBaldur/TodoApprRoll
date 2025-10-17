@@ -20,7 +20,7 @@ export default defineConfig({
     }
   },
   define: {
-    'process.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL),
-    'process.env.VITE_API_URL_DEV': JSON.stringify(process.env.VITE_API_URL_DEV)
+    'import.meta.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL),
+    'import.meta.env.VITE_API_URL_DEV': JSON.stringify(process.env.VITE_API_URL_DEV)
   }
 })
