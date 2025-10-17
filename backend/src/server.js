@@ -25,9 +25,26 @@ const app = express();
 // Seguridad y parsing
 app.use(helmet());
 app.use(express.json());
+
+// CORS
+const defaultAllowedOrigins = [
+	'https://todoapp-roll-foi68rhtk-kpbaldurs-projects.vercel.app',
+	'http://localhost:5173'
+];
+const allowedOrigins = (process.env.CORS_ORIGINS
+	? process.env.CORS_ORIGINS.split(',').map(o => o.trim()).filter(Boolean)
+	: defaultAllowedOrigins);
+
 app.use(cors({
-  origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:5173'],
-  credentials: true
+	origin: (origin, callback) => {
+		// Permitir llamadas sin header Origin (p.ej. health checks, curl)
+		if (!origin) return callback(null, true);
+		if (allowedOrigins.includes(origin)) return callback(null, true);
+		return callback(new Error('Not allowed by CORS'));
+	},
+	credentials: true,
+	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+	allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Sesiones
