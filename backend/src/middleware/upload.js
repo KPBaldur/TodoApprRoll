@@ -1,5 +1,10 @@
 import multer from 'multer';
 import { fileURLToPath } from 'url';
+import multer from 'multer';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
