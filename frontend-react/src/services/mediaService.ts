@@ -1,63 +1,80 @@
-// MediaService - Updated for Cloudinary integration
-import { get, post, put, del, postForm } from './api'
+// ✅ frontend-react/src/services/mediaService.ts
 
-export type MediaItem = {
+export type MediaKind = 'audio' | 'image' | 'video' | 'file';
+
+export interface MediaItem {
   id: string;
-  type: 'audio' | 'image' | 'video' | 'file';
+  type: MediaKind;
   name: string;
-  path: string; // p.e. /uploads/123-file.mp3 o URL externa
-  cloudinaryId?: string; // public_id (si existe)
-};
-
-const BASE = '/api/media';
-
-export async function listMedia(): Promise<MediaItem[]> {
-  const json = await get<{ success: boolean; data: { media: MediaItem[]; count: number }; message?: string }>(`${BASE}`)
-  if (!json.success) throw new Error(json.message || 'Error al listar media');
-  return json.data.media as MediaItem[];
+  path: string;
+  cloudinaryId?: string;
 }
 
-export async function uploadMedia(file: File, name?: string) {
-  const allowedTypes = ['audio/', 'image/', 'video/'];
-  if (!allowedTypes.some(prefix => file.type.startsWith(prefix))) {
-    throw new Error(`Tipo de archivo no permitido: ${file.type}`);
-  }
+const API_BASE =
+  import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+/** Listar todos los elementos multimedia */
+export async function listMedia(): Promise<MediaItem[]> {
+  const res = await fetch(`${API_BASE}/api/media`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error(`Error al listar medios: ${res.status}`);
+  const json = await res.json();
+  return json.data?.media || [];
+}
+
+/** Agregar un medio existente (por URL) */
+export async function addMediaByUrl(payload: {
+  name: string;
+  path: string;
+  type?: MediaKind;
+}): Promise<MediaItem> {
+  const res = await fetch(`${API_BASE}/api/media`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(`Error al agregar medio: ${res.status}`);
+  const json = await res.json();
+  return json.data?.item;
+}
+
+/** Subir archivo (multipart/form-data con campo "file") */
+export async function uploadMedia(file: File, name?: string): Promise<MediaItem> {
   const formData = new FormData();
   formData.append('file', file);
   if (name) formData.append('name', name);
 
-  const json = await postForm<{ success: boolean; data: { item: MediaItem } }>('/api/media/upload', formData)
-  if (!json.success) throw new Error('Error al subir archivo multimedia');
-  return json.data.item as MediaItem;
+  const res = await fetch(`${API_BASE}/api/media/upload`, {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,
+  });
+  if (!res.ok) throw new Error(`Error al subir medio: ${res.status}`);
+  const json = await res.json();
+  return json.data?.item;
 }
 
-// Alta por JSON (URL existente)
-export async function addMediaByUrl(path: string, name: string, type?: MediaItem['type']): Promise<MediaItem> {
-  const json = await post<{ success: boolean; data: { item: MediaItem } }>(`${BASE}`, { path, name, type })
-  if (!json.success) throw new Error('Error al registrar URL');
-  return json.data.item as MediaItem;
-}
-
+/** Renombrar un medio */
 export async function renameMedia(id: string, name: string): Promise<MediaItem> {
-  const json = await put<{ success: boolean; data: { item: MediaItem } }>(`${BASE}/${id}`, { name })
-  if (!json.success) throw new Error('Error al renombrar');
-  return json.data.item as MediaItem;
+  const res = await fetch(`${API_BASE}/api/media/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) throw new Error(`Error al renombrar medio: ${res.status}`);
+  const json = await res.json();
+  return json.data?.item;
 }
 
+/** Eliminar un medio */
 export async function deleteMedia(id: string): Promise<void> {
-  const json = await del<{ success: boolean }>(`${BASE}/${id}`)
-  if (!json.success) throw new Error('Error al eliminar');
-}
-
-export function filterMediaByType(media: MediaItem[], type: 'audio' | 'image' | 'video'): MediaItem[]{
-  return media.filter(m => m.type === type);
-}
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
-
-export function getMediaUrl(media: MediaItem): string {
-  if (!media.path) return '';
-  if (media.path.startsWith('http')) return media.path;
-  return `${API_BASE}${media.path}`;
+  const res = await fetch(`${API_BASE}/api/media/${id}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error(`Error al eliminar medio: ${res.status}`);
 }

@@ -49,7 +49,7 @@ export default function MediaPage() {
     if (!urlPath || !urlName) return;
     setLoading(true); setError(undefined);
     try {
-      await addMediaByUrl(urlPath, urlName);
+      await addMediaByUrl({ path: urlPath, name: urlName });
       setUrlPath(''); setUrlName('');
       await reload();
     } catch (e: any) {
