@@ -1,12 +1,11 @@
 /**
  * Controlador de Biblioteca Multimedia
  * Persistencia en media.json con items { id, type: 'audio'|'image'|'gif'|'mp3', name, path }
+ * Ahora usa Cloudinary para almacenamiento de archivos
  */
 import { v4 as uuidv4 } from 'uuid';
 import Storage from '../services/storage.js';
-import fs from 'fs';
-import path from 'path';
-import { uploadsDir } from '../middleware/upload.js';
+import { v2 as cloudinary } from 'cloudinary';
 
 function detectTypeByFile(file) {
   const mime = file?.mimetype || '';
@@ -69,16 +68,35 @@ const upload = async (req, res, next) => {
 
     const customName = req.body?.name;
     const type = detectTypeByFile(file);
-    const publicPath = `/uploads/${file.filename}`;
     const name = customName || file.originalname;
 
+    // Subir a Cloudinary
+    const result = await cloudinary.uploader.upload(
+      `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+      {
+        resource_type: 'auto',
+        folder: 'todoapp-media',
+        public_id: `${Date.now()}-${name.replace(/\s+/g, '-')}`,
+        overwrite: false
+      }
+    );
+
     const media = await Storage.getMedia();
-    const item = { id: uuidv4(), type, name, path: publicPath };
+    const item = { 
+      id: uuidv4(), 
+      type, 
+      name, 
+      path: result.secure_url,
+      cloudinaryId: result.public_id
+    };
     media.push(item);
     await Storage.saveMedia(media);
 
-    res.status(201).json({ success: true, message: 'Archivo subido', data: { item } });
-  } catch (err) { next(err); }
+    res.status(201).json({ success: true, message: 'Archivo subido a Cloudinary', data: { item } });
+  } catch (err) { 
+    console.error('Error uploading to Cloudinary:', err);
+    next(err); 
+  }
 };
 
 const remove = async (req, res, next) => {
@@ -89,11 +107,15 @@ const remove = async (req, res, next) => {
     if (idx === -1) return res.status(404).json({ success: false, message: 'Item no encontrado' });
 
     const item = media[idx];
-    // Si el archivo está dentro de /uploads, eliminar del disco
-    if (item.path && item.path.startsWith('/uploads/')) {
-      const abs = path.join(uploadsDir, path.basename(item.path));
-      if (fs.existsSync(abs)) {
-        try { await fs.promises.unlink(abs); } catch (e) { /* ignorar */ }
+    
+    // Si tiene cloudinaryId, eliminar de Cloudinary
+    if (item.cloudinaryId) {
+      try {
+        await cloudinary.uploader.destroy(item.cloudinaryId);
+        console.log(`Archivo eliminado de Cloudinary: ${item.cloudinaryId}`);
+      } catch (cloudinaryErr) {
+        console.error('Error eliminando de Cloudinary:', cloudinaryErr);
+        // Continuar con la eliminación local aunque falle Cloudinary
       }
     }
 

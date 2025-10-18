@@ -20,6 +20,12 @@ services:
         value: /opt/render/project/src/database/json
       - key: UPLOADS_DIR
         value: /opt/render/project/src/uploads
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
     persistentDisk:
       - name: todoapp-data
         mountPath: /opt/render/project/src/database
