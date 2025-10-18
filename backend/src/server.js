@@ -14,85 +14,94 @@ import mediaRoutes from './routes/media.js';
 import configRoutes from './routes/config.js';
 import historyRoutes from './routes/history.js';
 import { errorHandler } from './middleware/error.js';
-// app.use('/uploads', express.static(uploadsDir)); // Cloudinary se encarga del hosting de archivos
 
-
+// ========================================================
+// 🔧 Configuración inicial
+// ========================================================
 dotenv.config();
-
-// Configurar Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// CORS - DEBE ir ANTES que helmet y otros middlewares
-console.log('CORS_ORIGINS from env:', process.env.CORS_ORIGINS);
+// ========================================================
+// ☁️ Configurar Cloudinary
+// ========================================================
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
+console.log('✅ Cloudinary configurado correctamente');
+
+// ========================================================
+// 🌐 Configuración de CORS
+// ========================================================
 const defaultAllowedOrigins = [
-	/\.vercel\.app$/,  // Permite cualquier subdominio de Vercel
-	'http://localhost:5173'
+  /\.vercel\.app$/, // cualquier subdominio de vercel.app
+  'http://localhost:5173',
 ];
 
-const allowedOrigins = (process.env.CORS_ORIGINS
-	? process.env.CORS_ORIGINS.split(',').map(o => o.trim()).filter(Boolean)
-	: defaultAllowedOrigins);
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map(o => o.trim()).filter(Boolean)
+  : defaultAllowedOrigins;
 
-app.use(cors({
-  origin: (origin, callback) => {
-    console.log('CORS check for origin:', origin);
-    
-    if (!origin) {
-      console.log('No origin header, allowing request');
-      return callback(null, true);
-    }
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      const isAllowed = allowedOrigins.some(o =>
+        typeof o === 'string' ? o === origin : o.test(origin)
+      );
+      if (isAllowed) callback(null, true);
+      else callback(new Error(`Not allowed by CORS: ${origin}`));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
 
-    const isAllowed = allowedOrigins.some(o => {
-      if (typeof o === "string") {
-        return o === origin;
-      } else if (o instanceof RegExp) {
-        return o.test(origin);
-      }
-      return false;
-    });
+console.log('✅ CORS configurado con orígenes permitidos:', allowedOrigins);
 
-    if (isAllowed) {
-      console.log('Origin allowed:', origin);
-      callback(null, true);
-    } else {
-      console.log('Origin REJECTED:', origin, 'Allowed origins:', allowedOrigins);
-      callback(new Error(`Not allowed by CORS: ${origin}`));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
+// ========================================================
+// 🛡️ Seguridad y middlewares básicos
+// ========================================================
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false,
+  })
+);
+app.use(express.json({ limit: '10mb' })); // Aumenta el límite para archivos base64
 
-// Seguridad y parsing - DESPUÉS de CORS
-app.use(helmet({ 
-	crossOriginResourcePolicy: false, 
-	crossOriginEmbedderPolicy: false 
-}));
-app.use(express.json());
+// ========================================================
+// 🔒 Configuración de sesiones
+// ========================================================
+if (!process.env.SESSION_SECRET) {
+  console.warn(
+    '⚠️ SESSION_SECRET no está definido. Usa un valor seguro en producción.'
+  );
+}
 
-// Sesiones
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'default-secret-key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false, sameSite: 'lax' }
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'fallback-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production', // solo HTTPS en producción
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60 * 24, // 1 día
+    },
+  })
+);
 
-// Servir archivos estáticos
-app.use('/uploads', express.static(uploadsDir));
-
-// Rutas
+// ========================================================
+// 🧭 Rutas principales
+// ========================================================
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/alarms', alarmRoutes);
@@ -100,11 +109,22 @@ app.use('/api/media', mediaRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/history', historyRoutes);
 
-// Salud del servicio
-app.get('/health', (_, res) => res.json({ ok: true }));
+// ========================================================
+// 🩺 Health Check
+// ========================================================
+app.get('/health', (_, res) => res.json({ ok: true, service: 'TodoApp API' }));
 
-// Middleware de error
+// ========================================================
+// ⚠️ Middleware global de manejo de errores
+// ========================================================
 app.use(errorHandler);
 
+// ========================================================
+// 🚀 Inicialización del servidor
+// ========================================================
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`[API] running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 [API] corriendo en puerto ${PORT}`);
+  console.log(`🌍 Entorno: ${process.env.NODE_ENV || 'development'}`);
+});
+  
