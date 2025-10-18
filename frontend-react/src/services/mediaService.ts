@@ -64,12 +64,8 @@ export async function listMedia(): Promise<MediaItem[]> {
 }
 
 /** Registrar un recurso ya alojado (URL directa de Cloudinary o externa) */
-export async function addMediaByUrl(params: {
-  name: string;
-  path: string;   // URL
-  type?: MediaKind;
-}): Promise<MediaItem> {
-  const json = await apiJson<ApiSimpleResp<{ item: MediaItem }>>('/api/media', 'POST', params);
+export async function addMediaByUrl(path: string, name: string, type?: MediaKind): Promise<MediaItem> {
+  const json = await apiJson<ApiSimpleResp<{ item: MediaItem }>>('/api/media', 'POST', { path, name, type });
   return json.data!.item;
 }
 
@@ -92,4 +88,13 @@ export async function renameMedia(id: string, name: string): Promise<MediaItem> 
 /** Eliminar un item */
 export async function deleteMedia(id: string): Promise<void> {
   await apiJson<ApiSimpleResp>(`/api/media/${id}`, 'DELETE');
+}
+
+/** Obtener URL completa para un item de media */
+export function getMediaUrl(media: MediaItem): string {
+  if (!media.path) return '';
+  // Si ya es una URL completa (Cloudinary o externa), usarla directamente
+  if (media.path.startsWith('http')) return media.path;
+  // Para rutas locales (compatibilidad con archivos antiguos)
+  return `${API_BASE}${media.path}`;
 }
