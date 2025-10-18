@@ -14,7 +14,8 @@ import mediaRoutes from './routes/media.js';
 import configRoutes from './routes/config.js';
 import historyRoutes from './routes/history.js';
 import { errorHandler } from './middleware/error.js';
-import { uploadsDir } from './middleware/upload.js';
+// app.use('/uploads', express.static(uploadsDir)); // Cloudinary se encarga del hosting de archivos
+
 
 dotenv.config();
 
