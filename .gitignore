@@ -1,0 +1,5 @@
+# Backend local Postgres data
+apps/backend/pgdata/
+
+# Backend local env
+apps/backend/.env
