@@ -12,16 +12,14 @@ datasource db {
 }
 
 // ---------------------------------------------------------
-// MODELOS PRINCIPALES
+// USER
 // ---------------------------------------------------------
-
 model User {
   id        String   @id @default(cuid())
   username  String   @unique
   passHash  String
   createdAt DateTime @default(now())
 
-  // Relaciones
   tasks     Task[]
   media     Media[]
   alarms    Alarm[]
@@ -36,14 +34,17 @@ model Task {
   userId      String
   title       String
   description String?
-  status      String   @default("pending") // pending | working | completed | archived
-  priority    String   @default("medium")  // low | medium | high | critical
-  alarmId     String?                      // Relación con una alarma (opcional)
+  status      String   @default("pending")
+  priority    String   @default("medium")
+  alarmId     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   user  User  @relation(fields: [userId], references: [id])
-  alarm Alarm? @relation(fields: [alarmId], references: [id])
+  alarm Alarm? @relation("TaskAlarm", fields: [alarmId], references: [id])
+
+  @@index([userId, status])
+  @@index([userId, createdAt])
 }
 
 // ---------------------------------------------------------
@@ -55,7 +56,7 @@ model Media {
   name        String
   url         String
   publicId    String
-  type        String   // 'audio' | 'image' | 'video'
+  type        String
   durationSec Int?
   width       Int?
   height      Int?
@@ -63,7 +64,6 @@ model Media {
 
   user User @relation(fields: [userId], references: [id])
 
-  // Relaciones inversas para Alarm
   alarmsAsAudio Alarm[] @relation("AlarmAudio")
   alarmsAsImage Alarm[] @relation("AlarmImage")
 }
@@ -87,7 +87,7 @@ model Alarm {
   user  User   @relation(fields: [userId], references: [id])
   audio Media? @relation("AlarmAudio", fields: [audioId], references: [id])
   image Media? @relation("AlarmImage", fields: [imageId], references: [id])
-  tasks Task[] // Relación inversa hacia Task (si una alarma está vinculada)
+  tasks Task[] @relation("TaskAlarm")
 }
 
 // ---------------------------------------------------------
@@ -99,6 +99,7 @@ model History {
   entity      String
   action      String
   payloadJson String
+  category    String?
   createdAt   DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
