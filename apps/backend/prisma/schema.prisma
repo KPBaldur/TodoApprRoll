@@ -1,35 +1,54 @@
+// ---------------------------------------------------------
+// PRISMA SCHEMA - TodoApp Roll v3.0
+// ---------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
+// ---------------------------------------------------------
+// MODELOS PRINCIPALES
+// ---------------------------------------------------------
 
 model User {
   id        String   @id @default(cuid())
   username  String   @unique
   passHash  String
   createdAt DateTime @default(now())
+
+  // Relaciones
   tasks     Task[]
   media     Media[]
   alarms    Alarm[]
   history   History[]
 }
 
+// ---------------------------------------------------------
+// TASK
+// ---------------------------------------------------------
 model Task {
   id          String   @id @default(cuid())
   userId      String
   title       String
   description String?
-  status      String   @default("pending")
-  dueDate     DateTime?
+  status      String   @default("pending") // pending | working | completed | archived
+  priority    String   @default("medium")  // low | medium | high | critical
+  alarmId     String?                      // Relación con una alarma (opcional)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id])
+
+  user  User  @relation(fields: [userId], references: [id])
+  alarm Alarm? @relation(fields: [alarmId], references: [id])
 }
 
+// ---------------------------------------------------------
+// MEDIA
+// ---------------------------------------------------------
 model Media {
   id          String   @id @default(cuid())
   userId      String
@@ -41,12 +60,17 @@ model Media {
   width       Int?
   height      Int?
   createdAt   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id])
-  // back-relations para desambiguar
+
+  user User @relation(fields: [userId], references: [id])
+
+  // Relaciones inversas para Alarm
   alarmsAsAudio Alarm[] @relation("AlarmAudio")
   alarmsAsImage Alarm[] @relation("AlarmImage")
 }
 
+// ---------------------------------------------------------
+// ALARM
+// ---------------------------------------------------------
 model Alarm {
   id         String   @id @default(cuid())
   userId     String
@@ -59,11 +83,16 @@ model Alarm {
   enabled    Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
   user  User   @relation(fields: [userId], references: [id])
   audio Media? @relation("AlarmAudio", fields: [audioId], references: [id])
   image Media? @relation("AlarmImage", fields: [imageId], references: [id])
+  tasks Task[] // Relación inversa hacia Task (si una alarma está vinculada)
 }
 
+// ---------------------------------------------------------
+// HISTORY
+// ---------------------------------------------------------
 model History {
   id          String   @id @default(cuid())
   userId      String
@@ -71,5 +100,6 @@ model History {
   action      String
   payloadJson String
   createdAt   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id])
+
+  user User @relation(fields: [userId], references: [id])
 }
