@@ -3,6 +3,7 @@ import prisma from "../services/prismaService";
 import { generateAccessToken } from "../utils/token";
 import { Request, Response } from "express";
 import { createSession } from "../services/token.service";
+import { logHistory } from "@services/historyService";
 
 
 
@@ -27,6 +28,8 @@ export const register = async (req: Request, res: Response) => {
 
     // 🔥 Creamos la sesión usando el user.id real
     const session = await createSession(user.id);
+    await logHistory(user.id, "User", "REGISTER", { username });
+
 
     res.status(201).json({
       message: "Usuario creado exitosamente.",
@@ -52,6 +55,7 @@ export const login = async (req: Request, res: Response) => {
 
     // 🔥 Creamos la sesión y devolvemos ambos tokens
     const session = await createSession(user.id);
+    await logHistory(user.id, "User", "LOGIN", { timestamp: new Date() });
 
     res.json({
       message: "Inicio de sesión exitoso.",

@@ -1,7 +1,7 @@
 import cron from "node-cron";
 import prisma from "./prismaService";
 import { playAudio } from "../utils/audioPlayer";
-
+import { runMaintenance } from "./maintenanceService";
 interface ActiveAlarm {
     id: string;
     name: string;
@@ -77,3 +77,8 @@ const triggerAlarm = async (alarm: ActiveAlarm) => {
     setTimeout(() => triggerAlarm(alarm), alarm.snoozeMins * 60000);
   }
 };
+
+cron.schedule("0 */48 * * *", async () => {
+  console.log("Iniciando tarea programada de mantenimiento...");
+  await runMaintenance();
+});

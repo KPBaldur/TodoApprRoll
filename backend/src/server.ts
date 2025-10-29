@@ -8,6 +8,7 @@ import tokenRoutes from "./routes/token.routes";
 import taskRoutes from "./routes/taskRoutes";
 import alarmRoutes from "./routes/alarmRoutes"; 
 import { initializeAlarms } from "./services/schedulerService";
+import historyRoutes from "./routes/historyRoutes";
 
 dotnev.config();
 const app = express();
@@ -23,6 +24,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/token", tokenRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/alarms", alarmRoutes);
+app.use("/api/history", historyRoutes);
 
 app.get("/api/health", (req, res) => {
     res.json({ status: "ok", message: "Todo App Roll v3.0 backend online."});

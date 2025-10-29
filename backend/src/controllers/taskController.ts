@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../services/prismaService";
 import { AuthRequest } from "../middleware/auth.middleware";
+import { logHistory } from "@services/historyService";
 
 // Obtener las tareas con el usuario autenticado
 export const getTasks = async (req: AuthRequest, res: Response) => {
@@ -34,6 +35,8 @@ export const createTask = async (req: AuthRequest, res: Response) => {
                 status: status || "pending",
             },
         });
+
+        await logHistory(req.userId!, "Task", "CREATE", task);
         res.status(201).json(task);
     } catch (error) {
         console.error("Error al crear la tarea:", error);
@@ -59,6 +62,7 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
             data: { title, description, priority, status },
         });
 
+        await logHistory(req.userId!, "Task", "UPDATE", updated);
         res.json(updated);
     } catch (error) {
         console.error("Error al actualizar la tarea:", error);
@@ -79,6 +83,7 @@ export const deleteTask = async ( req: AuthRequest, res: Response) => {
             return res.status(404).json({ message: "Tarea no encontrada" });
 
         await prisma.task.delete({ where: { id }});
+        await logHistory(req.userId!, "Task", "DELETE", existing);
         res.json({ message: "Tarea eliminada correctamente"});
     } catch (error) {
         console.error("Error al eliminar tarea: ", error);

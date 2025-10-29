@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../services/prismaService";
 import { AuthRequest } from "../middleware/auth.middleware";
+import { logHistory } from "@services/historyService";
 
 // Obtener todas las alarmas del usuario autenticado
 export const getAlarms = async (req: AuthRequest, res: Response) => {
@@ -41,6 +42,7 @@ export const createAlarm = async (req: AuthRequest, res: Response) => {
             },
         });
 
+        await logHistory(req.userId!, "Alarm", "CREATE", alarm);
         res.status(201).json(alarm);
     } catch (error) {
         console.error("Error al crear alarma:", error);
@@ -74,6 +76,7 @@ export const updateAlarm = async (req: AuthRequest, res: Response) => {
             },
         });
 
+        await logHistory(req.userId!, "Alarm", "UPDATE", updated);
         res.json(updated);
     } catch (error) {
         console.error("Error al actualizar alarma:", error);
@@ -93,7 +96,9 @@ export const deleteAlarm = async (req: AuthRequest, res: Response) => {
     if (!existing)
       return res.status(404).json({ message: "Alarma no encontrada" });
 
+    
     await prisma.alarm.delete({ where: { id } });
+    await logHistory(req.userId!, "Alarm", "DELETE", existing);
     res.json({ message: "Alarma eliminada correctamente" });
   } catch (error) {
     console.error("Error al eliminar alarma:", error);
