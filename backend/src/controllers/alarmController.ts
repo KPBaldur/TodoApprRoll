@@ -52,6 +52,51 @@ export const createAlarm = async (req: AuthRequest, res: Response) => {
 export const updateAlarm = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        const { name, audioId, imageId, scheduleAt, snoozeMins, enable}
+        const { name, audioId, imageId, scheduleAt, snoozeMins, enable, cronExpr } = req.body;
+
+        const existing = await prisma.alarm.findFirst({
+            where: { id, userId: req.userId },
+        });
+
+        if (!existing)
+            return res.status(404).json({ message: "Alarma no encontrada" });
+
+        const updated = await prisma.alarm.update({
+            where: { id },
+            data: {
+                name,
+                audioId,
+                imageId,
+                scheduleAt: scheduleAt ? new Date(scheduleAt) : null,
+                snoozeMins,
+                enabled: enable || false,
+                cronExpr,
+            },
+        });
+
+        res.json(updated);
+    } catch (error) {
+        console.error("Error al actualizar alarma:", error);
+        res.status(500).json({ message: "Error al actualizar alarma"});
     }
-}
+};
+
+// Eliminar una alarma
+export const deleteAlarm = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const existing = await prisma.alarm.findFirst({
+      where: { id, userId: req.userId },
+    });
+
+    if (!existing)
+      return res.status(404).json({ message: "Alarma no encontrada" });
+
+    await prisma.alarm.delete({ where: { id } });
+    res.json({ message: "Alarma eliminada correctamente" });
+  } catch (error) {
+    console.error("Error al eliminar alarma:", error);
+    res.status(500).json({ message: "Error al eliminar alarma" });
+  }
+};

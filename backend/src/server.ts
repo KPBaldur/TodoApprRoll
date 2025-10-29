@@ -6,6 +6,8 @@ import { PrismaClient } from "@prisma/client";
 import authRoutes from "./routes/auth.routes";
 import tokenRoutes from "./routes/token.routes";
 import taskRoutes from "./routes/taskRoutes";
+import alarmRoutes from "./routes/alarmRoutes"; 
+import { initializeAlarms } from "./services/schedulerService";
 
 dotnev.config();
 const app = express();
@@ -20,6 +22,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/token", tokenRoutes);
 app.use("/api/tasks", taskRoutes);
+app.use("/api/alarms", alarmRoutes);
 
 app.get("/api/health", (req, res) => {
     res.json({ status: "ok", message: "Todo App Roll v3.0 backend online."});
@@ -37,3 +40,4 @@ app.get("/api/test.db", async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Backend corriendo en puerto ${PORT}`));
+initializeAlarms();
