@@ -12,6 +12,7 @@ model User {
   username  String    @unique
   passHash  String
   createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now())   @updatedAt
   alarms    Alarm[]
   history   History[]
   media     Media[]
