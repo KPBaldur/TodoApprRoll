@@ -1,5 +1,5 @@
 import express from "express";
-import { authenticateToken } from "../middleware/auth.middleware";
+import { authenticateToken } from "../middleware/authMiddleware";
 import {
     getTasks,
     createTask,
