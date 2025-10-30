@@ -1,12 +1,6 @@
-DATABASE_URL="postgresql://neondb_owner:npg_K2ZdV3ugfykh@ep-green-hall-ac0wzba5-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-
-# Persistencia de token de acceso
+DATABASE_URL="postgresql://<user>:<password>@<host>/<db>?sslmode=require"
+JWT_SECRET=TodoAppRollSecretKey
 ACCESS_TOKEN_EXPIRES=30m
 REFRESH_TOKEN_EXPIRES=2d
-
+CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>
 PORT=4000
-JWT_SECRET=TodoAppRollSecretKey
-
-CLOUDINARY_URL=cloudinary://585154771594746:rERHyJyRCGpcJJhBxW10RMEqDa0@TodoAppRoll
-
-const PORT = parseInt(process.env.PORT || "3000", 10);
