@@ -1,6 +1,6 @@
 import express from "express";
 import { getUserHistory } from "@controllers/historyController";
-import { authenticateToken } from "@middleware/auth.middleware";
+import { authenticateToken } from "@middleware/authMiddleware";
 
 const router = express.Router();
 
