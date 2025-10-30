@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../services/prismaService";
-import { AuthRequest } from "../middleware/auth.middleware";
+import { AuthRequest } from "../middleware/authMiddleware";
 import { logHistory } from "@services/historyService";
 
 // Obtener todas las alarmas del usuario autenticado
