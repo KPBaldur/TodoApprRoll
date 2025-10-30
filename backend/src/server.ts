@@ -5,8 +5,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
 
-import authRoutes from "./routes/auth.routes";
-import tokenRoutes from "./routes/token.routes";
+import authRoutes from "./routes/authRoutes";
+import tokenRoutes from "./routes/tokenRoutes";
 import taskRoutes from "./routes/taskRoutes";
 import alarmRoutes from "./routes/alarmRoutes"; 
 import historyRoutes from "./routes/historyRoutes";
@@ -21,6 +21,13 @@ dotenv.config();
 app.use(helmet());
 app.use(cors({ origin: "*"}));
 app.use(express.json());
+
+process.on("uncaughtException", err => {
+  console.error("🔥 Excepción no controlada:", err);
+});
+process.on("unhandledRejection", err => {
+  console.error("🔥 Promesa no controlada:", err);
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/token", tokenRoutes);
@@ -51,4 +58,3 @@ console.log("DATABASE_URL:", process.env.DATABASE_URL ? "OK (oculto por segurida
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Backend corriendo en puerto ${PORT}`));
-initializeAlarms();
