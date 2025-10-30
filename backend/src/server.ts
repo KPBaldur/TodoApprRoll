@@ -1,30 +1,34 @@
 import express from "express";
-import cors from "cors";
 import helmet from "helmet";
-import dotnev from "dotenv";
+import cors from "cors";
+
+import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
+
 import authRoutes from "./routes/auth.routes";
 import tokenRoutes from "./routes/token.routes";
 import taskRoutes from "./routes/taskRoutes";
 import alarmRoutes from "./routes/alarmRoutes"; 
-import { initializeAlarms } from "./services/schedulerService";
 import historyRoutes from "./routes/historyRoutes";
+import mediaRoutes from "./routes/mediaRoutes";
+import userRoutes from "./routes/userRoutes";
 
-dotnev.config();
-const app = express();
+import { initializeAlarms } from "./services/schedulerService";
+
 const prisma = new PrismaClient();
-console.log("✅ Archivo .env cargado correctamente");
-console.log("DATABASE_URL:", process.env.DATABASE_URL ? "OK (oculto por seguridad)" : "❌ No cargado");
-
-
+const app = express();
+dotenv.config();
 app.use(helmet());
 app.use(cors({ origin: "*"}));
 app.use(express.json());
+
 app.use("/api/auth", authRoutes);
 app.use("/api/token", tokenRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/alarms", alarmRoutes);
 app.use("/api/history", historyRoutes);
+app.use("/api/media", mediaRoutes);
+app.use("/api/users", userRoutes);
 
 app.get("/api/health", (req, res) => {
     res.json({ status: "ok", message: "Todo App Roll v3.0 backend online."});
@@ -39,6 +43,11 @@ app.get("/api/test.db", async (req, res) => {
         res.status(500).json({ error: "Error conectando a la base de datos"});
     }
 });
+
+
+
+console.log("✅ Archivo .env cargado correctamente");
+console.log("DATABASE_URL:", process.env.DATABASE_URL ? "OK (oculto por seguridad)" : "❌ No cargado");
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Backend corriendo en puerto ${PORT}`));
