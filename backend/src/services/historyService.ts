@@ -1,4 +1,4 @@
-import prisma from "@services/prismaService";
+import prisma from "./prismaService";
 
 export const logHistory = async (
     userId: string,

@@ -2,7 +2,7 @@ import prisma from "../services/prismaService";
 import { Request, Response } from "express";
 import { AuthRequest } from "../middleware/authMiddleware";
 import * as userService from "../services/userService";
-import { logHistory } from "@services/historyService";
+import { logHistory } from "../services/historyService";
 
 // Obtener perfil de usuario autenticado
 export const getProfile = async (req: AuthRequest, res: Response) => {

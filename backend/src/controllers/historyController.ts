@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import prisma from "@services/prismaService";
+import prisma from "../services/prismaService";
 
 export const getUserHistory = async (req: Request, res: Response) => {
     try {

@@ -4,7 +4,7 @@ import prisma from "../services/prismaService";
 import { generateAccessToken } from "../utils/token";
 import { Request, Response } from "express";
 import { createSession } from "../services/tokenService";
-import { logHistory } from "@services/historyService";
+import { logHistory } from "../services/historyService";
 
 
 

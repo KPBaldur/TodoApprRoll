@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { refreshSession, revokeSession } from "../services/tokenService";
-import { logHistory } from "@services/historyService";
+import { logHistory } from "../services/historyService";
 import { verifyToken } from "../utils/token";
 
 // ✅ Refrescar Access Token
