@@ -24,7 +24,6 @@ export default function LoginPage() {
     <main className="center">
       <section className="login-card" aria-label="Formulario de inicio de sesión">
         <header className="brand">
-          <img src="/assets/LogoAntartica.svg" alt="Logo" className="logo" />
           <h1>Inicio de sesión</h1>
           <p className="subtitle">Ingresa tus credenciales</p>
         </header>
@@ -36,7 +35,7 @@ export default function LoginPage() {
             id="usuario"
             value={usuario}
             onChange={(e) => setUsuario(e.target.value)}
-            placeholder="Tu usuario"
+            placeholder="  Tu usuario"
             required
             autoComplete="username"
           />
@@ -47,7 +46,7 @@ export default function LoginPage() {
             id="contrasena"
             value={contrasena}
             onChange={(e) => setContrasena(e.target.value)}
-            placeholder="Tu contraseña"
+            placeholder="  Tu contraseña"
             required
             autoComplete="current-password"
           />

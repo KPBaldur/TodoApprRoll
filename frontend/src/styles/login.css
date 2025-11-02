@@ -11,59 +11,81 @@
 html, body { height: 100%; }
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  color: var(--text-light);
-  /* Fondo: primero un degradado, luego la imagen (cuando se agregue a assets/bg.jpg) */
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background-image:
-    linear-gradient(135deg, rgba(15, 23, 42, 0.55) 0%, rgba(11, 43, 51, 0.55) 45%, rgba(5, 36, 42, 0.55) 100%),
-    url("assets/background.jpg");
+    linear-gradient(135deg, rgba(15, 23, 42, 0.35) 0%, rgba(11, 43, 51, 0.35) 45%, rgba(5, 36, 42, 0.35) 100%),
+    url("/login/background.jpg");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
-  display: grid;
-  place-items: center;
-  padding: 32px;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  color: var(--text-light);
 }
 
 .center { width: 100%; }
 
 /* Tarjeta con efecto Glass Morphism */
 .login-card {
-  max-width: 400px;
+  max-width: 650px;
   margin: 0 auto;
-  padding: 28px 24px;
-  border-radius: 18px;
+  padding: 32px 28px;
+  border-radius: 16px;
   background: var(--glass-bg);
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
   border: 1px solid var(--glass-border);
   box-shadow: 0 8px 32px rgba(8, 25, 35, 0.45);
+  text-align: left;
 }
 
 .brand { text-align: center; margin-bottom: 12px; }
 .brand .logo { width: 112px; height: 112px; display: inline-block; }
 .brand h1 {
-  margin: 6px 0 2px;
-  font-weight: 650;
+  margin: 6px 0 8px;
+  font-weight: 700;
   letter-spacing: 0.3px;
+  font-size: 1.9rem;
+  
 }
 .brand .subtitle { margin: 0; opacity: 0.8; font-size: 0.95rem; }
 
-.form { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.form label,
+.form input,
+.form button {
+  width: 100%;
+}
+
 label { font-size: 0.9rem; opacity: 0.9; }
 input {
   width: 100%;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.25);
-  background: rgba(255, 255, 255, 0.15);
-  color: var(--text-light);
+  padding: 16px 18px;               /* Aumenta la altura */
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;                   /* Texto blanco */
+  font-size: 1rem;
+  font-weight: 500;
   outline: none;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
 }
-input::placeholder { color: rgba(230,255,251,0.7); }
+input::placeholder {
+  color: rgba(255, 255, 255, 1);  /* Blanco suave */
+  font-weight: 400;
+}
 input:focus {
   border-color: var(--aqua);
-  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25);
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.35);
 }
 
 .actions {
@@ -71,7 +93,8 @@ input:focus {
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  margin-top: 4px;
+  margin-top: 16px;
+  width: 100%;
 }
 
 .forgot { color: var(--aqua); text-decoration: none; }
@@ -80,17 +103,25 @@ input:focus {
 .btn {
   appearance: none;
   border: none;
-  padding: 12px 18px;
-  border-radius: 12px;
+  padding: 14px 0;
+  border-radius: 8px;
   font-weight: 600;
   color: #022a27;
   background: linear-gradient(135deg, var(--aqua) 0%, var(--aqua-600) 100%);
   box-shadow: 0 10px 24px rgba(20, 184, 166, 0.35), inset 0 0 0 1px rgba(255,255,255,0.25);
   cursor: pointer;
   width: 100%;
+  transition: all 0.2s ease-in-out;
 }
-.btn:hover { filter: brightness(1.05); }
-.btn:active { transform: translateY(1px); }
+.btn:hover { filter: brightness(1.1); }
+.btn:active { transform: translateY(-2px); }
+
+@media (min-width: 1440px) {
+  .login-card {
+    width: 460px;
+    height: 440px;
+  }
+}
 
 @media (max-width: 640px) {
   body {
@@ -102,16 +133,23 @@ input:focus {
     justify-content: center;
   }
   .login-card {
-    width: 100%;
-    max-width: 380px;
-    padding: 22px 18px;
-    border-radius: 16px;
-    box-shadow: 0 6px 20px rgba(8, 25, 35, 0.35);
-    backdrop-filter: blur(12px) saturate(160%);
-    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    width: 440px;              /* antes 520px → más angosto */
+  height: 420px;             /* nuevo alto fijo */
+  max-width: 90vw;
+  margin: 0 auto;
+  padding: 36px 32px;
+  border-radius: 18px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px rgba(8, 25, 35, 0.45);
+  text-align: left;
+  position: relative;
+  z-index: 1;
   }
   .brand .logo { width: 96px; height: 96px; }
-  .brand h1 { font-size: 1.35rem; }
+  .brand h1 { font-size: 1.5rem; }
   .brand .subtitle { font-size: 0.9rem; }
   input { font-size: 16px; }
   .actions { flex-direction: column; gap: 10px; align-items: stretch; }
@@ -119,4 +157,40 @@ input:focus {
 }
 @media (max-width: 360px) {
   .login-card { max-width: 320px; }
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 30% 30%, rgba(45,212,191,0.08), transparent 60%),
+              radial-gradient(circle at 70% 70%, rgba(14,165,233,0.08), transparent 60%);
+  animation: pulse 10s ease-in-out infinite alternate;
+  z-index: 0;
+}
+
+@keyframes pulse {
+  from { filter: blur(40px) brightness(0.9); }
+  to { filter: blur(60px) brightness(1.1); }
+}
+
+#root {
+  max-width: none !important;
+  padding: 0 !important;
+  text-align: unset !important;
+}
+
+body {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100vh !important;
+  min-width: 100% !important;
+  padding: 0 !important;
+}
+
+/* Asegura que el login-card ocupe el espacio correcto */
+.login-card {
+  width: 440px !important;
+  max-width: 90vw !important;
 }
