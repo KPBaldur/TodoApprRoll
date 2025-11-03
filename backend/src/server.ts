@@ -1,6 +1,6 @@
 import express from "express";
-import helmet from "helmet";
 import cors, { CorsOptions } from "cors";
+import helmet from "helmet";
 import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
 
@@ -41,8 +41,6 @@ app.use(cors(corsOptions));
 app.use(helmet());
 app.use(express.json());
 
-
-
 process.on("uncaughtException", err => {
   console.error("🔥 Excepción no controlada:", err);
 });
@@ -71,8 +69,6 @@ app.get("/api/test.db", async (req, res) => {
         res.status(500).json({ error: "Error conectando a la base de datos"});
     }
 });
-
-
 
 console.log("✅ Archivo .env cargado correctamente");
 console.log("DATABASE_URL:", process.env.DATABASE_URL ? "OK (oculto por seguridad)" : "❌ No cargado");
