@@ -1,7 +1,6 @@
 import express from "express";
 import helmet from "helmet";
-import cors from "cors";
-
+import cors, { CorsOptions } from "cors";
 import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
 
@@ -15,12 +14,34 @@ import userRoutes from "./routes/userRoutes";
 
 import { initializeAlarms } from "./services/schedulerService";
 
+dotenv.config();
 const prisma = new PrismaClient();
 const app = express();
-dotenv.config();
+
+const allowedOrigins = [
+  "http://localhost:5174",
+  "https://todoapproll-frontend.vercel.app",
+];
+
+const corsOptions: CorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Origen no permitido por CORS"));
+    }
+  },
+  credentials: true, // permite cookies y headers de autenticación
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+
 app.use(helmet());
-app.use(cors({ origin: "*"}));
 app.use(express.json());
+
+
 
 process.on("uncaughtException", err => {
   console.error("🔥 Excepción no controlada:", err);
