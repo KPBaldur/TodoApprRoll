@@ -1,5 +1,5 @@
 import express from "express";
-import cors, { CorsOptions } from "cors";
+import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
@@ -23,20 +23,23 @@ const allowedOrigins = [
   "https://todoapproll-frontend.vercel.app",
 ];
 
-const corsOptions: CorsOptions = {
-  origin: (origin, callback) => {
+const corsOptions = {
+  origin: (origin: string | undefined, callback: any) => {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error("Origen no permitido por CORS"));
+      callback(new Error("CORS bloqueado para este origen."));
     }
   },
-  credentials: true, // permite cookies y headers de autenticación
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
 };
 
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.use(helmet());
 app.use(express.json());
@@ -86,5 +89,5 @@ app.get("/", (req, res) => {
 console.log("✅ Archivo .env cargado correctamente");
 console.log("DATABASE_URL:", process.env.DATABASE_URL ? "OK (oculto por seguridad)" : "❌ No cargado");
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Backend corriendo en puerto ${PORT}`));
