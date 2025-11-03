@@ -1,0 +1,13 @@
+:root {
+  --bg-dark: #141b2b;
+  --bg-panel: #1c2535;
+  --bg-hover: #243146;
+  --bg-gradient: linear-gradient(180deg, #182233, #1d293a);
+  --text-light: #eaf3ff;
+  --text-muted: #a5b2cc;
+  --primary: #0ea5e9;
+  --primary-hover: #38bdf8;
+  --danger: #ef4444;
+  --radius: 10px;
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.25);
+}

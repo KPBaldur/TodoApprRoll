@@ -1,151 +1,206 @@
-/* Layout general */
-.dashboard {
-  display: flex;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-  background: linear-gradient(135deg, #0b132b 0%, #1c2541 100%);
-  color: #f8fafc;
-  position: relative;
-  transition: background 0.5s ease;
-}
-
-/* Modo con fondo personalizado */
-.dashboard.custom-bg {
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-/* Sidebar */
-.sidebar {
-  background-color: rgba(28, 37, 65, 0.95);
-  color: #f8fafc;
-  width: 240px;
-  min-width: 240px;
-  transition: all 0.3s ease-in-out;
-  display: flex;
-  flex-direction: column;
-  border-right: 1px solid #3a506b;
-}
-
-.sidebar.closed {
-  width: 80px;
-  min-width: 80px;
-}
-
-/* Sidebar header */
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem;
-  font-weight: bold;
-  border-bottom: 1px solid #3a506b;
-}
-
-.app-title {
-  font-size: 1.2rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-.toggle-btn {
-  background: none;
-  color: #00a8e8;
-  border: none;
-  cursor: pointer;
-  font-size: 1.2rem;
-  transition: transform 0.2s ease;
-}
-.toggle-btn:hover {
-  transform: scale(1.2);
-}
-
-/* Sidebar menu */
-.sidebar-menu {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 0.5rem 0;
-  gap: 2px;
-}
-
-.menu-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0.8rem 1.2rem;
-  color: #e0f2fe;
-  text-decoration: none;
-  font-size: 0.95rem;
-  font-weight: 500;
-  transition: background 0.3s ease;
-}
-
-.menu-item:hover,
-.menu-item.active {
-  background: #3a506b;
-  color: #fff;
-}
-
-/* Main section */
+/* === Dashboard Layout === */
 .dashboard-main {
-  flex: 1;
+  margin-left: 240px;             /* espacio del sidebar */
+  margin-top: 60px;               /* espacio del header */
+  padding: 2rem 2.5rem;
+  min-height: calc(100vh - 60px);
+  color: var(--text-light);
+  overflow-y: auto;
+  backdrop-filter: blur(8px);
+  background: rgba(20, 27, 43, 0.4); /* capa de fondo translúcida */
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.25);
+}
+
+/* === Secciones principales === */
+.filters,
+.create-card {
+  background: rgba(28, 37, 53, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* === Filtros === */
+.filters {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.filters label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.filters input,
+.filters select {
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-light);
+  transition: all 0.2s ease;
+}
+
+.filters input:focus,
+.filters select:focus {
+  border-color: var(--primary);
+  outline: none;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* === Crear Tarea === */
+.create-card {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
+  gap: 1rem;
 }
 
-/* Header */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: rgba(11, 19, 43, 0.9);
-  padding: 1rem 2rem;
-  border-bottom: 1px solid #3a506b;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.header h1 {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #e2e8f0;
-}
-
-.logout-btn {
-  background: linear-gradient(135deg, #00a8e8, #3ddc97);
-  border: none;
-  padding: 0.6rem 1rem;
+.create-card input,
+.create-card textarea,
+.create-card select {
+  width: 100%;
+  padding: 0.7rem;
   border-radius: 8px;
-  color: #022a27;
-  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text-light);
+  transition: all 0.2s ease;
+}
+
+.create-card textarea {
+  resize: none;
+  min-height: 90px;
+}
+
+.create-card input:focus,
+.create-card textarea:focus,
+.create-card select:focus {
+  border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+}
+
+/* === Botones === */
+button,
+.btn {
+  background: linear-gradient(90deg, var(--primary), var(--primary-hover));
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
   cursor: pointer;
+  font-weight: 500;
+  transition: transform 0.2s ease, background 0.3s ease;
+}
+
+button:hover,
+.btn:hover {
+  background: linear-gradient(90deg, var(--primary-hover), #7dd3fc);
+  transform: scale(1.03);
+}
+
+/* === Chips de prioridad === */
+.priority-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.chip {
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.chip.low {
+  border-color: #22c55e88;
+}
+.chip.medium {
+  border-color: #f59e0b88;
+}
+.chip.high {
+  border-color: #ef444488;
+}
+
+.chip.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.6);
+}
+
+/* === Lista de Tareas === */
+.list-title {
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 1rem 0 0.5rem;
+}
+
+.task-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.task-card {
+  background: rgba(28, 37, 53, 0.8);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1rem;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
-.logout-btn:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
+.task-card:hover {
+  background: rgba(40, 52, 75, 0.9);
+  transform: translateY(-2px);
 }
 
-/* Contenido del dashboard */
-.dashboard-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 2rem;
-  background: rgba(12, 21, 49, 0.4);
-  backdrop-filter: blur(4px);
+.task-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
 }
 
-/* Scrollbar estética */
-.dashboard-content::-webkit-scrollbar {
-  width: 8px;
+.task-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
 }
-.dashboard-content::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
+
+.task-controls {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.task-controls .btn {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+.task-controls .btn.danger {
+  background: #ef4444;
+}
+
+.task-controls .btn.danger:hover {
+  background: #f87171;
+}
+
+/* === Responsividad === */
+@media (max-width: 900px) {
+  .dashboard-main {
+    margin-left: 0;
+    padding: 1.2rem;
+  }
 }

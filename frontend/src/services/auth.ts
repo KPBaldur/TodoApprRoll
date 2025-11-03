@@ -1,4 +1,4 @@
-export const API_URL = "https://todoapproll-backend.onrender.com/api";
+export const API_URL = "/api";
 
 export async function loginUser(username: string, password: string) {
   const response = await fetch(`${API_URL}/auth/login`, {
