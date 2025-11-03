@@ -1,55 +1,151 @@
+/* Layout general */
 .dashboard {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #0b1120, #042f2e);
-  color: #e0fdfa;
-  font-family: system-ui, sans-serif;
-  padding: 2rem;
   display: flex;
-  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0b132b 0%, #1c2541 100%);
+  color: #f8fafc;
+  position: relative;
+  transition: background 0.5s ease;
 }
 
-.dashboard-header {
+/* Modo con fondo personalizado */
+.dashboard.custom-bg {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Sidebar */
+.sidebar {
+  background-color: rgba(28, 37, 65, 0.95);
+  color: #f8fafc;
+  width: 240px;
+  min-width: 240px;
+  transition: all 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #3a506b;
+}
+
+.sidebar.closed {
+  width: 80px;
+  min-width: 80px;
+}
+
+/* Sidebar header */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  font-weight: bold;
+  border-bottom: 1px solid #3a506b;
+}
+
+.app-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.toggle-btn {
+  background: none;
+  color: #00a8e8;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: transform 0.2s ease;
+}
+.toggle-btn:hover {
+  transform: scale(1.2);
+}
+
+/* Sidebar menu */
+.sidebar-menu {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0;
+  gap: 2px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.8rem 1.2rem;
+  color: #e0f2fe;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background 0.3s ease;
+}
+
+.menu-item:hover,
+.menu-item.active {
+  background: #3a506b;
+  color: #fff;
+}
+
+/* Main section */
+.dashboard-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Header */
+.header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  background-color: rgba(11, 19, 43, 0.9);
+  padding: 1rem 2rem;
+  border-bottom: 1px solid #3a506b;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
-.user-name {
-  color: #2dd4bf;
+.header h1 {
+  font-size: 1.2rem;
   font-weight: 600;
+  color: #e2e8f0;
 }
 
 .logout-btn {
-  background: linear-gradient(135deg, #2dd4bf, #14b8a6);
+  background: linear-gradient(135deg, #00a8e8, #3ddc97);
   border: none;
-  color: #022a27;
   padding: 0.6rem 1rem;
   border-radius: 8px;
+  color: #022a27;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
+
 .logout-btn:hover {
   filter: brightness(1.1);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
+/* Contenido del dashboard */
 .dashboard-content {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+  background: rgba(12, 21, 49, 0.4);
+  backdrop-filter: blur(4px);
 }
 
-.card {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
-  padding: 1.5rem;
-  backdrop-filter: blur(8px);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+/* Scrollbar estética */
+.dashboard-content::-webkit-scrollbar {
+  width: 8px;
 }
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 20px rgba(45, 212, 191, 0.2);
+.dashboard-content::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
 }

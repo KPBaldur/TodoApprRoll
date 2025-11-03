@@ -1,0 +1,48 @@
+.tasks-section {
+  padding: 1.5rem;
+  background: #f8fafc;
+  color: #0f172a;
+  min-height: 100vh;
+}
+
+.tasks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.add-task {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.add-task input {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+}
+
+.add-task button {
+  background: #06b6d4;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.task-item {
+  background: white;
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease-in-out;
+}
+
+.task-item.completed span {
+  text-decoration: line-through;
+  color: gray;
+}

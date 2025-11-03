@@ -35,7 +35,7 @@ export default function LoginPage() {
             id="usuario"
             value={usuario}
             onChange={(e) => setUsuario(e.target.value)}
-            placeholder="  Tu usuario"
+            placeholder=""
             required
             autoComplete="username"
           />
@@ -46,7 +46,7 @@ export default function LoginPage() {
             id="contrasena"
             value={contrasena}
             onChange={(e) => setContrasena(e.target.value)}
-            placeholder="  Tu contraseña"
+            placeholder=""
             required
             autoComplete="current-password"
           />

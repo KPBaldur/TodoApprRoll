@@ -1,0 +1,48 @@
+.app-header {
+    height: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 2rem;
+    background: linear-gradient(90deg, #1e293b 0%, #334155 100%);
+    border-bottom: 1px solid #475569;
+    color: #f8fafc;
+    position: sticky;
+    top: 0;
+    z-index: 90;
+    backdrop-filter: blur(8px);
+}
+
+app.title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #38bdf8
+}
+
+.logout-btn {
+    background: linear-gradient(90deg, #06b6d4, #22d3ee);
+    color: #0f172a;
+    font-weight: 600;
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+    background: linear-gradient(90deg, #22d3ee, #38bdf8);
+    transform: scale(1.05);
+}
+
+.dashboard-main {
+  margin-left: 240px; /* Espacio reservado para el Sidebar */
+  padding: 1.5rem;
+  background: #0f172a;
+  min-height: 100vh;
+  color: #f8fafc;
+}
+
+.app-title {
+  text-shadow: 0 1px 4px rgba(56, 189, 248, 0.4);
+}
