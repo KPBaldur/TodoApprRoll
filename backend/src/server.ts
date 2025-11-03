@@ -70,6 +70,19 @@ app.get("/api/test.db", async (req, res) => {
     }
 });
 
+app.get("/", (req, res) => {
+  res.send(`
+    <h2>🚀 TodoAppRoll Backend</h2>
+    <p>Servidor activo y corriendo correctamente.</p>
+    <p>Endpoints disponibles:</p>
+    <ul>
+      <li><a href="/api/health">/api/health</a></li>
+      <li><a href="/api/auth/login">/api/auth/login</a></li>
+      <li><a href="/api/tasks">/api/tasks</a></li>
+    </ul>
+  `);
+});
+
 console.log("✅ Archivo .env cargado correctamente");
 console.log("DATABASE_URL:", process.env.DATABASE_URL ? "OK (oculto por seguridad)" : "❌ No cargado");
 
