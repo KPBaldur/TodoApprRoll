@@ -1,13 +1,13 @@
 import express from "express";
-import cors from "cors";
 import helmet from "helmet";
+import cors from "cors";
 import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
 
 import authRoutes from "./routes/authRoutes";
 import tokenRoutes from "./routes/tokenRoutes";
 import taskRoutes from "./routes/taskRoutes";
-import alarmRoutes from "./routes/alarmRoutes"; 
+import alarmRoutes from "./routes/alarmRoutes";
 import historyRoutes from "./routes/historyRoutes";
 import mediaRoutes from "./routes/mediaRoutes";
 import userRoutes from "./routes/userRoutes";
@@ -18,35 +18,35 @@ dotenv.config();
 const prisma = new PrismaClient();
 const app = express();
 
+// ✅ Lista blanca simple
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
   "https://todoapproll-frontend.vercel.app",
 ];
 
-// ✅ Middleware CORS unificado y seguro
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
-    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    res.header("Access-Control-Allow-Credentials", "true");
-    return res.sendStatus(204);
-  }
-  next();
-});
+// ✅ Middleware CORS limpio y sin duplicaciones
+app.use(
+  cors({
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
 
-// ✅ Manejo explícito del preflight (Render exige esto)
-app.options("/*", cors());
-
-// 🧠 2. Luego de CORS, recién aquí helmet y el resto
+// ✅ Seguridad
 app.use(helmet());
 app.use(express.json());
 
-process.on("uncaughtException", err => {
+process.on("uncaughtException", (err) => {
   console.error("🔥 Excepción no controlada:", err);
 });
+process.on("unhandledRejection", (err) => {
+  console.error("🔥 Promesa no controlada:", err);
+});
 
+// ✅ Rutas
 app.use("/api/auth", authRoutes);
 app.use("/api/token", tokenRoutes);
 app.use("/api/tasks", taskRoutes);
@@ -55,25 +55,25 @@ app.use("/api/history", historyRoutes);
 app.use("/api/media", mediaRoutes);
 app.use("/api/users", userRoutes);
 
+// ✅ Rutas de test
 app.get("/api/health", (req, res) => {
-    res.json({ status: "ok", message: "Todo App Roll v3.0 backend online."});
+  res.json({ status: "ok", message: "Todo App Roll v3.0 backend online." });
 });
 
 app.get("/api/test.db", async (req, res) => {
-    try {
-        const users = await prisma.user.findMany();
-        res.json({ message: "Conexion a Neon exitosa", count: users.length});
-    } catch (error) {
-        console.error("Error de conexion:", error);
-        res.status(500).json({ error: "Error conectando a la base de datos"});
-    }
+  try {
+    const users = await prisma.user.findMany();
+    res.json({ message: "Conexion a Neon exitosa", count: users.length });
+  } catch (error) {
+    console.error("Error de conexion:", error);
+    res.status(500).json({ error: "Error conectando a la base de datos" });
+  }
 });
 
 app.get("/", (req, res) => {
   res.send(`
     <h2>🚀 TodoAppRoll Backend</h2>
     <p>Servidor activo y corriendo correctamente.</p>
-    <p>Endpoints disponibles:</p>
     <ul>
       <li><a href="/api/health">/api/health</a></li>
       <li><a href="/api/auth/login">/api/auth/login</a></li>
