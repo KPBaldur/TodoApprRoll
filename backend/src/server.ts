@@ -18,11 +18,23 @@ dotenv.config();
 const prisma = new PrismaClient();
 const app = express();
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:5174",
-  "https://todoapproll-frontend.vercel.app",
-];
+const allowedOrigins =
+  process.env.NODE_ENV === "development"
+    ? ["http://localhost:5173", "http://localhost:5174"]
+    : ["https://todoapproll-frontend.vercel.app"];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Credentials", "true");
+
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
 
 const corsOptions = {
   origin: (origin: string | undefined, callback: any) => {
@@ -76,9 +88,6 @@ app.use(
 );
 
 // 🧠 2. Luego de CORS, recién aquí helmet y el resto
-app.use(helmet());
-app.use(express.json());
-
 app.use(helmet());
 app.use(express.json());
 
