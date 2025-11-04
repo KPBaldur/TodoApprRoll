@@ -39,7 +39,7 @@ const LoginPage: React.FC = () => {
         <div className="brand">
           <img src="/logo.svg" alt="TodoAppRoll" className="logo" />
           <h1>TodoAppRoll</h1>
-          <p className="subtitle">Tu espacio personal de organización</p>
+          <p className="subtitle">Mi espacio personal de organización</p>
         </div>
 
         <form className="form" onSubmit={handleSubmit}>
@@ -49,7 +49,7 @@ const LoginPage: React.FC = () => {
             id="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="Ej: BaldurDev"
+            placeholder="User name"
             autoFocus
             required
           />
@@ -70,7 +70,7 @@ const LoginPage: React.FC = () => {
         {error && <p style={{ color: "#f87171", marginTop: "10px" }}>{error}</p>}
 
         <div className="actions">
-          <p>Bienvenido de nuevo, creador ✨</p>
+          <p>Bienvenido de nuevo, Baldur ✨</p>
         </div>
       </div>
     </div>
