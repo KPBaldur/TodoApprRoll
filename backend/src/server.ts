@@ -18,49 +18,26 @@ dotenv.config();
 const prisma = new PrismaClient();
 const app = express();
 
-const allowedOrigins =
-  process.env.NODE_ENV === "development"
-    ? ["http://localhost:5173", "http://localhost:5174"]
-    : ["https://todoapproll-frontend.vercel.app"];
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://todoapproll-frontend.vercel.app",
+];
 
-// === 🔐 Configuración ÚNICA y segura de CORS ===
-// ⚠️ Colocar SIEMPRE antes de helmet() y express.json()
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-  }
-
-  res.header(
-    "Access-Control-Allow-Methods",
-    "GET,POST,PUT,DELETE,PATCH,OPTIONS"
-  );
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, X-Requested-With"
-  );
-  res.header("Access-Control-Allow-Credentials", "true");
-
-  // ✅ Manejo del preflight request (OPTIONS)
-  if (req.method === "OPTIONS") {
-    return res.status(204).end();
-  }
-
-  next();
-});
-
+// ✅ Middleware CORS unificado y seguro
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Origen no permitido por CORS"));
-      }
-    },
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   })
 );
+
+// ✅ Manejo explícito del preflight (Render exige esto)
+app.options("*", cors());
 
 // 🧠 2. Luego de CORS, recién aquí helmet y el resto
 app.use(helmet());
