@@ -15,7 +15,7 @@ const LoginPage: React.FC = () => {
 
     try {
       const res = await axios.post(
-        "https://todoapprroll.onrender.com/api/auth/login",
+        "https://todoapproll.onrender.com/api/auth/login",
         { username, password },
         { headers: { "Content-Type": "application/json" } }
       );

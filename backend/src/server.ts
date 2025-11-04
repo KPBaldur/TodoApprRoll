@@ -23,60 +23,35 @@ const allowedOrigins =
     ? ["http://localhost:5173", "http://localhost:5174"]
     : ["https://todoapproll-frontend.vercel.app"];
 
+// === 🔐 Configuración ÚNICA y segura de CORS ===
+// ⚠️ Colocar SIEMPRE antes de helmet() y express.json()
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin && allowedOrigins.includes(origin)) {
     res.header("Access-Control-Allow-Origin", origin);
   }
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.header("Access-Control-Allow-Credentials", "true");
 
-  if (req.method === "OPTIONS") return res.sendStatus(204);
-  next();
-});
-
-const corsOptions = {
-  origin: (origin: string | undefined, callback: any) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("CORS bloqueado para este origen."));
-    }
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
-};
-
-// 🧱 1. Configuración de CORS — SIEMPRE antes de helmet() y express.json()
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
   res.header(
     "Access-Control-Allow-Methods",
-    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    "GET,POST,PUT,DELETE,PATCH,OPTIONS"
   );
   res.header(
     "Access-Control-Allow-Headers",
     "Content-Type, Authorization, X-Requested-With"
   );
   res.header("Access-Control-Allow-Credentials", "true");
+
+  // ✅ Manejo del preflight request (OPTIONS)
   if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
+    return res.status(204).end();
   }
+
   next();
 });
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      const allowedOrigins = [
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "https://todoapproll-frontend.vercel.app",
-      ];
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -93,9 +68,6 @@ app.use(express.json());
 
 process.on("uncaughtException", err => {
   console.error("🔥 Excepción no controlada:", err);
-});
-process.on("unhandledRejection", err => {
-  console.error("🔥 Promesa no controlada:", err);
 });
 
 app.use("/api/auth", authRoutes);
