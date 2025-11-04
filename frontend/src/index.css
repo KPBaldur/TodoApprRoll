@@ -1,11 +1,11 @@
-/* === GLOBAL RESET === */
+/* === GLOBAL RESET === 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* === ESTRUCTURA BASE === */
+/* === ESTRUCTURA BASE
 html, body, #root {
   width: 100%;
   height: 100%;
@@ -15,13 +15,13 @@ html, body, #root {
   overflow: hidden;
 }
 
-/* === ENLACES === */
+ENLACES
 a {
   text-decoration: none;
   color: inherit;
 }
 
-/* === SCROLLBAR === */
+SCROLLBAR 
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -30,10 +30,11 @@ a {
   border-radius: 4px;
 }
 
-/* === LAYOUT GENERAL === */
+LAYOUT GENERAL
 body {
   display: flex;
   flex-direction: column;
   background-color: rgba(20, 27, 43, 0.85);
   backdrop-filter: blur(6px);
 }
+*/

@@ -1,17 +1,8 @@
-/* Paleta y configuración */
-:root {
-  --aqua: #2dd4bf;         /* verde agua principal */
-  --aqua-600: #14b8a6;     /* tono más intenso */
-  --glass-bg: rgba(255, 255, 255, 0.08);
-  --glass-border: rgba(255, 255, 255, 0.25);
-  --text-light: #e6fffb;
-}
-
-* { box-sizing: border-box; }
-html, body { height: 100%; }
-body {
-  margin: 0;
-  height: 100vh;
+/* === Login Page === */
+.login-page {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -21,147 +12,15 @@ body {
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  overflow: hidden;
+  font-family: "Inter", system-ui, sans-serif;
   color: var(--text-light);
 }
 
-.center { width: 100%; }
-
-/* Tarjeta con efecto Glass Morphism */
-.login-card {
-  max-width: 650px;
-  margin: 0 auto;
-  padding: 32px 28px;
-  border-radius: 16px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(18px) saturate(160%);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 8px 32px rgba(8, 25, 35, 0.45);
-  text-align: left;
-}
-
-.brand { text-align: center; margin-bottom: 12px; }
-.brand .logo { width: 112px; height: 112px; display: inline-block; }
-.brand h1 {
-  margin: 6px 0 8px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  font-size: 1.9rem;
-  
-}
-.brand .subtitle { margin: 0; opacity: 0.8; font-size: 0.95rem; }
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  width: 100%;
-}
-
-.form label,
-.form input,
-.form button {
-  width: 100%;
-}
-
-label { font-size: 0.9rem; opacity: 0.9; }
-input {
-  width: 100%;
-  padding: 16px 18px;               /* Aumenta la altura */
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;                   /* Texto blanco */
-  font-size: 1rem;
-  font-weight: 500;
-  outline: none;
-  transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
-}
-input::placeholder {
-  color: rgba(255, 255, 255, 1);  /* Blanco suave */
-  font-weight: 400;
-}
-input:focus {
-  border-color: var(--aqua);
-  background: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.35);
-}
-
-.actions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  margin-top: 16px;
-  width: 100%;
-}
-
-.forgot { color: var(--aqua); text-decoration: none; }
-.forgot:hover { text-decoration: underline; }
-
-.btn {
-  appearance: none;
-  border: none;
-  padding: 14px 0;
-  border-radius: 8px;
-  font-weight: 600;
-  color: #022a27;
-  background: linear-gradient(135deg, var(--aqua) 0%, var(--aqua-600) 100%);
-  box-shadow: 0 10px 24px rgba(20, 184, 166, 0.35), inset 0 0 0 1px rgba(255,255,255,0.25);
-  cursor: pointer;
-  width: 100%;
-  transition: all 0.2s ease-in-out;
-}
-.btn:hover { filter: brightness(1.1); }
-.btn:active { transform: translateY(-2px); }
-
-@media (min-width: 1440px) {
-  .login-card {
-    width: 460px;
-    height: 440px;
-  }
-}
-
-@media (max-width: 640px) {
-  body {
-    min-height: 100svh;
-    padding: clamp(16px, 5vw, 24px);
-    background-attachment: scroll;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .login-card {
-    width: 440px;              /* antes 520px → más angosto */
-  height: 420px;             /* nuevo alto fijo */
-  max-width: 90vw;
-  margin: 0 auto;
-  padding: 36px 32px;
-  border-radius: 18px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 8px 32px rgba(8, 25, 35, 0.45);
-  text-align: left;
-  position: relative;
-  z-index: 1;
-  }
-  .brand .logo { width: 96px; height: 96px; }
-  .brand h1 { font-size: 1.5rem; }
-  .brand .subtitle { font-size: 0.9rem; }
-  input { font-size: 16px; }
-  .actions { flex-direction: column; gap: 10px; align-items: stretch; }
-  .btn { width: 100%; }
-}
-@media (max-width: 360px) {
-  .login-card { max-width: 320px; }
-}
-
-body::before {
+/* === Efecto de luz animado === */
+.login-page::before {
   content: "";
-  position: fixed;
+  position: absolute;
   inset: 0;
   background: radial-gradient(circle at 30% 30%, rgba(45,212,191,0.08), transparent 60%),
               radial-gradient(circle at 70% 70%, rgba(14,165,233,0.08), transparent 60%);
@@ -174,23 +33,112 @@ body::before {
   to { filter: blur(60px) brightness(1.1); }
 }
 
-#root {
-  max-width: none !important;
-  padding: 0 !important;
-  text-align: unset !important;
-}
-
-body {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-height: 100vh !important;
-  min-width: 100% !important;
-  padding: 0 !important;
-}
-
-/* Asegura que el login-card ocupe el espacio correcto */
+/* === Tarjeta principal === */
 .login-card {
-  width: 440px !important;
-  max-width: 90vw !important;
+  position: relative;
+  z-index: 1;
+  width: 440px;
+  max-width: 90vw;
+  padding: 36px 32px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 32px rgba(8, 25, 35, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  color: var(--text-light);
+}
+
+/* === Marca === */
+.brand {
+  text-align: center;
+  margin-bottom: 0.8rem;
+}
+.brand .logo {
+  width: 100px;
+  height: 100px;
+}
+.brand h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin: 0.3rem 0;
+}
+.brand .subtitle {
+  font-size: 0.9rem;
+  opacity: 0.75;
+}
+
+/* === Formulario === */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form label {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.form input {
+  padding: 16px 18px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 1rem;
+  transition: all 0.25s ease;
+}
+
+.form input:focus {
+  border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.3);
+  outline: none;
+}
+
+.form input[type="text"],
+.form input[type="password"] {
+  width: 100%;
+  padding: 16px 18px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 1rem;
+  transition: all 0.25s ease;
+}
+
+/* === Botón principal === */
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 14px 0;
+  font-weight: 600;
+  color: #022a27;
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  box-shadow: 0 10px 24px rgba(14, 165, 233, 0.35);
+  cursor: pointer;
+  transition: all 0.25s ease-in-out;
+}
+.btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+/* === Extras === */
+.actions {
+  margin-top: 1rem;
+  text-align: center;
+}
+.actions a {
+  color: var(--primary);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+.actions a:hover {
+  text-decoration: underline;
 }

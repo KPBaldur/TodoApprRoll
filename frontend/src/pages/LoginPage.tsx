@@ -1,63 +1,80 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import "../styles/login.css";
-import { loginUser } from "../services/auth";
 
-export default function LoginPage() {
-  const [usuario, setUsuario] = useState("");
-  const [contrasena, setContrasena] = useState("");
+const LoginPage: React.FC = () => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
     try {
-      const res = await loginUser(usuario, contrasena);
-      if (res) {
-        localStorage.setItem("token", res.accessToken);
-        window.location.href = "/dashboard";
-      }
-    } catch {
-      setError("Credenciales incorrectas. Intenta nuevamente.");
+      const res = await axios.post(
+        "https://todoapprroll.onrender.com/api/auth/login",
+        { username, password },
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      // Guardar tokens en localStorage
+      localStorage.setItem("accessToken", res.data.accessToken);
+      localStorage.setItem("refreshToken", res.data.refreshToken);
+      localStorage.setItem("username", username);
+
+      // Redirigir al Dashboard
+      navigate("/dashboard");
+    } catch (err: any) {
+      console.error("Error al iniciar sesión:", err);
+      setError("Usuario o contraseña incorrectos");
     }
   };
 
   return (
-    <main className="center">
-      <section className="login-card" aria-label="Formulario de inicio de sesión">
-        <header className="brand">
-          <h1>Inicio de sesión</h1>
-          <p className="subtitle">Ingresa tus credenciales</p>
-        </header>
+    <div className="login-page">
+      <div className="login-card">
+        <div className="brand">
+          <img src="/logo.svg" alt="TodoAppRoll" className="logo" />
+          <h1>TodoAppRoll</h1>
+          <p className="subtitle">Tu espacio personal de organización</p>
+        </div>
 
-        <form className="form" autoComplete="on" onSubmit={handleSubmit}>
-          <label htmlFor="usuario">Usuario</label>
+        <form className="form" onSubmit={handleSubmit}>
+          <label htmlFor="username">Nombre de usuario</label>
           <input
             type="text"
-            id="usuario"
-            value={usuario}
-            onChange={(e) => setUsuario(e.target.value)}
-            placeholder=""
+            id="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Ej: BaldurDev"
+            autoFocus
             required
-            autoComplete="username"
           />
 
-          <label htmlFor="contrasena">Contraseña</label>
+          <label htmlFor="password">Contraseña</label>
           <input
             type="password"
-            id="contrasena"
-            value={contrasena}
-            onChange={(e) => setContrasena(e.target.value)}
-            placeholder=""
+            id="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="********"
             required
-            autoComplete="current-password"
           />
 
-          {error && <p style={{ color: "salmon", textAlign: "center" }}>{error}</p>}
-
-          <div className="actions">
-            <button className="btn" type="submit">Login</button>
-          </div>
+          <button type="submit" className="btn">Ingresar</button>
         </form>
-      </section>
-    </main>
+
+        {error && <p style={{ color: "#f87171", marginTop: "10px" }}>{error}</p>}
+
+        <div className="actions">
+          <p>Bienvenido de nuevo, creador ✨</p>
+        </div>
+      </div>
+    </div>
   );
-}
+};
+
+export default LoginPage;
