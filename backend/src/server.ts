@@ -36,10 +36,14 @@ app.use(
 );
 
 // ✅ Seguridad
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false,
+  })
+);
+
 app.use(express.json());
-app.use(helmet());
-
-
 
 process.on("uncaughtException", (err) => {
   console.error("🔥 Excepción no controlada:", err);
