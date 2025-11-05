@@ -25,35 +25,21 @@ const allowedOrigins = [
   "https://todoapproll-frontend.vercel.app",
 ];
 
-// ✅ Middleware CORS seguro y compatible
+// ✅ Middleware CORS limpio y sin duplicaciones
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`CORS bloqueado para origen: ${origin}`));
-      }
-    },
-    credentials: true,
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   })
 );
 
-// ✅ Parser JSON antes de Helmet
+// ✅ Seguridad
 app.use(express.json());
+app.use(helmet());
 
-// ✅ Helmet después de CORS
-app.use(
-  helmet({
-    crossOriginResourcePolicy: false,
-    crossOriginEmbedderPolicy: false,
-  })
-);
 
-// ✅ Manejador de preflight (Render)
-app.options("*", cors());
 
 process.on("uncaughtException", (err) => {
   console.error("🔥 Excepción no controlada:", err);
