@@ -17,7 +17,12 @@ const LoginPage: React.FC = () => {
       const res = await axios.post(
         "https://todoapproll.onrender.com/api/auth/login",
         { username, password },
-        { headers: { "Content-Type": "application/json" }, withCredentials: true }
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true, // 👈 importante
+        }
       );
 
       // Guardar tokens en localStorage
