@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { loginUser } from "../services/auth";
 import "../styles/login.css";
 
 const LoginPage: React.FC = () => {
@@ -14,27 +14,18 @@ const LoginPage: React.FC = () => {
     setError("");
 
     try {
-      const res = await axios.post(
-        "https://todoapproll.onrender.com/api/auth/login",
-        { username, password },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true, // 👈 importante
-        }
-      );
+      const res = await loginUser(username, password);
 
-      // Guardar tokens en localStorage
-      localStorage.setItem("accessToken", res.data.accessToken);
-      localStorage.setItem("refreshToken", res.data.refreshToken);
+      // Guardar tokens
+      localStorage.setItem("accessToken", res.accessToken);
+      localStorage.setItem("refreshToken", res.refreshToken);
       localStorage.setItem("username", username);
 
-      // Redirigir al Dashboard
+      console.log("✅ Sesión iniciada correctamente.");
       navigate("/dashboard");
     } catch (err: any) {
-      console.error("Error al iniciar sesión:", err);
-      setError("Usuario o contraseña incorrectos");
+      console.error("❌ Error al iniciar sesión:", err.message);
+      setError(err.message || "Usuario o contraseña incorrectos");
     }
   };
 
@@ -72,7 +63,9 @@ const LoginPage: React.FC = () => {
           <button type="submit" className="btn">Ingresar</button>
         </form>
 
-        {error && <p style={{ color: "#f87171", marginTop: "10px" }}>{error}</p>}
+        {error && (
+          <p style={{ color: "#f87171", marginTop: "10px" }}>{error}</p>
+        )}
 
         <div className="actions">
           <p>Bienvenido de nuevo, Baldur ✨</p>
