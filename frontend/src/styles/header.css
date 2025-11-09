@@ -9,7 +9,6 @@
   align-items: center;
   padding: 0 1.8rem;
   background: rgba(30, 41, 59, 0.95);
-  border-bottom: 1px solid #475569;
   color: #f8fafc;
   z-index: 1000;
   backdrop-filter: blur(12px);
