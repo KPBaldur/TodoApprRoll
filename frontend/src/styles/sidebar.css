@@ -1,9 +1,8 @@
 .sidebar {
   position: fixed;
-  top: 60px; /* justo debajo del header */
   left: 0;
   width: 240px;
-  height: calc(100vh - 60px);
+  height: 100%;
   background-color: rgba(11, 19, 43, 0.94);
   backdrop-filter: blur(12px);
   border-right: 1px solid #1e293b;

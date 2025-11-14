@@ -11,7 +11,7 @@ body,
   width: 100%;
   height: 100%;
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
-  background: url("/backgrounds/aurora-night.jpg") no-repeat center center fixed;
+  background: url("/backgrounds/background.jpg") no-repeat center center fixed;
   background-size: cover;
   color: var(--text-light);
   overflow: hidden;
