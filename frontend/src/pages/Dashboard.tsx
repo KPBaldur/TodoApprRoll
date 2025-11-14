@@ -146,8 +146,10 @@ export default function Dashboard() {
       <main className="dashboard-main">
         <Header />
 
-        {/* Filtros */}
-        <section className="filters">
+        {/* Área de trabajo */}
+        <div className="work-area">
+          {/* Filtros */}
+          <section className="filters">
           <div className="filter-row">
             <div>
               <label>Estado:</label>
@@ -238,23 +240,23 @@ export default function Dashboard() {
           )}
         </section>
 
-        {/* Chips prioridad */}
-        <section className="priority-chips">
-          <button className={`chip low ${priority==="low" ? "active":""}`} onClick={()=>setPriority(priority==="low"?"all":"low")}>
-            Prioridad baja
-          </button>
-          <button className={`chip medium ${priority==="medium" ? "active":""}`} onClick={()=>setPriority(priority==="medium"?"all":"medium")}>
-            Prioridad media
-          </button>
-          <button className={`chip high ${priority==="high" ? "active":""}`} onClick={()=>setPriority(priority==="high"?"all":"high")}>
-            Prioridad alta
-          </button>
-        </section>
+          {/* Chips prioridad */}
+          <section className="priority-chips">
+            <button className={`chip low ${priority==="low" ? "active":""}`} onClick={()=>setPriority(priority==="low"?"all":"low")}>
+              Prioridad baja
+            </button>
+            <button className={`chip medium ${priority==="medium" ? "active":""}`} onClick={()=>setPriority(priority==="medium"?"all":"medium")}>
+              Prioridad media
+            </button>
+            <button className={`chip high ${priority==="high" ? "active":""}`} onClick={()=>setPriority(priority==="high"?"all":"high")}>
+              Prioridad alta
+            </button>
+          </section>
 
-        {/* Lista de tareas */}
-        <h3 className="list-title">Tareas activas</h3>
-        {loading ? <p className="muted">Cargando…</p> : null}
-        <div className="task-list">
+          {/* Lista de tareas */}
+          <h3 className="list-title">Tareas activas</h3>
+          {loading ? <p className="muted">Cargando…</p> : null}
+          <div className="task-list">
           {tasks.map(task => (
             <article key={task.id} className={`task-card prio-${String(task.priority).toLowerCase()}`}>
               <header className="task-head">
@@ -306,6 +308,7 @@ export default function Dashboard() {
           {!loading && tasks.length === 0 && (
             <p className="muted">No hay tareas que coincidan con los filtros.</p>
           )}
+          </div>
         </div>
       </main>
     </div>
