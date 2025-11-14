@@ -77,36 +77,67 @@ export default function Dashboard() {
     await load();
   }
 
-  async function onChangeStatus(id: number, st: Status) {
-    await updateTaskStatus(id, st);
-    await load();
+  async function onChangeStatus(id: string, st: Status) {
+    try {
+      const task = tasks.find(t => t.id === id);
+      await updateTaskStatus(id, st, task);
+      await load();
+    } catch (error) {
+      console.error("Error al cambiar estado:", error);
+      alert("No se pudo cambiar el estado de la tarea");
+    }
   }
 
-  async function onDelete(id: number) {
+  async function onDelete(id: string) {
     if (!confirm("¿Eliminar esta tarea?")) return;
-    await deleteTask(id);
-    await load();
+    try {
+      await deleteTask(id);
+      await load();
+    } catch (error) {
+      console.error("Error al eliminar:", error);
+      alert("No se pudo eliminar la tarea");
+    }
   }
 
-  async function onAddSubtask(id: number, name: string) {
+  async function onAddSubtask(id: string, name: string) {
     if (!name.trim()) return;
-    await addSubtask(id, name.trim());
-    await load();
+    try {
+      await addSubtask(id, name.trim());
+      await load();
+    } catch (error: any) {
+      console.error("Error al añadir subtarea:", error);
+      alert(error.message || "Funcionalidad no disponible todavía");
+    }
   }
 
-  async function onToggleSubtask(taskId: number, subId: number, done: boolean) {
-    await toggleSubtask(taskId, subId, done);
-    await load();
+  async function onToggleSubtask(taskId: string, subId: string, done: boolean) {
+    try {
+      await toggleSubtask(taskId, subId, done);
+      await load();
+    } catch (error: any) {
+      console.error("Error al actualizar subtarea:", error);
+      alert(error.message || "Funcionalidad no disponible todavía");
+    }
   }
 
-  async function onDeleteSubtask(taskId: number, subId: number) {
-    await deleteSubtask(taskId, subId);
-    await load();
+  async function onDeleteSubtask(taskId: string, subId: string) {
+    try {
+      await deleteSubtask(taskId, subId);
+      await load();
+    } catch (error: any) {
+      console.error("Error al eliminar subtarea:", error);
+      alert(error.message || "Funcionalidad no disponible todavía");
+    }
   }
 
-  async function onLinkAlarm(id: number) {
-    await linkAlarm(id);
-    await load();
+  async function onLinkAlarm(id: string) {
+    try {
+      await linkAlarm(id);
+      await load();
+    } catch (error: any) {
+      console.error("Error al vincular alarma:", error);
+      alert(error.message || "Funcionalidad no disponible todavía");
+    }
   }
 
   return (

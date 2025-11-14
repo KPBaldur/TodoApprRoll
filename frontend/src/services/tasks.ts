@@ -1,12 +1,50 @@
 // src/services/tasks.ts
-const API = "/api";
+import { getToken, refreshAccessToken } from "./auth";
+
+// Usar URL absoluta para cloud (Render)
+const API_URL = "https://todoapprroll.onrender.com/api";
+// En desarrollo local, usar: const API_URL = "/api";
 
 function authHeaders() {
-  const token = localStorage.getItem("token");
+  const token = getToken();
   return {
     "Content-Type": "application/json",
     Authorization: token ? `Bearer ${token}` : "",
   };
+}
+
+/**
+ * Wrapper para fetch que maneja automáticamente la renovación de tokens
+ */
+async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+  let response = await fetch(url, {
+    ...options,
+    headers: {
+      ...authHeaders(),
+      ...options.headers,
+    },
+  });
+
+  // Si el token expiró (401), intentamos renovarlo
+  if (response.status === 401) {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      // Reintentamos la petición con el nuevo token
+      response = await fetch(url, {
+        ...options,
+        headers: {
+          ...authHeaders(),
+          ...options.headers,
+        },
+      });
+    } else {
+      // Si no pudimos renovar, redirigir al login
+      window.location.href = "/";
+      throw new Error("Sesión expirada. Por favor, inicia sesión nuevamente.");
+    }
+  }
+
+  return response;
 }
 
 /** Tipos básicos (ajustados al schema del backend) */
@@ -15,20 +53,20 @@ export type Status = "pending" | "in_progress" | "completed" | "archived" |
                      "PENDING" | "IN_PROGRESS" | "COMPLETED" | "ARCHIVED";
 
 export interface Subtask {
-  id: number;
+  id: string;
   title: string;
   done: boolean;
 }
 
 export interface Task {
-  id: number;
+  id: string;
   title: string;
   description?: string | null;
   priority: Priority;
   status: Status;
   createdAt?: string;
   subtasks?: Subtask[];
-  alarmId?: number | null;
+  alarmId?: string | null;
 }
 
 /** Listar tareas con filtros */
@@ -46,7 +84,7 @@ export async function fetchTasks(params: {
   if (params.sortBy) query.set("sortBy", params.sortBy);
   if (params.order) query.set("order", params.order);
 
-  const res = await fetch(`${API}/tasks?${query.toString()}`, { headers: authHeaders() });
+  const res = await fetchWithAuth(`${API_URL}/tasks?${query.toString()}`);
   if (!res.ok) throw new Error("No se pudieron cargar las tareas");
   return (await res.json()) as Task[];
 }
@@ -58,9 +96,8 @@ export async function createTask(payload: {
   description?: string;
   linkAlarm?: boolean; // si quieres vincular alarma a la creación
 }) {
-  const res = await fetch(`${API}/tasks`, {
+  const res = await fetchWithAuth(`${API_URL}/tasks`, {
     method: "POST",
-    headers: authHeaders(),
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error("No se pudo crear la tarea");
@@ -68,73 +105,56 @@ export async function createTask(payload: {
 }
 
 /** Editar tarea */
-export async function updateTask(id: number, payload: Partial<Task>) {
-  const res = await fetch(`${API}/tasks/${id}`, {
+export async function updateTask(id: string, payload: Partial<Task>) {
+  const res = await fetchWithAuth(`${API_URL}/tasks/${id}`, {
     method: "PUT",
-    headers: authHeaders(),
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error("No se pudo actualizar la tarea");
   return (await res.json()) as Task;
 }
 
-/** Cambiar estado */
-export async function updateTaskStatus(id: number, status: Status) {
-  const res = await fetch(`${API}/tasks/${id}/status`, {
-    method: "PATCH",
-    headers: authHeaders(),
-    body: JSON.stringify({ status }),
-  });
-  if (!res.ok) throw new Error("No se pudo cambiar el estado");
-  return (await res.json()) as Task;
+/** Cambiar estado - Usa PUT ya que el backend no tiene endpoint PATCH /status */
+export async function updateTaskStatus(id: string, status: Status, currentTask?: Task) {
+  // Si ya tenemos la tarea actual, la usamos. Si no, la obtenemos.
+  let task = currentTask;
+  if (!task) {
+    const tasks = await fetchTasks({});
+    task = tasks.find(t => t.id === id);
+    if (!task) throw new Error("Tarea no encontrada");
+  }
+  
+  // Actualizamos solo el status usando PUT
+  return updateTask(id, { ...task, status });
 }
 
 /** Eliminar */
-export async function deleteTask(id: number) {
-  const res = await fetch(`${API}/tasks/${id}`, {
+export async function deleteTask(id: string) {
+  const res = await fetchWithAuth(`${API_URL}/tasks/${id}`, {
     method: "DELETE",
-    headers: authHeaders(),
   });
   if (!res.ok) throw new Error("No se pudo eliminar la tarea");
   return true;
 }
 
-/** Subtareas */
-export async function addSubtask(taskId: number, title: string) {
-  const res = await fetch(`${API}/tasks/${taskId}/subtasks`, {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify({ title }),
-  });
-  if (!res.ok) throw new Error("No se pudo añadir la subtarea");
-  return (await res.json()) as Subtask;
+/** Subtareas - TEMPORALMENTE DESHABILITADO hasta que el backend lo implemente */
+export async function addSubtask(_taskId: string, _title: string) {
+  console.warn("Funcionalidad de subtareas no disponible todavía.");
+  throw new Error("Funcionalidad de subtareas no disponible todavía");
 }
 
-export async function toggleSubtask(taskId: number, subtaskId: number, done: boolean) {
-  const res = await fetch(`${API}/tasks/${taskId}/subtasks/${subtaskId}`, {
-    method: "PATCH",
-    headers: authHeaders(),
-    body: JSON.stringify({ done }),
-  });
-  if (!res.ok) throw new Error("No se pudo actualizar la subtarea");
-  return (await res.json()) as Subtask;
+export async function toggleSubtask(_taskId: string, _subtaskId: string, _done: boolean) {
+  console.warn("Funcionalidad de subtareas no disponible todavía.");
+  throw new Error("Funcionalidad de subtareas no disponible todavía");
 }
 
-export async function deleteSubtask(taskId: number, subtaskId: number) {
-  const res = await fetch(`${API}/tasks/${taskId}/subtasks/${subtaskId}`, {
-    method: "DELETE",
-    headers: authHeaders(),
-  });
-  if (!res.ok) throw new Error("No se pudo eliminar la subtarea");
-  return true;
+export async function deleteSubtask(_taskId: string, _subtaskId: string) {
+  console.warn("Funcionalidad de subtareas no disponible todavía.");
+  throw new Error("Funcionalidad de subtareas no disponible todavía");
 }
 
-/** Vincular alarma (el backend asigna nombre de la tarea a la alarma) */
-export async function linkAlarm(taskId: number) {
-  const res = await fetch(`${API}/alarms/link-task/${taskId}`, {
-    method: "POST",
-    headers: authHeaders(),
-  });
-  if (!res.ok) throw new Error("No se pudo vincular la alarma");
-  return await res.json();
+/** Vincular alarma - TEMPORALMENTE DESHABILITADO hasta verificar endpoint */
+export async function linkAlarm(_taskId: string) {
+  console.warn("Funcionalidad de vincular alarma no disponible todavía.");
+  throw new Error("Funcionalidad de vincular alarma no disponible todavía");
 }

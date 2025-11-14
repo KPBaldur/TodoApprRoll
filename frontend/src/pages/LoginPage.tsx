@@ -14,11 +14,9 @@ const LoginPage: React.FC = () => {
     setError("");
 
     try {
-      const res = await loginUser(username, password);
+      await loginUser(username, password);
 
-      // Guardar tokens
-      localStorage.setItem("accessToken", res.accessToken);
-      localStorage.setItem("refreshToken", res.refreshToken);
+      // Los tokens ya se guardan en loginUser, solo guardamos username
       localStorage.setItem("username", username);
 
       console.log("✅ Sesión iniciada correctamente.");
