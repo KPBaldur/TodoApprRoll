@@ -22,20 +22,33 @@ model User {
 }
 
 model Task {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   userId      String
   description String?
-  status      String   @default("pending")
-  priority    String   @default("medium")
+  status      String     @default("pending")
+  priority    String     @default("medium")
   alarmId     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
   title       String
-  alarm       Alarm?   @relation("TaskAlarm", fields: [alarmId], references: [id])
-  user        User     @relation(fields: [userId], references: [id])
+  alarm       Alarm?     @relation("TaskAlarm", fields: [alarmId], references: [id])
+  user        User       @relation(fields: [userId], references: [id])
+  subtasks    Subtask[]
 
   @@index([userId, status])
   @@index([userId, createdAt])
+}
+
+model Subtask {
+  id        String   @id @default(cuid())
+  taskId    String
+  title     String
+  done      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
 }
 
 model Media {

@@ -2,7 +2,7 @@
 import { getToken, refreshAccessToken } from "./auth";
 
 // Usar URL absoluta para cloud (Render)
-const API_URL = "https://todoapprroll.onrender.com/api";
+export const API_URL = "https://todoapprroll.onrender.com/api";
 // En desarrollo local, usar: const API_URL = "/api";
 
 function authHeaders() {
@@ -16,7 +16,7 @@ function authHeaders() {
 /**
  * Wrapper para fetch que maneja automáticamente la renovación de tokens
  */
-async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+export async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
   let response = await fetch(url, {
     ...options,
     headers: {
@@ -94,7 +94,7 @@ export async function createTask(payload: {
   title: string;
   priority: Priority;
   description?: string;
-  linkAlarm?: boolean; // si quieres vincular alarma a la creación
+  alarmId?: string | null;
 }) {
   const res = await fetchWithAuth(`${API_URL}/tasks`, {
     method: "POST",
@@ -137,24 +137,52 @@ export async function deleteTask(id: string) {
   return true;
 }
 
-/** Subtareas - TEMPORALMENTE DESHABILITADO hasta que el backend lo implemente */
-export async function addSubtask(_taskId: string, _title: string) {
-  console.warn("Funcionalidad de subtareas no disponible todavía.");
-  throw new Error("Funcionalidad de subtareas no disponible todavía");
+/** Agregar subtarea */
+export async function addSubtask(taskId: string, title: string) {
+  const res = await fetchWithAuth(`${API_URL}/tasks/${taskId}/subtasks`, {
+    method: "POST",
+    body: JSON.stringify({ title }),
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: "No se pudo crear la subtarea" }));
+    throw new Error(error.message || "No se pudo crear la subtarea");
+  }
+  return (await res.json()) as Subtask;
 }
 
-export async function toggleSubtask(_taskId: string, _subtaskId: string, _done: boolean) {
-  console.warn("Funcionalidad de subtareas no disponible todavía.");
-  throw new Error("Funcionalidad de subtareas no disponible todavía");
+/** Toggle subtarea (marcar como completada/pendiente) */
+export async function toggleSubtask(taskId: string, subtaskId: string, done: boolean) {
+  const res = await fetchWithAuth(`${API_URL}/tasks/${taskId}/subtasks/${subtaskId}`, {
+    method: "PUT",
+    body: JSON.stringify({ done }),
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: "No se pudo actualizar la subtarea" }));
+    throw new Error(error.message || "No se pudo actualizar la subtarea");
+  }
+  return (await res.json()) as Subtask;
 }
 
-export async function deleteSubtask(_taskId: string, _subtaskId: string) {
-  console.warn("Funcionalidad de subtareas no disponible todavía.");
-  throw new Error("Funcionalidad de subtareas no disponible todavía");
+/** Eliminar subtarea */
+export async function deleteSubtask(taskId: string, subtaskId: string) {
+  const res = await fetchWithAuth(`${API_URL}/tasks/${taskId}/subtasks/${subtaskId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: "No se pudo eliminar la subtarea" }));
+    throw new Error(error.message || "No se pudo eliminar la subtarea");
+  }
+  return true;
 }
 
 /** Vincular alarma - TEMPORALMENTE DESHABILITADO hasta verificar endpoint */
-export async function linkAlarm(_taskId: string) {
-  console.warn("Funcionalidad de vincular alarma no disponible todavía.");
-  throw new Error("Funcionalidad de vincular alarma no disponible todavía");
+export async function linkAlarm(taskId: string, alarmId: string | null) {
+  const res = await fetchWithAuth(`${API_URL}/tasks/${taskId}/link-alarm`, {
+    method: "POST",
+    body: JSON.stringify({ alarmId }),
+  });
+  if (!res.ok) {
+    throw new Error("No se pudo vincular la alarma");
+  }
+  return (await res.json()) as Task;
 }
