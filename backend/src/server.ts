@@ -13,7 +13,7 @@ import mediaRoutes from "./routes/mediaRoutes";
 import userRoutes from "./routes/userRoutes";
 
 import { initializeAlarms } from "./services/schedulerService";
-import prisma from "./services/prismaService";
+/* import prisma from "./services/prismaService";*/
 
 dotenv.config();
 const prisma = new PrismaClient();
