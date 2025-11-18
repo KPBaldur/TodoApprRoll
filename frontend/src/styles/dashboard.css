@@ -547,6 +547,7 @@ button:active,
   gap: 0.5rem;
 }
 
+/* Subtareas */
 .subtask-item {
   display: flex;
   align-items: center;
@@ -554,6 +555,22 @@ button:active,
   padding: 0.45rem 0.65rem;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.03);
+}
+
+/* Estado completado: fondo verde suave y borde */
+.subtask-item.completed {
+  background: rgba(16, 185, 129, 0.18); /* verde */
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+/* Texto de subtarea cuando está completada (ya tiene line-through por .done) */
+.subtask-item.completed span {
+  color: #d1fae5; /* verde muy claro, legible en dark */
+}
+
+/* Icono de subtarea completada en verde */
+.subtask-toggle .subtask-icon.done {
+  color: #10b981;
 }
 
 .subtask-toggle {

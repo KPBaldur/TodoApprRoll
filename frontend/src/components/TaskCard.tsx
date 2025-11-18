@@ -274,7 +274,10 @@ export default function TaskCard({
         ) : (
           <ul className="subtask-list">
             {subtasks.map((subtask) => (
-              <li key={subtask.id} className="subtask-item">
+              <li
+                key={subtask.id}
+                className={`subtask-item ${subtask.done ? "completed" : ""}`}
+              >
                 <button
                   className="subtask-toggle"
                   type="button"
