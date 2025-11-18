@@ -138,7 +138,7 @@ export default function TaskCard({
               placeholder="Título de la tarea"
             />
           ) : (
-            <h3>{task.title}</h3>
+            <h3 style={{ color: priorityInfo.color }}>{task.title}</h3>
           )}
         </div>
         <div className="task-card__pills">

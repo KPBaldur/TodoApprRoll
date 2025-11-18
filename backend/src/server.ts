@@ -13,6 +13,7 @@ import mediaRoutes from "./routes/mediaRoutes";
 import userRoutes from "./routes/userRoutes";
 
 import { initializeAlarms } from "./services/schedulerService";
+
 /* import prisma from "./services/prismaService";*/
 
 dotenv.config();
@@ -94,3 +95,4 @@ console.log("DATABASE_URL:", process.env.DATABASE_URL ? "OK (oculto por segurida
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Backend corriendo en puerto ${PORT}`));
+initializeAlarms();

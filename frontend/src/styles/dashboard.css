@@ -866,3 +866,8 @@ body {
   margin-top: 0.25rem;
 }
 
+/* Suavizar el cambio de color del título según prioridad */
+.task-card__title h3 {
+  transition: color 0.2s ease;
+}
+
