@@ -1,6 +1,5 @@
 generator client {
   provider      = "prisma-client-js"
-  schema        = "backend/prisma/schema.prisma"
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
@@ -14,7 +13,7 @@ model User {
   username  String    @unique
   passHash  String
   createdAt DateTime  @default(now())
-  updatedAt DateTime  @default(now())   @updatedAt
+  updatedAt DateTime  @default(now()) @updatedAt
   alarms    Alarm[]
   history   History[]
   media     Media[]
@@ -78,7 +77,7 @@ model Alarm {
   enable     Boolean   @default(true)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
-  
+
   audio      Media?    @relation("AlarmAudio", fields: [audioId], references: [id])
   image      Media?    @relation("AlarmImage", fields: [imageId], references: [id])
   user       User      @relation(fields: [userId], references: [id])
