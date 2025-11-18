@@ -5,6 +5,7 @@ import { getToken } from "./services/auth";
 // Paginas
 import LoginPage from "./pages/LoginPage";
 import Dashboard from "./pages/Dashboard";
+import AlarmsPage from "./pages/AlarmsPage";
 
 // Estilos especificos del proyecto
 import "./styles/login.css";
@@ -28,10 +29,26 @@ const App: React.FC = () => {
     <Routes>
       <Route path="/" element={<LoginPage />} />
       <Route 
+        path="/dashboard/alarms"
+        element={
+          <ProtectedRoute>
+            <AlarmsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route 
         path="/dashboard/*" 
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/alarms" 
+        element={
+          <ProtectedRoute>
+            <AlarmsPage />
           </ProtectedRoute>
         } 
       />
