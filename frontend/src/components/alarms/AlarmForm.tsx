@@ -21,9 +21,13 @@ export default function AlarmForm({ initial, media, onSubmit, onCancel }: Props)
   const [enabled, setEnabled] = useState<boolean>(initial?.enabled ?? true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [useTimer, setUseTimer] = useState(false);
+  const [timerMins, setTimerMins] = useState<number>(5);
 
   const audioList = useMemo(() => media.filter((m) => m.type === "audio"), [media]);
   const imageList = useMemo(() => media.filter((m) => m.type === "image"), [media]);
+  const selectedImage = useMemo(() => imageList.find((i) => i.id === imageId) || null, [imageList, imageId]);
+  const selectedAudio = useMemo(() => audioList.find((a) => a.id === audioId) || null, [audioList, audioId]);
 
   const validate = (): string | null => {
     if (!name.trim()) return "El nombre es obligatorio";
@@ -61,128 +65,171 @@ export default function AlarmForm({ initial, media, onSubmit, onCancel }: Props)
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <label className="block text-sm text-slate-200">Nombre</label>
-        <input
-          className="mt-1 w-full rounded border border-slate-600 bg-slate-800 px-3 py-2 text-slate-100"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Alarma de la mañana"
-        />
-      </div>
+    <div className="alarm-form">
+      <div className="alarm-form-grid">
+        {/* Columna izquierda: campos */}
+        <div className="alarm-form-left">
+          <div>
+            <label className="form-label">Nombre de alarma</label>
+            <input
+              className="input-modern"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Alarma de la mañana"
+            />
+          </div>
 
-      <div className="flex gap-4">
-        <button
-          type="button"
-          className={`px-3 py-1 rounded ${mode === "date" ? "bg-blue-600 text-white" : "bg-slate-700 text-slate-200"}`}
-          onClick={() => setMode("date")}
-        >
-          📅 Fecha específica
-        </button>
-        <button
-          type="button"
-          className={`px-3 py-1 rounded ${mode === "cron" ? "bg-blue-600 text-white" : "bg-slate-700 text-slate-200"}`}
-          onClick={() => setMode("cron")}
-        >
-          🔁 Cron
-        </button>
-      </div>
+          <div className="toggle-group">
+            <button
+              type="button"
+              className={`toggle-btn ${mode === "date" ? "active" : ""}`}
+              onClick={() => setMode("date")}
+            >
+              📅 Fecha específica
+            </button>
+            <button
+              type="button"
+              className={`toggle-btn ${mode === "cron" ? "active" : ""}`}
+              onClick={() => setMode("cron")}
+            >
+              🔁 Cron
+            </button>
+            <button
+              type="button"
+              className={`toggle-btn ${useTimer ? "active" : ""}`}
+              onClick={() => setUseTimer((v) => !v)}
+            >
+              ⏱️ Temporizador
+            </button>
+          </div>
 
-      {mode === "date" ? (
-        <div>
-          <label className="block text-sm text-slate-200">Fecha y hora</label>
-          <input
-            type="datetime-local"
-            className="mt-1 w-full rounded border border-slate-600 bg-slate-800 px-3 py-2 text-slate-100"
-            value={scheduleAt ?? ""}
-            onChange={(e) => setScheduleAt(e.target.value || null)}
-          />
-        </div>
-      ) : (
-        <div>
-          <label className="block text-sm text-slate-200">Expresión cron (ej: "0 8 * * *")</label>
-          <input
-            className="mt-1 w-full rounded border border-slate-600 bg-slate-800 px-3 py-2 text-slate-100"
-            value={cronExpr ?? ""}
-            onChange={(e) => setCronExpr(e.target.value || null)}
-            placeholder="m h * * *"
-          />
-        </div>
-      )}
+          {mode === "date" ? (
+            <div>
+              <label className="form-label">Fecha y hora</label>
+              <input
+                type="datetime-local"
+                className="input-modern"
+                value={scheduleAt ?? ""}
+                onChange={(e) => setScheduleAt(e.target.value || null)}
+              />
+            </div>
+          ) : (
+            <div>
+              <label className="form-label">Expresión cron (ej: "0 8 * * *")</label>
+              <input
+                className="input-modern"
+                value={cronExpr ?? ""}
+                onChange={(e) => setCronExpr(e.target.value || null)}
+                placeholder="m h * * *"
+              />
+            </div>
+          )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm text-slate-200">Audio</label>
-          <select
-            className="mt-1 w-full rounded border border-slate-600 bg-slate-800 px-3 py-2 text-slate-100"
-            value={audioId}
-            onChange={(e) => setAudioId(e.target.value)}
-          >
-            <option value="">Sin audio</option>
-            {audioList.map((a) => (
-              <option key={a.id} value={a.id}>{a.name}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm text-slate-200">Imagen</label>
-          <select
-            className="mt-1 w-full rounded border border-slate-600 bg-slate-800 px-3 py-2 text-slate-100"
-            value={imageId}
-            onChange={(e) => setImageId(e.target.value)}
-          >
-            <option value="">Sin imagen</option>
-            {imageList.map((i) => (
-              <option key={i.id} value={i.id}>{i.name}</option>
-            ))}
-          </select>
-        </div>
-      </div>
+          {useTimer && (
+            <div>
+              <label className="form-label">Temporizador (minutos)</label>
+              <input
+                className="input-modern"
+                type="number"
+                min={1}
+                value={timerMins}
+                onChange={(e) => setTimerMins(Number(e.target.value))}
+              />
+            </div>
+          )}
 
-      <div className="grid grid-cols-2 gap-4 items-center">
-        <div>
-          <label className="block text-sm text-slate-200">Snooze</label>
-          <select
-            className="mt-1 w-full rounded border border-slate-600 bg-slate-800 px-3 py-2 text-slate-100"
-            value={snoozeMins}
-            onChange={(e) => setSnoozeMins(Number(e.target.value))}
-          >
-            {snoozeOptions.map((n) => (
-              <option key={n} value={n}>{n} mins</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-slate-200">Enabled</label>
-          <input
-            type="checkbox"
-            checked={enabled}
-            onChange={(e) => setEnabled(e.target.checked)}
-          />
-        </div>
-      </div>
+          <div className="grid-two">
+            <div>
+              <label className="form-label">Snooze (minutos)</label>
+              <input
+                className="input-modern"
+                type="number"
+                min={1}
+                value={snoozeMins}
+                onChange={(e) => setSnoozeMins(Number(e.target.value))}
+              />
+            </div>
+            <div className="checkbox-row">
+              <label className="form-label">Activa</label>
+              <input
+                type="checkbox"
+                className="checkbox-modern"
+                checked={enabled}
+                onChange={(e) => setEnabled(e.target.checked)}
+              />
+            </div>
+          </div>
 
-      {error ? <p className="text-red-400 text-sm">{error}</p> : null}
+          <div className="grid-two">
+            <div>
+              <label className="form-label">Imagen</label>
+              <select
+                className="select-modern"
+                value={imageId}
+                onChange={(e) => setImageId(e.target.value)}
+              >
+                <option value="">Sin imagen</option>
+                {imageList.map((i) => (
+                  <option key={i.id} value={i.id}>{i.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="form-label">Audio</label>
+              <select
+                className="select-modern"
+                value={audioId}
+                onChange={(e) => setAudioId(e.target.value)}
+              >
+                <option value="">Sin audio</option>
+                {audioList.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={submitting}
-          className="px-4 py-2 rounded bg-green-600 text-white hover:opacity-90"
-        >
-          {submitting ? "Guardando..." : "Guardar"}
-        </button>
-        {onCancel ? (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 rounded bg-slate-700 text-slate-200"
-          >
-            Cancelar
-          </button>
-        ) : null}
+          {error ? <p className="error-text">{error}</p> : null}
+
+          <div className="alarm-form-actions">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="btn btn-green"
+            >
+              {submitting ? "Guardando..." : "Guardar"}
+            </button>
+            {onCancel ? (
+              <button
+                type="button"
+                onClick={onCancel}
+                className="btn btn-muted"
+              >
+                Cancelar
+              </button>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Columna derecha: preview */}
+        <div className="alarm-form-right">
+          <div className={`image-preview-card ${selectedImage ? "active" : ""}`}>
+            {selectedImage ? (
+              <>
+                <img src={selectedImage.url} alt={selectedImage.name} />
+                <div className="file-name">{selectedImage.name}</div>
+              </>
+            ) : (
+              <div className="muted">Sin imagen seleccionada</div>
+            )}
+          </div>
+
+          <div className="audio-preview-actions">
+            <span className="muted">Reproductor de audio</span>
+            {/* usa el player con estilos nuevos */}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -22,7 +22,7 @@ export default function AudioPreviewPlayer({ url }: Props) {
     <button
       type="button"
       onClick={play}
-      className="px-3 py-1 rounded bg-blue-600 text-white hover:opacity-90"
+      className="audio-preview-btn"
       disabled={!url || playing}
       title="Probar sonido"
     >

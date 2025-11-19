@@ -65,30 +65,46 @@ export default function AlarmsPage() {
       <main className="dashboard-main">
         <Header />
         <div className="work-area">
-          <div className="flex items-center justify-between">
+          <div className="alarms-header-row">
             <h3 className="list-title">Alarmas</h3>
+            {/* Botón a la izquierda según requerimiento */}
             <button
               type="button"
               onClick={openCreate}
-              className="px-4 py-2 rounded bg-green-600 text-white hover:opacity-90"
+              className="alarm-new-btn"
               title="Nueva alarma"
             >
-              + Nueva alarma
+              + Nueva Alarma
             </button>
           </div>
 
           {loading ? <p className="muted">Cargando…</p> : null}
           {error ? <p className="error">{error}</p> : null}
 
-          <AlarmList
-            alarms={alarms}
-            onEdit={openEdit}
-            onDelete={onDelete}
-            onToggle={onToggle}
-          />
-
+          {/* Estado vacío con dos tarjetas grandes */}
           {!loading && !error && alarms.length === 0 && (
-            <p className="muted">No hay alarmas registradas.</p>
+            <div className="alarms-empty-grid">
+              <div className="alarms-empty-card">
+                <h4>No hay alarmas Creadas</h4>
+                <p>Usa el botón "Nueva Alarma" para empezar</p>
+              </div>
+              <div className="alarms-empty-card">
+                <h4>No hay alarmas Activas</h4>
+                <p>Activa una alarma para verla aquí</p>
+              </div>
+            </div>
+          )}
+
+          {/* Lista de alarmas si existen */}
+          {alarms.length > 0 && (
+            <>
+              <AlarmList
+                alarms={alarms}
+                onEdit={openEdit}
+                onDelete={onDelete}
+                onToggle={onToggle}
+              />
+            </>
           )}
 
           <AlarmModal

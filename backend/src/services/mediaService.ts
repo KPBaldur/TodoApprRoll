@@ -1,29 +1,35 @@
 import { v2 as cloudinary } from "cloudinary";
 import prisma from "../services/prismaService";
 
-cloudinary.config({
+// Configura Cloudinary aceptando CLOUDINARY_URL o claves separadas
+if (process.env.CLOUDINARY_URL) {
+  cloudinary.config({ secure: true });
+} else {
+  cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
     api_key: process.env.CLOUDINARY_API_KEY!,
     api_secret: process.env.CLOUDINARY_API_SECRET!,
-});
+    secure: true,
+  });
+}
 
 // SUBE UN ARCHIVO A cLOUDINARY Y DEVUELVE LA METADA DATA NECESARIA
 export const uploadToCloudinary = async (filePath: string, folder = "TodoAppRoll") => {
-    try {
-        const result = await cloudinary.uploader.upload(filePath, {
-            folder,
-            resource_type: "auto",
-        });
+  try {
+    const result = await cloudinary.uploader.upload(filePath, {
+      folder,
+      resource_type: "auto",
+    });
 
-        return {
-            publicId: result.public_id,
-            url: result.secure_url,
-            type: result.resource_type,
-        };
-    } catch (error) {
-        console.error("Error al subir a Cloudinary:", error);
-        throw new Error("Error al subir el archivo a Cloudinary");
-    }
+    return {
+      publicId: result.public_id,
+      url: result.secure_url,
+      type: result.resource_type,
+    };
+  } catch (error) {
+    console.error("Error al subir a Cloudinary:", error);
+    throw new Error("Error al subir el archivo a Cloudinary");
+  }
 };
 
 // Erliminar un archivo remoto de Cloudinary

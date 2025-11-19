@@ -13,12 +13,39 @@ type Stats = {
 export default function Sidebar({ stats }: { stats?: Stats }) {
   return (
     <aside className="sidebar">
-      <nav className="nav">
-        <NavLink to="/dashboard" end className="nav-item">Tareas</NavLink>
-        <NavLink to="/alarms" className="nav-item">Alarmas</NavLink>
-        <NavLink to="/media" className="nav-item">Multimedia</NavLink>
-        <NavLink to="/history" className="nav-item">Historial</NavLink>
-        <NavLink to="/settings" className="nav-item">Configuración</NavLink>
+      {/* Usar las clases de estilo definidas en sidebar.css */}
+      <nav className="sidebar-menu">
+        <NavLink
+          to="/dashboard"
+          end
+          className={({ isActive }) => `menu-item${isActive ? " active" : ""}`}
+        >
+          Tareas
+        </NavLink>
+        <NavLink
+          to="/alarms"
+          className={({ isActive }) => `menu-item${isActive ? " active" : ""}`}
+        >
+          Alarmas
+        </NavLink>
+        <NavLink
+          to="/media"
+          className={({ isActive }) => `menu-item${isActive ? " active" : ""}`}
+        >
+          Multimedia
+        </NavLink>
+        <NavLink
+          to="/history"
+          className={({ isActive }) => `menu-item${isActive ? " active" : ""}`}
+        >
+          Historial
+        </NavLink>
+        <NavLink
+          to="/settings"
+          className={({ isActive }) => `menu-item${isActive ? " active" : ""}`}
+        >
+          Configuración
+        </NavLink>
       </nav>
 
       <div className="sidebar-meta">
