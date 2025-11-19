@@ -25,12 +25,15 @@ export const uploadMedia = async (req: AuthRequest, res: Response) => {
     if (!file) {
       return res.status(400).json({ message: "Archivo (file) requerido" });
     }
+
     if (!type || !["image", "audio"].includes(type)) {
       return res.status(400).json({ message: "Tipo inválido. Usa 'image' o 'audio'." });
     }
 
-    const info = await uploadToCloudinary(file.path, "TodoAppRoll");
+    // Nombre del archivo REAL
     const name = file.originalname;
+
+    const info = await uploadToCloudinary(file.path, "TodoAppRoll");
 
     const newMedia = await prisma.media.create({
       data: {
@@ -43,6 +46,7 @@ export const uploadMedia = async (req: AuthRequest, res: Response) => {
     });
 
     await fs.unlink(file.path).catch(() => {});
+
     res.status(201).json(newMedia);
   } catch (error) {
     console.error("Error al subir multimedia:", error);
