@@ -1,3 +1,6 @@
+// Reescritura completa del formulario para modos: fecha, cron, temporizador.
+// Convierte datetime-local a ISO, genera scheduleAt para temporizador,
+// y asegura exclusiones entre modos.
 import React, { useMemo, useState } from "react";
 import type { Alarm, AlarmCreatePayload, AlarmUpdatePayload, Media } from "../../services/alarmService";
 
@@ -12,33 +15,39 @@ const snoozeOptions = [5, 10, 15, 30, 60];
 
 export default function AlarmForm({ initial, media, onSubmit, onCancel }: Props) {
   const [name, setName] = useState(initial?.name ?? "");
-  const [mode, setMode] = useState<"date" | "cron">(initial?.cronExpr ? "cron" : "date");
+  const [mode, setMode] = useState<"date" | "cron" | "timer">(initial?.cronExpr ? "cron" : initial?.scheduleAt ? "date" : "date");
   const [scheduleAt, setScheduleAt] = useState<string | null>(initial?.scheduleAt ?? null);
   const [cronExpr, setCronExpr] = useState<string | null>(initial?.cronExpr ?? null);
   const [snoozeMins, setSnoozeMins] = useState<number>(initial?.snoozeMins ?? 5);
+  const [timerMins, setTimerMins] = useState<number>(5);
   const [audioId, setAudioId] = useState<string>(initial?.audioId ?? "");
   const [imageId, setImageId] = useState<string>(initial?.imageId ?? "");
   const [enabled, setEnabled] = useState<boolean>(initial?.enabled ?? true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [useTimer, setUseTimer] = useState(false);
-  const [timerMins, setTimerMins] = useState<number>(5);
 
   const audioList = useMemo(() => media.filter((m) => m.type === "audio"), [media]);
   const imageList = useMemo(() => media.filter((m) => m.type === "image"), [media]);
-  const selectedImage = useMemo(() => imageList.find((i) => i.id === imageId) || null, [imageList, imageId]);
-  const selectedAudio = useMemo(() => audioList.find((a) => a.id === audioId) || null, [audioList, audioId]);
 
   const validate = (): string | null => {
     if (!name.trim()) return "El nombre es obligatorio";
-    if (useTimer) {
+
+    if (mode === "timer") {
       if ((timerMins ?? 0) < 1) return "Temporizador mínimo 1 minuto";
-      return null; // Saltar reglas de date/cron si hay temporizador
+      if ((snoozeMins ?? 0) < 1) return "Snooze mínimo 1 minuto";
+      return null;
     }
-    if (mode === "date" && !scheduleAt) return "Debe seleccionar fecha y hora";
-    if (mode === "cron" && !cronExpr?.trim()) return "Debe ingresar una expresión cron";
-    if (mode === "date" && cronExpr) return "Si se define fecha, cronExpr debe ser null";
-    if (mode === "cron" && scheduleAt) return "Si cronExpr está definido, scheduleAt debe ser null";
+
+    if (mode === "date") {
+      if (!scheduleAt) return "Debe seleccionar fecha y hora";
+      if (cronExpr) return "Si hay fecha, cronExpr debe ser null";
+    }
+
+    if (mode === "cron") {
+      if (!cronExpr?.trim()) return "Debe ingresar una expresión cron";
+      if (scheduleAt) return "Si hay cronExpr, scheduleAt debe ser null";
+    }
+
     if ((snoozeMins ?? 0) < 1) return "Snooze mínimo 1 minuto";
     return null;
   };
@@ -49,14 +58,17 @@ export default function AlarmForm({ initial, media, onSubmit, onCancel }: Props)
     setSubmitting(true);
     setError("");
 
+    // Resolver valores efectivos según el modo
     const effectiveScheduleAt =
-      useTimer
+      mode === "timer"
         ? new Date(Date.now() + timerMins * 60000).toISOString()
         : mode === "date"
         ? scheduleAt
+          ? new Date(scheduleAt).toISOString()
+          : null
         : null;
 
-    const effectiveCronExpr = useTimer ? null : mode === "cron" ? cronExpr : null;
+    const effectiveCronExpr = mode === "cron" ? (cronExpr ?? null) : null;
 
     const payload: AlarmCreatePayload | AlarmUpdatePayload = {
       name: name.trim(),
@@ -80,7 +92,6 @@ export default function AlarmForm({ initial, media, onSubmit, onCancel }: Props)
   return (
     <div className="alarm-form">
       <div className="alarm-form-grid">
-        {/* Columna izquierda: campos */}
         <div className="alarm-form-left">
           <div>
             <label className="form-label">Nombre de alarma</label>
@@ -96,39 +107,49 @@ export default function AlarmForm({ initial, media, onSubmit, onCancel }: Props)
             <button
               type="button"
               className={`toggle-btn ${mode === "date" ? "active" : ""}`}
-              onClick={() => setMode("date")}
+              onClick={() => { setMode("date"); setCronExpr(null); }}
             >
               📅 Fecha específica
             </button>
             <button
               type="button"
               className={`toggle-btn ${mode === "cron" ? "active" : ""}`}
-              onClick={() => setMode("cron")}
+              onClick={() => { setMode("cron"); setScheduleAt(null); }}
             >
               🔁 Cron
             </button>
             <button
               type="button"
-              className={`toggle-btn ${useTimer ? "active" : ""}`}
-              onClick={() => setUseTimer((v) => !v)}
+              className={`toggle-btn ${mode === "timer" ? "active" : ""}`}
+              onClick={() => { setMode("timer"); setScheduleAt(null); setCronExpr(null); }}
             >
               ⏱️ Temporizador
             </button>
           </div>
 
-          {mode === "date" ? (
+          {mode === "date" && (
             <div>
               <label className="form-label">Fecha y hora</label>
               <input
                 type="datetime-local"
                 className="input-modern"
-                value={scheduleAt ?? ""}
-                onChange={(e) => setScheduleAt(e.target.value || null)}
+                value={scheduleAt ? new Date(scheduleAt).toISOString().slice(0, 16) : ""}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  if (raw) {
+                    const dt = new Date(raw);
+                    setScheduleAt(dt.toISOString()); // ISO con timezone
+                  } else {
+                    setScheduleAt(null);
+                  }
+                }}
               />
             </div>
-          ) : (
+          )}
+
+          {mode === "cron" && (
             <div>
-              <label className="form-label">Expresión cron (ej: "0 8 * * *")</label>
+              <label className="form-label">Expresión cron (ej: "*/1 * * * *")</label>
               <input
                 className="input-modern"
                 value={cronExpr ?? ""}
@@ -138,7 +159,7 @@ export default function AlarmForm({ initial, media, onSubmit, onCancel }: Props)
             </div>
           )}
 
-          {useTimer && (
+          {mode === "timer" && (
             <div>
               <label className="form-label">Temporizador (minutos)</label>
               <input
@@ -148,19 +169,22 @@ export default function AlarmForm({ initial, media, onSubmit, onCancel }: Props)
                 value={timerMins}
                 onChange={(e) => setTimerMins(Number(e.target.value))}
               />
+              <p className="muted">Se programará ahora + {timerMins} minutos</p>
             </div>
           )}
 
           <div className="grid-two">
             <div>
               <label className="form-label">Snooze (minutos)</label>
-              <input
-                className="input-modern"
-                type="number"
-                min={1}
+              <select
+                className="select-modern"
                 value={snoozeMins}
                 onChange={(e) => setSnoozeMins(Number(e.target.value))}
-              />
+              >
+                {snoozeOptions.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
             </div>
             <div className="checkbox-row">
               <label className="form-label">Activa</label>
@@ -225,22 +249,13 @@ export default function AlarmForm({ initial, media, onSubmit, onCancel }: Props)
           </div>
         </div>
 
-        {/* Columna derecha: preview */}
+        {/* Preview derecha mínima */}
         <div className="alarm-form-right">
-          <div className={`image-preview-card ${selectedImage ? "active" : ""}`}>
-            {selectedImage ? (
-              <>
-                <img src={selectedImage.url} alt={selectedImage.name} />
-                <div className="file-name">{selectedImage.name}</div>
-              </>
-            ) : (
-              <div className="muted">Sin imagen seleccionada</div>
-            )}
+          <div className="image-preview-card">
+            <div className="file-name">Imagen seleccionada: {imageList.find((i) => i.id === imageId)?.name ?? "Ninguna"}</div>
           </div>
-
           <div className="audio-preview-actions">
-            <span className="muted">Reproductor de audio</span>
-            {/* usa el player con estilos nuevos */}
+            <span className="muted">Audio: {audioList.find((a) => a.id === audioId)?.name ?? "Ninguno"}</span>
           </div>
         </div>
       </div>
