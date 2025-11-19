@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
+import type {
   Alarm,
   AlarmCreatePayload,
   AlarmUpdatePayload,
+  Media,
+} from "../services/alarmService";
+import {
   getAlarms,
   createAlarm,
   updateAlarm,
   toggleAlarm,
   deleteAlarm,
   listMedia,
-  Media,
 } from "../services/alarmService";
 
 type UseAlarmsResult = {
