@@ -8,7 +8,7 @@ type Props = {
 export default function MediaPreviewPanel({ item, onDelete }: Props) {
   if (!item) {
     return (
-      <aside className="media-preview">
+      <aside className="media-preview" onClick={(e) => e.stopPropagation()}>
         <div className="muted">Selecciona un archivo para previsualizar.</div>
       </aside>
     );
@@ -17,7 +17,7 @@ export default function MediaPreviewPanel({ item, onDelete }: Props) {
   const isImage = item.type === "image";
 
   return (
-    <aside className="media-preview">
+    <aside className="media-preview" onClick={(e) => e.stopPropagation()}>
       <div className="preview-header">
         <h4 className="preview-title">{item.name}</h4>
       </div>

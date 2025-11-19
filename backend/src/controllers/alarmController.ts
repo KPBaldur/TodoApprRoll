@@ -185,8 +185,14 @@ export const toggleAlarm = async (req: AuthRequest, res: Response) => {
 
         const updated = await prisma.alarm.update({
             where: { id },
-            data: { enabled: !alarm.enabled }
+            data: { enabled: !alarm.enabled },
+            include: { audio: { select: { url: true } } }, // incluir audio para programar
         });
+
+        // Si quedó activada, programar inmediatamente
+        if (updated.enabled) {
+            scheduleAlarm(updated);
+        }
 
         await logHistory(req.userId!, "Alarm", "TOGGLE", updated);
         res.json(updated);

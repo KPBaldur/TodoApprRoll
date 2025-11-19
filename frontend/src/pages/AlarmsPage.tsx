@@ -7,6 +7,7 @@ import AlarmList from "../components/alarms/AlarmList";
 import AlarmModal from "../components/alarms/AlarmModal";
 import AlarmForm from "../components/alarms/AlarmForm";
 import type { Alarm, AlarmCreatePayload, AlarmUpdatePayload } from "../services/alarmService";
+import AlarmTriggerContent from "../components/alarms/AlarmTriggerContent"; // Nuevo
 import "../styles/dashboard.css";
 
 export default function AlarmsPage() {
@@ -14,6 +15,7 @@ export default function AlarmsPage() {
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Alarm | null>(null);
+  const [testing, setTesting] = useState<Alarm | null>(null); // Nuevo
 
   useEffect(() => {
     refresh();
@@ -59,6 +61,9 @@ export default function AlarmsPage() {
     await remove(alarm.id);
   };
 
+  const openTest = (alarm: Alarm) => setTesting(alarm); // Nuevo
+  const closeTest = () => setTesting(null); // Nuevo
+
   return (
     <div className="dashboard">
       <Sidebar stats={stats} />
@@ -103,6 +108,7 @@ export default function AlarmsPage() {
                 onEdit={openEdit}
                 onDelete={onDelete}
                 onToggle={onToggle}
+                onTest={openTest} // Nuevo
               />
             </>
           )}
@@ -118,6 +124,15 @@ export default function AlarmsPage() {
               onSubmit={onSubmit}
               onCancel={closeModal}
             />
+          </AlarmModal>
+
+          {/* Nuevo: Modal para probar alarma */}
+          <AlarmModal
+            open={!!testing}
+            title="Probar alarma"
+            onClose={closeTest}
+          >
+            {testing ? <AlarmTriggerContent alarm={testing} /> : null}
           </AlarmModal>
         </div>
       </main>

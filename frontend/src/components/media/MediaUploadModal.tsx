@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { uploadMedia } from "../../services/media";
 import type { Media } from "../../types/media.types";
 
@@ -15,6 +15,15 @@ export default function MediaUploadModal({ open, onClose, onUploaded }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+
+  // Resetear estado al abrir el modal para no mostrar el último archivo subido
+  useEffect(() => {
+    if (open) {
+      setFile(null);
+      setError("");
+      setUploading(false);
+    }
+  }, [open]);
 
   const type: "image" | "audio" | null = useMemo(() => {
     if (!file) return null;
@@ -57,6 +66,10 @@ export default function MediaUploadModal({ open, onClose, onUploaded }: Props) {
       fd.append("type", type);
       const created = await uploadMedia(fd);
       onUploaded(created);
+      // Limpiar estado antes de cerrar
+      setFile(null);
+      setError("");
+      setUploading(false);
       onClose();
     } catch (e: any) {
       setError(e.message || "No se pudo subir el archivo.");

@@ -9,9 +9,10 @@ type Props = {
   onEdit: (alarm: Alarm) => void;
   onDelete: (alarm: Alarm) => void;
   onToggle: (alarm: Alarm) => void;
+  onTest?: (alarm: Alarm) => void; // Nuevo
 };
 
-export default function AlarmList({ alarms, onEdit, onDelete, onToggle }: Props) {
+export default function AlarmList({ alarms, onEdit, onDelete, onToggle, onTest }: Props) {
   if (!alarms.length) {
     return <p className="text-sm text-gray-300">No hay alarmas creadas.</p>;
   }
@@ -82,6 +83,17 @@ export default function AlarmList({ alarms, onEdit, onDelete, onToggle }: Props)
               >
                 Eliminar
               </button>
+              {/* Nuevo: Probar alarma */}
+              {typeof onTest === "function" && (
+                <button
+                  type="button"
+                  onClick={() => onTest(a)}
+                  className="px-3 py-1 rounded bg-green-600 text-white hover:opacity-90"
+                  title="Probar alarma"
+                >
+                  Probar alarma
+                </button>
+              )}
             </div>
           </div>
         );

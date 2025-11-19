@@ -101,18 +101,23 @@ export default function MediaDashboard() {
           </div>
         </div>
       ) : (
-        <div className="media-content">
+        // Click en el fondo: deselecciona
+        <div className="media-content" onClick={() => setSelected(null)}>
           <div className="media-grid">
             {visible.map((it) => (
               <MediaItemCard
                 key={it.id}
                 item={it}
                 selected={selected?.id === it.id}
-                onClick={() => setSelected(it)}
+                // Alternar selección al hacer click en la misma tarjeta
+                onClick={() =>
+                  setSelected((prev) => (prev?.id === it.id ? null : it))
+                }
                 onDelete={() => onDelete(it)}
               />
             ))}
           </div>
+          {/* Evitar que clicks dentro del panel limpien la selección */}
           <MediaPreviewPanel item={selected} onDelete={onDelete} />
         </div>
       )}

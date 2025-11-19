@@ -31,6 +31,10 @@ export default function AlarmForm({ initial, media, onSubmit, onCancel }: Props)
 
   const validate = (): string | null => {
     if (!name.trim()) return "El nombre es obligatorio";
+    if (useTimer) {
+      if ((timerMins ?? 0) < 1) return "Temporizador mínimo 1 minuto";
+      return null; // Saltar reglas de date/cron si hay temporizador
+    }
     if (mode === "date" && !scheduleAt) return "Debe seleccionar fecha y hora";
     if (mode === "cron" && !cronExpr?.trim()) return "Debe ingresar una expresión cron";
     if (mode === "date" && cronExpr) return "Si se define fecha, cronExpr debe ser null";
@@ -45,10 +49,19 @@ export default function AlarmForm({ initial, media, onSubmit, onCancel }: Props)
     setSubmitting(true);
     setError("");
 
+    const effectiveScheduleAt =
+      useTimer
+        ? new Date(Date.now() + timerMins * 60000).toISOString()
+        : mode === "date"
+        ? scheduleAt
+        : null;
+
+    const effectiveCronExpr = useTimer ? null : mode === "cron" ? cronExpr : null;
+
     const payload: AlarmCreatePayload | AlarmUpdatePayload = {
       name: name.trim(),
-      scheduleAt: mode === "date" ? scheduleAt : null,
-      cronExpr: mode === "cron" ? cronExpr : null,
+      scheduleAt: effectiveScheduleAt,
+      cronExpr: effectiveCronExpr,
       snoozeMins,
       audioId: audioId || null,
       imageId: imageId || null,

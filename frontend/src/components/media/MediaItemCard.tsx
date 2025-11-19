@@ -13,10 +13,18 @@ export default function MediaItemCard({ item, selected, onClick, onDelete }: Pro
   return (
     <div
       className={`media-card ${selected ? "selected" : ""}`}
-      onClick={onClick}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => e.key === "Enter" && onClick()}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.stopPropagation();
+          onClick();
+        }
+      }}
     >
       <button
         type="button"

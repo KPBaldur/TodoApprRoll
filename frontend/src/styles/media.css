@@ -75,7 +75,7 @@
   .media-grid { grid-template-columns: 1fr 1fr 1fr; }
 }
 
-/* Tarjeta */
+/* Tarjeta más compacta */
 .media-card {
   position: relative;
   background: #1e2636;
@@ -105,6 +105,7 @@
 }
 .media-card-delete:hover { filter: brightness(1.05); }
 
+/* Thumb más bajo para evitar espacios en blanco */
 .media-thumb {
   display: flex;
   align-items: center;
@@ -117,15 +118,16 @@
 }
 .media-thumb img {
   max-width: 100%;
-  max-height: 120px;
+  max-height: 96px;
   object-fit: cover;
 }
 .media-audio-icon {
   font-size: 48px;
   color: #9ca3af;
 }
+/* Nombre más compacto */
 .media-name {
-  font-size: 13px;
+  font-size: 12px;
   color: #e2e8f0;
   white-space: nowrap;
   overflow: hidden;
