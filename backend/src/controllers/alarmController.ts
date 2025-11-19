@@ -3,6 +3,7 @@ import prisma from "../services/prismaService";
 import { AuthRequest } from "../middleware/authMiddleware";
 import { logHistory } from "../services/historyService";
 import { scheduleAlarm } from "../services/schedulerService";
+import cron from "node-cron";
 
 // Obtener todas las alarmas del usuario autenticado
 export const getAlarms = async (req: AuthRequest, res: Response) => {
@@ -58,12 +59,17 @@ export const createAlarm = async (req: AuthRequest, res: Response) => {
                 ? enable
                 : true;
 
+        // Validar formato cron si viene definido
+        if (cronExpr && cronExpr.trim() && !cron.validate(cronExpr.trim())) {
+            return res.status(400).json({ message: "Expresión cron inválida" });
+        }
+
         const alarm = await prisma.alarm.create({
             data: {
                 userId: req.userId!,
                 name,
-                audioId,
-                imageId,
+                audioId: audioId || null,
+                imageId: imageId || null,
                 scheduleAt: scheduleAt ? new Date(scheduleAt) : null,
                 snoozeMins: snoozeMins ?? 5,
                 cronExpr,
@@ -72,7 +78,6 @@ export const createAlarm = async (req: AuthRequest, res: Response) => {
             include: { audio: { select: { url: true } } },
         });
 
-        // Reprogramar inmediatamente tras crear
         scheduleAlarm(alarm);
 
         await logHistory(req.userId!, "Alarm", "CREATE", alarm);
@@ -124,6 +129,10 @@ export const updateAlarm = async (req: AuthRequest, res: Response) => {
                 ? enable
                 : existing.enabled;
 
+        if (typeof cronExpr !== "undefined" && cronExpr && cronExpr.trim() && !cron.validate(cronExpr.trim())) {
+            return res.status(400).json({ message: "Expresión cron inválida" });
+        }
+
         const updated = await prisma.alarm.update({
             where: { id },
             data: {
@@ -138,7 +147,6 @@ export const updateAlarm = async (req: AuthRequest, res: Response) => {
             include: { audio: { select: { url: true } } },
         });
 
-        // Reprogramar inmediatamente tras actualizar
         scheduleAlarm(updated);
 
         await logHistory(req.userId!, "Alarm", "UPDATE", updated);
@@ -173,31 +181,25 @@ export const deleteAlarm = async (req: AuthRequest, res: Response) => {
 
 // Activar/desactivar una alarma rápidamente (toggle)
 export const toggleAlarm = async (req: AuthRequest, res: Response) => {
-    try {
-        const { id } = req.params;
+  try {
+    const { id } = req.params;
+    const alarm = await prisma.alarm.findFirst({ where: { id, userId: req.userId } });
+    if (!alarm) return res.status(404).json({ message: "Alarma no encontrada" });
 
-        const alarm = await prisma.alarm.findFirst({
-            where: { id, userId: req.userId }
-        });
+    const updated = await prisma.alarm.update({
+      where: { id },
+      data: { enabled: !alarm.enabled },
+      include: { audio: { select: { url: true } } },
+    });
 
-        if (!alarm)
-            return res.status(404).json({ message: "Alarma no encontrada" });
-
-        const updated = await prisma.alarm.update({
-            where: { id },
-            data: { enabled: !alarm.enabled },
-            include: { audio: { select: { url: true } } }, // incluir audio para programar
-        });
-
-        // Si quedó activada, programar inmediatamente
-        if (updated.enabled) {
-            scheduleAlarm(updated);
-        }
-
-        await logHistory(req.userId!, "Alarm", "TOGGLE", updated);
-        res.json(updated);
-    } catch (error) {
-        console.error("Error al activar/desactivar alarma:", error);
-        res.status(500).json({ message: "Error al modificar alarma" });
+    if (updated.enabled) {
+      scheduleAlarm(updated);
     }
+
+    await logHistory(req.userId!, "Alarm", "TOGGLE", updated);
+    res.json(updated);
+  } catch (error) {
+    console.error("Error al activar/desactivar alarma:", error);
+    res.status(500).json({ message: "Error al modificar alarma" });
+  }
 };

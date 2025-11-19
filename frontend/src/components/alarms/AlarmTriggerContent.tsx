@@ -8,35 +8,19 @@ export default function AlarmTriggerContent({ alarm }: Props) {
   const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
-    if (!alarm.audio?.url) return;
-
-    const audio = new Audio(alarm.audio.url);
-    audioRef.current = audio;
-
-    audio.play().then(() => {
-      setPlaying(true);
-    }).catch(() => {
+    // Quitar autoplay: sólo limpiar al montar/desmontar
+    audioRef.current = null;
+    return () => {
+      const audio = audioRef.current;
+      if (audio) {
+        try {
+          audio.pause();
+          audio.currentTime = 0;
+        } catch {}
+      }
       setPlaying(false);
-      alert("No se pudo reproducir el audio de la alarma.");
-    });
-
-    audio.onended = () => setPlaying(false);
-
-    useEffect(() => {
-      // Eliminar autoplay: sólo limpiar el ref al abrir/cerrar
       audioRef.current = null;
-      return () => {
-        const audio = audioRef.current;
-        if (audio) {
-          try {
-            audio.pause();
-            audio.currentTime = 0;
-          } catch {}
-        }
-        setPlaying(false);
-        audioRef.current = null;
-      };
-    }, [alarm]);
+    };
   }, [alarm]);
 
   const stopAudio = () => {
@@ -52,6 +36,7 @@ export default function AlarmTriggerContent({ alarm }: Props) {
 
   return (
     <div className="alarm-trigger-body">
+      {/* El audio se inicia al pulsar “Reproducir” (sin alertas de autoplay) */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         <div className="image-preview-card" style={{ minHeight: 280 }}>
           {alarm.image?.url ? (

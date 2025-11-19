@@ -35,11 +35,19 @@ export const scheduleAlarm = (alarm: ActiveAlarm) => {
   const { id, name, cronExpr, scheduleAt, snoozeMins, audio } = alarm;
 
   try {
-    // Si tiene cronExpr (por ejemplo: "0 8 * * *" -> todos los días a las 8 AM)
-    if (cronExpr) {
-      cron.schedule(cronExpr, () => triggerAlarm(alarm));
-      console.log(`🕒 Alarma '${name}' programada con cronExpr: ${cronExpr}`);
-      return;
+    // Normalizar CRON
+    const normalizedCron = (cronExpr || "").trim();
+
+    // Validar CRON antes de programar
+    if (normalizedCron) {
+      if (cron.validate(normalizedCron)) {
+        cron.schedule(normalizedCron, () => triggerAlarm(alarm));
+        console.log(`🕒 Alarma '${name}' programada con cronExpr: ${normalizedCron}`);
+        return;
+      } else {
+        console.warn(`❌ Expresión cron inválida para '${name}': ${normalizedCron}`);
+        return;
+      }
     }
 
     // Si tiene una fecha específica programada
@@ -61,35 +69,34 @@ export const scheduleAlarm = (alarm: ActiveAlarm) => {
 
 //Ejecuta la accion de una alarma cuando se activa
 const triggerAlarm = async (alarm: ActiveAlarm) => {
-    try {
-        // Leer estado real de DB para evitar disparar alarmas desactivadas
-        const fresh = await prisma.alarm.findUnique({
-            where: { id: alarm.id },
-            include: { audio: { select: { url: true } } },
-        });
+  try {
+    // Releer estado real desde DB (evita disparo de desactivadas)
+    const fresh = await prisma.alarm.findUnique({
+      where: { id: alarm.id },
+      include: { audio: { select: { url: true } } },
+    });
 
-        if (!fresh || !fresh.enabled) {
-            console.log(`⛔ Alarma '${alarm.name}' desactivada; no se ejecuta.`);
-            return;
-        }
-
-        console.log(`ACTIVANDO ALARMA: ${fresh.name}`);
-
-        if (fresh.audio?.url) {
-            await playAudio(fresh.audio.url);
-        } else {
-            console.log(`🔈 Alarma '${fresh.name}' sin audio asignado.`);
-        }
-
-        // Repetir con snooze de la configuración actual
-        if (fresh.snoozeMins && fresh.snoozeMins > 0) {
-            const nextTrigger = new Date(Date.now() + fresh.snoozeMins * 60000);
-            console.log(`🔁 Alarma '${fresh.name}' repetirá a las ${nextTrigger.toLocaleTimeString()}`);
-            setTimeout(() => triggerAlarm(fresh as ActiveAlarm), fresh.snoozeMins * 60000);
-        }
-    } catch (error) {
-        console.error(`❌ Error al activar alarma '${alarm.name}':`, error);
+    if (!fresh || !fresh.enabled) {
+      console.log(`⛔ Alarma '${alarm.name}' desactivada; no se ejecuta.`);
+      return;
     }
+
+    console.log(`ACTIVANDO ALARMA: ${fresh.name}`);
+
+    if (fresh.audio?.url) {
+      await playAudio(fresh.audio.url);
+    } else {
+      console.log(`🔈 Alarma '${fresh.name}' sin audio asignado.`);
+    }
+
+    if (fresh.snoozeMins && fresh.snoozeMins > 0) {
+      const nextTrigger = new Date(Date.now() + fresh.snoozeMins * 60000);
+      console.log(`🔁 Alarma '${fresh.name}' repetirá a las ${nextTrigger.toLocaleTimeString()}`);
+      setTimeout(() => triggerAlarm(fresh as ActiveAlarm), fresh.snoozeMins * 60000);
+    }
+  } catch (error) {
+    console.error(`❌ Error al activar alarma '${alarm.name}':`, error);
+  }
 };
 
 cron.schedule("0 */48 * * *", async () => {
