@@ -4,46 +4,30 @@ import bcrypt from "bcrypt";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🔄 Ejecutando seed...");
+  console.log("🌱 Generando usuario BaldurDev...");
 
-  // Limpieza opcional para desarrollo
-  await prisma.history.deleteMany();
-  await prisma.media.deleteMany();
-  await prisma.alarm.deleteMany();
-  await prisma.subtask.deleteMany();
-  await prisma.task.deleteMany();
-  await prisma.user.deleteMany();
-
-  // Contraseña con bcrypt
   const hashedPassword = await bcrypt.hash("123456", 10);
 
-  // Usuario inicial
-  const user = await prisma.user.create({
+  await prisma.user.create({
     data: {
       username: "BaldurDev",
-      passHash: hashedPassword,   // ← ESTE ES EL CAMPO CORRECTO
+      passHash: hashedPassword,
     },
   });
 
-  // Tarea inicial
+  console.log("🌱 Creando tarea inicial...");
+
   await prisma.task.create({
     data: {
-      userId: user.id,
       title: "Bienvenido a TodoApp v3.0",
       description: "Primera tarea de prueba",
-      priority: "MEDIUM",
-      status: "PENDING",
+      user: { connect: { username: "BaldurDev" } },
     },
   });
 
-  console.log("✅ Seed completado con éxito → Usuario: BaldurDev / 123456");
+  console.log("✅ Seed completado con éxito");
 }
 
 main()
-  .catch((e) => {
-    console.error("❌ Error ejecutando seed:", e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .catch((e) => console.error(e))
+  .finally(() => prisma.$disconnect());

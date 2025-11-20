@@ -43,5 +43,8 @@
     "@utils": "dist/utils",
     "@services": "dist/services",
     "@controllers": "dist/controllers"
+  },
+  "prisma": {
+  "seed": "ts-node prisma/seed.ts"
   }
 }
