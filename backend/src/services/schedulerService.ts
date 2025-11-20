@@ -1,4 +1,4 @@
-// Reescritura completa del scheduler
+// backend/src/services/schedulerService.ts
 import cron, { ScheduledTask } from "node-cron";
 import prisma from "./prismaService";
 import { playAudio } from "../utils/audioPlayer";
@@ -9,7 +9,7 @@ interface ActiveAlarm {
   name: string;
   enabled?: boolean;
   cronExpr?: string | null;
-  scheduleAt?: Date | null;
+  scheduleAt?: Date | string | null;
   snoozeMins?: number | null;
   audio?: { url?: string | null } | null;
 }
@@ -80,40 +80,39 @@ function scheduleTimeout(alarm: ActiveAlarm, when: Date) {
     console.log(`⏭️ Alarma '${alarm.name}' programada en pasado, ignorada.`);
     return;
   }
+
   const to = setTimeout(() => triggerAlarm(alarm), diff);
   timeouts.set(alarm.id, to);
-  console.log(`📅 Programada para: ${when.toLocaleString()} | Alarma '${alarm.name}'`);
+
+  console.log(
+    `📅 Programada para: ${when.toLocaleString()} | Alarma '${alarm.name}'`
+  );
 }
 
 // Programa una alarma individual basada en su configuración
 export const scheduleAlarm = (alarm: ActiveAlarm) => {
-  const { id, name, cronExpr, scheduleAt, snoozeMins } = alarm;
+  const { id, name, cronExpr, scheduleAt, enabled } = alarm;
 
-  // Cancelar programación previa antes de reprogramar
+  // Siempre cancelar programación previa antes de reprogramar
   cancelAlarm(id);
 
+  // Si la alarma no está habilitada, no se programa nada
+  if (enabled === false) {
+    console.log(`⛔ Alarma '${name}' deshabilitada; no se programa.`);
+    return;
+  }
+
   try {
-    // Caso: si hay temporizador efectivo o scheduleAt explícito → setTimeout
+    // 1) Intentar programar por scheduleAt (fecha/hora fija o temporizador)
     const dt = convertScheduleAt(scheduleAt ?? null);
     if (dt) {
       scheduleTimeout(alarm, dt);
       return;
     }
 
-    // Caso: CRON
+    // 2) Si no hay scheduleAt, intentar programar por cronExpr (repetitiva)
     const expr = (cronExpr || "").trim();
 
-    // Si tiene snooze, ignoramos cron y pasamos a scheduleAt cada snooze (Pomodoro)
-    if (expr && snoozeMins && snoozeMins > 0) {
-      const next = new Date(Date.now() + snoozeMins * 60000);
-      console.log(
-        `🕒 Alarma '${name}' con snooze activo: ignorando cron y usando temporizador cada ${snoozeMins} min`
-      );
-      scheduleTimeout(alarm, next);
-      return;
-    }
-
-    // Programar cron si es válido
     if (validateCron(expr)) {
       const task = cron.schedule(expr, () => triggerAlarm(alarm));
       cronTasks.set(id, task);
@@ -121,8 +120,10 @@ export const scheduleAlarm = (alarm: ActiveAlarm) => {
       return;
     }
 
-    // Si no hay nada válido
-    console.warn(`❌ Configuración inválida en '${name}': ni scheduleAt ni cronExpr válido`);
+    // 3) Si no hay nada válido
+    console.warn(
+      `❌ Configuración inválida en '${name}': ni scheduleAt ni cronExpr válido`
+    );
   } catch (error) {
     console.error(`❌ Error al programar alarma '${name}':`, error);
   }
@@ -157,13 +158,36 @@ const triggerAlarm = async (alarm: ActiveAlarm) => {
       console.log(`🔈 Alarma '${fresh.name}' sin audio asignado.`);
     }
 
-    // Manejo de snooze: programar siguiente disparo por scheduleAt (ignora cron)
+    // Manejo Pomodoro / Snooze automático:
+    // Si hay snoozeMins, la alarma se reprograma sola para ahora + snoozeMins
     if (fresh.snoozeMins && fresh.snoozeMins > 0) {
       const nextTrigger = new Date(Date.now() + fresh.snoozeMins * 60000);
+
       console.log(
-        `🔁 Snooze: '${fresh.name}' repetirá a las ${nextTrigger.toLocaleTimeString()} (+${fresh.snoozeMins} min)`
+        `🔁 Snooze/Pomodoro: '${fresh.name}' repetirá a las ${nextTrigger.toLocaleTimeString()} (+${fresh.snoozeMins} min)`
       );
-      scheduleTimeout(fresh as ActiveAlarm, nextTrigger);
+
+      // Persistimos la próxima ejecución como scheduleAt y limpiamos cronExpr
+      const updated = await prisma.alarm.update({
+        where: { id: fresh.id },
+        data: {
+          scheduleAt: nextTrigger,
+          cronExpr: null,
+        },
+        include: { audio: { select: { url: true } } },
+      });
+
+      scheduleTimeout(
+        {
+          id: updated.id,
+          name: updated.name,
+          enabled: updated.enabled,
+          scheduleAt: updated.scheduleAt!,
+          snoozeMins: updated.snoozeMins,
+          audio: updated.audio ? { url: updated.audio.url } : null,
+        },
+        nextTrigger
+      );
     }
   } catch (error) {
     console.error(`❌ Error al activar alarma '${alarm.name}':`, error);
