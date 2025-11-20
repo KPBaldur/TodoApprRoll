@@ -6,9 +6,9 @@ export default function useAlarmEvents(onAlarm: (payload: any) => void) {
     if (!token) return;
 
     const url = "https://todoapprroll.onrender.com/api/alarms/events";
-    const es = new EventSource(url, {
-      withCredentials: true
-    });
+    const es = new EventSource(
+      `${url}?token=${encodeURIComponent(token || "")}`
+    );
 
     es.onmessage = (event) => {
       try {

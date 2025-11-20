@@ -1,11 +1,24 @@
 import express from "express";
 import eventBus from "../services/eventBus";
-import { authenticateToken } from "../middleware/authMiddleware";
+import jwt from "jsonwebtoken"; // ← AGREGAR ESTA LÍNEA
 
 const router = express.Router();
 
 // Flujo SSE para escuchar alarmas
-router.get("/events", authenticateToken, (req, res) => {
+router.get("/events", (req, res) => {
+  const token = req.query.token as string;
+
+  if (!token) {
+    return res.status(401).json({ message: "No token provided" });
+  }
+
+  try {
+    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+    req.userId = decoded.id;
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid token" });
+  }
+
   res.set({
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache",
