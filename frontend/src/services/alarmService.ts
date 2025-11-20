@@ -1,6 +1,10 @@
+// frontend/src/services/alarmService.ts
+// Servicio de alarmas SOLO Pomodoro
+
 import { API_URL, fetchWithAuth } from "./tasks";
 
 export type MediaType = "audio" | "image";
+
 export interface Media {
   id: string;
   name: string;
@@ -14,25 +18,34 @@ export interface Alarm {
   name: string;
   enabled: boolean;
   scheduleAt: string | null;
-  cronExpr: string | null;
-  snoozeMins: number | null;
+  snoozeMins: number; // siempre numérico en el front
   audioId: string | null;
   imageId: string | null;
   audio?: { id: string; name: string; url: string } | null;
   image?: { id: string; name: string; url: string } | null;
 }
 
+/**
+ * Para crear Pomodoro:
+ * - name (obligatorio)
+ * - snoozeMins (obligatorio)
+ * - audioId / imageId opcionales
+ * - enabled opcional (true por defecto)
+ * - scheduleAt opcional (solo para casos especiales, normalmente lo calcula el backend)
+ */
 export interface AlarmCreatePayload {
   name: string;
-  scheduleAt: string | null;
-  cronExpr: string | null;
   snoozeMins: number;
   audioId: string | null;
   imageId: string | null;
-  enabled: boolean;
+  enabled?: boolean;
+  scheduleAt?: string | null;
 }
 
-export type AlarmUpdatePayload = Partial<AlarmCreatePayload>;
+export type AlarmUpdatePayload = Partial<AlarmCreatePayload> & {
+  enabled?: boolean;
+  scheduleAt?: string | null;
+};
 
 export async function getAlarms(): Promise<Alarm[]> {
   const res = await fetchWithAuth(`${API_URL}/alarms`);
@@ -46,6 +59,7 @@ export async function getAlarms(): Promise<Alarm[]> {
 export async function createAlarm(payload: AlarmCreatePayload): Promise<Alarm> {
   const res = await fetchWithAuth(`${API_URL}/alarms`, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -55,9 +69,13 @@ export async function createAlarm(payload: AlarmCreatePayload): Promise<Alarm> {
   return (await res.json()) as Alarm;
 }
 
-export async function updateAlarm(id: string, payload: AlarmUpdatePayload): Promise<Alarm> {
+export async function updateAlarm(
+  id: string,
+  payload: AlarmUpdatePayload
+): Promise<Alarm> {
   const res = await fetchWithAuth(`${API_URL}/alarms/${id}`, {
     method: "PUT",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
   if (!res.ok) {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Priority } from "../services/tasks";
-import type { Alarm } from "../services/alarms";
+import type { Alarm } from "../services/alarmService";
 
 type TaskFormProps = {
   alarms: Alarm[];

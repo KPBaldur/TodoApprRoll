@@ -19,7 +19,7 @@ import {
   PlusCircleIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import type { Alarm } from "../services/alarms";
+import type { Alarm } from "../services/alarmService";
 import type { Status, Task } from "../services/tasks";
 
 type IconEntry = {

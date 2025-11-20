@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import App from "./App";
+import AlarmProvider from "./components/alarms/AlarmProvider";
 
 // Estilos base
 import "./styles/globalReset.css";
@@ -11,7 +12,10 @@ import "./styles/variables.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      <AlarmProvider>
+        <App />
+      </AlarmProvider>
     </BrowserRouter>
   </React.StrictMode>
 );
+

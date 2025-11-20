@@ -16,8 +16,8 @@ import {
   linkAlarm,
 } from "../services/tasks";
 import type { Task, Priority, Status } from "../services/tasks";
-import { fetchAlarms } from "../services/alarms";
-import type { Alarm } from "../services/alarms";
+import { getAlarms } from "../services/alarmService";
+import type { Alarm } from "../services/alarmService";
 import "../styles/dashboard.css";
 
 const priorityLabel: Record<string, string> = {
@@ -83,7 +83,7 @@ export default function Dashboard() {
 
   const loadAlarms = useCallback(async () => {
     try {
-      const list = await fetchAlarms();
+      const list = await getAlarms();
       setAlarms(list);
       setAlarmsError("");
     } catch (error: any) {

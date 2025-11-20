@@ -6,30 +6,29 @@ import { useAlarms } from "../hooks/useAlarms";
 import AlarmList from "../components/alarms/AlarmList";
 import AlarmModal from "../components/alarms/AlarmModal";
 import AlarmForm from "../components/alarms/AlarmForm";
+import { useAlarmPopup } from "../components/alarms/AlarmProvider";
 import type { Alarm, AlarmCreatePayload, AlarmUpdatePayload } from "../services/alarmService";
-import AlarmTriggerContent from "../components/alarms/AlarmTriggerContent"; // Nuevo
 import "../styles/dashboard.css";
 
 export default function AlarmsPage() {
   const { alarms, media, loading, error, refresh, create, update, toggle, remove } = useAlarms();
 
+  const { triggerAlarmPopup } = useAlarmPopup();  // NUEVO
+
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Alarm | null>(null);
-  const [testing, setTesting] = useState<Alarm | null>(null); // Nuevo
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  const stats = useMemo(() => {
-    return {
-      pending: 0,
-      inProgress: 0,
-      completed: 0,
-      archived: 0,
-      activeAlarms: alarms.filter((a) => a.enabled).length,
-    };
-  }, [alarms]);
+  const stats = useMemo(() => ({
+    pending: 0,
+    inProgress: 0,
+    completed: 0,
+    archived: 0,
+    activeAlarms: alarms.filter((a) => a.enabled).length,
+  }), [alarms]);
 
   const openCreate = () => {
     setEditing(null);
@@ -61,23 +60,26 @@ export default function AlarmsPage() {
     await remove(alarm.id);
   };
 
-  const openTest = (alarm: Alarm) => setTesting(alarm); // Nuevo
-  const closeTest = () => setTesting(null); // Nuevo
+  // 👉 Reemplaza el test local por el popup global
+  const openTest = (alarm: Alarm) => {
+    triggerAlarmPopup(alarm);
+  };
 
   return (
     <div className="dashboard">
       <Sidebar stats={stats} />
+
       <main className="dashboard-main">
         <Header />
+
         <div className="work-area">
           <div className="alarms-header-row">
             <h3 className="list-title">Alarmas</h3>
-            {/* Botón a la izquierda según requerimiento */}
+
             <button
               type="button"
               onClick={openCreate}
               className="alarm-new-btn"
-              title="Nueva alarma"
             >
               + Nueva Alarma
             </button>
@@ -86,31 +88,27 @@ export default function AlarmsPage() {
           {loading ? <p className="muted">Cargando…</p> : null}
           {error ? <p className="error">{error}</p> : null}
 
-          {/* Estado vacío con dos tarjetas grandes */}
           {!loading && !error && alarms.length === 0 && (
             <div className="alarms-empty-grid">
               <div className="alarms-empty-card">
-                <h4>No hay alarmas Creadas</h4>
-                <p>Usa el botón "Nueva Alarma" para empezar</p>
+                <h4>No hay alarmas creadas</h4>
+                <p>Usa el botón “Nueva Alarma” para empezar</p>
               </div>
               <div className="alarms-empty-card">
-                <h4>No hay alarmas Activas</h4>
+                <h4>No hay alarmas activas</h4>
                 <p>Activa una alarma para verla aquí</p>
               </div>
             </div>
           )}
 
-          {/* Lista de alarmas si existen */}
           {alarms.length > 0 && (
-            <>
-              <AlarmList
-                alarms={alarms}
-                onEdit={openEdit}
-                onDelete={onDelete}
-                onToggle={onToggle}
-                onTest={openTest} // Nuevo
-              />
-            </>
+            <AlarmList
+              alarms={alarms}
+              onEdit={openEdit}
+              onDelete={onDelete}
+              onToggle={onToggle}
+              onTest={openTest}
+            />
           )}
 
           <AlarmModal
@@ -124,15 +122,6 @@ export default function AlarmsPage() {
               onSubmit={onSubmit}
               onCancel={closeModal}
             />
-          </AlarmModal>
-
-          {/* Nuevo: Modal para probar alarma */}
-          <AlarmModal
-            open={!!testing}
-            title="Probar alarma"
-            onClose={closeTest}
-          >
-            {testing ? <AlarmTriggerContent alarm={testing} /> : null}
           </AlarmModal>
         </div>
       </main>

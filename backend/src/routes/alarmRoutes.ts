@@ -5,8 +5,7 @@ import {
   createAlarm,
   updateAlarm,
   deleteAlarm,
-  toggleAlarm,
-  snoozeAlarm,      // <<< NUEVO
+  toggleAlarm
 } from "../controllers/alarmController";
 
 const router = express.Router();
@@ -18,10 +17,6 @@ router.get("/", getAlarms);
 router.post("/", createAlarm);
 router.put("/:id", updateAlarm);
 router.delete("/:id", deleteAlarm);
-
-// Activar / desactivar
 router.patch("/:id/toggle", toggleAlarm);
-
-router.patch("/:id/snooze", snoozeAlarm);   // <<< NUEVO ENDPOINT
 
 export default router;

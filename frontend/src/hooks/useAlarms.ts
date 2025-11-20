@@ -1,6 +1,19 @@
+// src/hooks/useAlarms.ts
 import { useCallback, useEffect, useState } from "react";
-import type { Alarm, AlarmCreatePayload, AlarmUpdatePayload, Media } from "../services/alarmService";
-import { getAlarms, createAlarm, updateAlarm, toggleAlarm, deleteAlarm, listMedia } from "../services/alarmService";
+import type {
+  Alarm,
+  AlarmCreatePayload,
+  AlarmUpdatePayload,
+  Media,
+} from "../services/alarmService";
+import {
+  getAlarms,
+  createAlarm,
+  updateAlarm,
+  toggleAlarm,
+  deleteAlarm,
+  listMedia,
+} from "../services/alarmService";
 
 type UseAlarmsResult = {
   alarms: Alarm[];
@@ -20,9 +33,13 @@ export function useAlarms(): UseAlarmsResult {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  /* --------------------------------------------
+     REFRESH
+  -------------------------------------------- */
   const refresh = useCallback(async () => {
     setLoading(true);
     setError("");
+
     try {
       const [list, m] = await Promise.all([getAlarms(), listMedia()]);
       setAlarms(list);
@@ -35,28 +52,35 @@ export function useAlarms(): UseAlarmsResult {
     }
   }, []);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
 
+  /* --------------------------------------------
+     CREATE — Pomodoro Only
+  -------------------------------------------- */
   const createFn = useCallback(async (payload: AlarmCreatePayload) => {
-    // Exclusiones
-    if (!payload.name?.trim()) throw new Error("El nombre es obligatorio");
-    if (payload.scheduleAt && payload.cronExpr) throw new Error("Si hay fecha, cronExpr debe ser null");
-    if (!payload.scheduleAt && !payload.cronExpr) throw new Error("Debe elegir fecha específica, temporizador o cron");
-    if ((payload.snoozeMins ?? 0) < 1) throw new Error("Snooze mínimo 1 minuto");
+    if (!payload.name?.trim()) {
+      throw new Error("El nombre es obligatorio");
+    }
 
-    // Optimista simple
+    if ((payload.snoozeMins ?? 0) < 1) {
+      throw new Error("Snooze mínimo 1 minuto");
+    }
+
+    // El backend generará scheduleAt automáticamente.
     const temp: Alarm = {
       id: `temp-${Date.now()}`,
       name: payload.name.trim(),
       enabled: payload.enabled ?? true,
-      scheduleAt: payload.scheduleAt ?? null,
-      cronExpr: payload.cronExpr ?? null,
-      snoozeMins: payload.snoozeMins ?? 5,
+      snoozeMins: payload.snoozeMins,
       audioId: payload.audioId ?? null,
       imageId: payload.imageId ?? null,
+      scheduleAt: null,
       audio: null,
-      image: null,
+      image: null
     };
+
     setAlarms((prev) => [temp, ...prev]);
 
     try {
@@ -68,51 +92,94 @@ export function useAlarms(): UseAlarmsResult {
     }
   }, []);
 
-  const updateFn = useCallback(async (id: string, payload: AlarmUpdatePayload) => {
-    if (typeof payload.name !== "undefined" && !String(payload.name).trim()) {
-      throw new Error("El nombre es obligatorio");
-    }
-    if (payload.scheduleAt && payload.cronExpr) {
-      throw new Error("Si hay fecha, cronExpr debe ser null");
-    }
-    if (typeof payload.snoozeMins !== "undefined" && (payload.snoozeMins ?? 1) < 1) {
-      throw new Error("Snooze mínimo 1 minuto");
-    }
+  /* --------------------------------------------
+     UPDATE — Pomodoro Only
+  -------------------------------------------- */
+  const updateFn = useCallback(
+    async (id: string, payload: AlarmUpdatePayload) => {
+      if (payload.name !== undefined && !String(payload.name).trim()) {
+        throw new Error("El nombre es obligatorio");
+      }
 
-    const prev = alarms;
-    setAlarms((list) => list.map((a) => (a.id === id ? { ...a, ...payload } as Alarm : a)));
+      if (
+        payload.snoozeMins !== undefined &&
+        (payload.snoozeMins ?? 0) < 1
+      ) {
+        throw new Error("Snooze mínimo 1 minuto");
+      }
 
-    try {
-      const updated = await updateAlarm(id, payload);
-      setAlarms((list) => list.map((a) => (a.id === id ? updated : a)));
-    } catch (e: any) {
-      setAlarms(prev);
-      throw e;
-    }
-  }, [alarms]);
+      const prev = alarms;
+      setAlarms((list) =>
+        list.map((a) => (a.id === id ? { ...a, ...payload } : a))
+      );
 
-  const toggleFn = useCallback(async (id: string) => {
-    const prev = alarms;
-    setAlarms((list) => list.map((a) => (a.id === id ? { ...a, enabled: !a.enabled } : a)));
-    try {
-      const updated = await toggleAlarm(id);
-      setAlarms((list) => list.map((a) => (a.id === id ? updated : a)));
-    } catch (e: any) {
-      setAlarms(prev);
-      throw e;
-    }
-  }, [alarms]);
+      try {
+        const updated = await updateAlarm(id, payload);
+        setAlarms((list) =>
+          list.map((a) => (a.id === id ? updated : a))
+        );
+      } catch (e: any) {
+        setAlarms(prev);
+        throw e;
+      }
+    },
+    [alarms]
+  );
 
-  const removeFn = useCallback(async (id: string) => {
-    const prev = alarms;
-    setAlarms((list) => list.filter((a) => a.id !== id));
-    try {
-      await deleteAlarm(id);
-    } catch (e: any) {
-      setAlarms(prev);
-      throw e;
-    }
-  }, [alarms]);
+  /* --------------------------------------------
+     TOGGLE
+  -------------------------------------------- */
+  const toggleFn = useCallback(
+    async (id: string) => {
+      const prev = alarms;
 
-  return { alarms, media, loading, error, refresh, create: createFn, update: updateFn, toggle: toggleFn, remove: removeFn };
+      setAlarms((list) =>
+        list.map((a) =>
+          a.id === id ? { ...a, enabled: !a.enabled } : a
+        )
+      );
+
+      try {
+        const updated = await toggleAlarm(id);
+        setAlarms((list) =>
+          list.map((a) => (a.id === id ? updated : a))
+        );
+      } catch (e: any) {
+        setAlarms(prev);
+        throw e;
+      }
+    },
+    [alarms]
+  );
+
+  /* --------------------------------------------
+     REMOVE
+  -------------------------------------------- */
+  const removeFn = useCallback(
+    async (id: string) => {
+      const prev = alarms;
+
+      setAlarms((list) => list.filter((a) => a.id !== id));
+
+      try {
+        await deleteAlarm(id);
+      } catch (e: any) {
+        setAlarms(prev);
+        throw e;
+      }
+    },
+    [alarms]
+  );
+
+  return {
+    alarms,
+    media,
+    loading,
+    error,
+    refresh,
+    create: createFn,
+    update: updateFn,
+    toggle: toggleFn,
+    remove: removeFn,
+  };
 }
