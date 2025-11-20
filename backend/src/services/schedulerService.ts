@@ -5,6 +5,7 @@ import cron from "node-cron";
 import prisma from "./prismaService";
 import { playAudio } from "../utils/audioPlayer";
 import { runMaintenance } from "./maintenanceService";
+import eventBus from "./eventBus";
 
 interface ActiveAlarm {
   id: string;
@@ -148,6 +149,15 @@ const triggerAlarm = async (alarmId: string) => {
     }
 
     console.log(`🔔 ACTIVANDO ALARMA: ${fresh.name}`);
+
+    eventBus.emit("alarmTriggered", {
+      id: fresh.id,
+      name: fresh.name,
+      audioUrl: fresh.audio?.url || null,
+      userId: fresh.userId,
+      timestamp: Date.now()
+    });
+
 
     if (fresh.audio?.url) {
       await playAudio(fresh.audio.url);

@@ -8,6 +8,7 @@ import {
   toggleAlarm
 } from "../controllers/alarmController";
 
+
 const router = express.Router();
 
 router.use(authenticateToken);

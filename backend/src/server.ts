@@ -13,6 +13,7 @@ import mediaRoutes from "./routes/mediaRoutes";
 import userRoutes from "./routes/userRoutes";
 
 import { initializeAlarms } from "./services/schedulerService";
+import alarmEventsRoutes from "./routes/alarmEventsRoutes";
 
 /* import prisma from "./services/prismaService";*/
 
@@ -44,6 +45,8 @@ app.use(
     crossOriginEmbedderPolicy: false,
   })
 );
+
+app.use("/api/alarms", alarmEventsRoutes);
 
 app.use(express.json());
 

@@ -19,6 +19,23 @@ import type { Task, Priority, Status } from "../services/tasks";
 import { getAlarms } from "../services/alarmService";
 import type { Alarm } from "../services/alarmService";
 import "../styles/dashboard.css";
+import useAlarmEvents from "../hooks/useAlarmEvents";
+
+useAlarmEvents((payload) => {
+  console.log("🔔 ALARMA RECIBIDA EN FRONT:", payload);
+
+  // Mostrar popup
+  alert(`🔔 Alarma: ${payload.name}`);
+
+  // Reproducir sonido automáticamente
+  if (payload.audioUrl) {
+    const audio = new Audio(payload.audioUrl);
+    audio.play().catch(() => {
+      console.warn("Audio bloqueado por navegador, se requiere interacción.");
+    });
+  }
+});
+
 
 const priorityLabel: Record<string, string> = {
   low: "Baja",
