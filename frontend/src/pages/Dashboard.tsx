@@ -50,23 +50,25 @@ export default function Dashboard() {
   // -------------------------------------------------------
   const { enqueueAlarmTrigger } = useAlarmPopup();
 
-  useAlarmEvents((payload) => {
-    console.log("🔔 SSE recibido:", payload);
+  const onAlarm = useCallback((payload: any) => {
+  console.log("🔔 SSE recibido:", payload);
 
-    enqueueAlarmTrigger({
-      id: payload.id,
-      name: payload.name,
-      snoozeMins: 25,
-      enabled: true,
-      scheduleAt: null,
-      audioId: null,
-      imageId: null,
-      audio: payload.audioUrl
-        ? { id: "runtime", name: "Audio alarma", url: payload.audioUrl }
-        : null,
-      image: null,
-    });
+  enqueueAlarmTrigger({
+    id: payload.id,
+    name: payload.name,
+    snoozeMins: 25,
+    enabled: true,
+    scheduleAt: null,
+    audioId: null,
+    imageId: null,
+    audio: payload.audioUrl
+      ? { id: "runtime", name: "Audio alarma", url: payload.audioUrl }
+      : null,
+    image: null,
   });
+}, [enqueueAlarmTrigger]);
+
+useAlarmEvents(onAlarm);
 
   // -------------------------------------------------------
   // 🔧 STATES DE FILTROS

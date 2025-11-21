@@ -1,34 +1,37 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export default function useAlarmEvents(onAlarm: (payload: any) => void) {
+  const onAlarmRef = useRef(onAlarm);
+
+  // mantener ref actualizada sin reiniciar SSE
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) return;
+    onAlarmRef.current = onAlarm;
+  }, [onAlarm]);
 
-    let es: EventSource | null = null;
+  useEffect(() => {
+    const tokenRaw = localStorage.getItem("accessToken");
+    if (!tokenRaw) return;
 
-    const connect = () => {
-      const url = `https://todoapprroll.onrender.com/api/alarms/events?token=${encodeURIComponent(token)}`;
-      es = new EventSource(url);
+    const token = tokenRaw.startsWith("Bearer ")
+      ? tokenRaw.slice(7)
+      : tokenRaw;
 
-      es.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          onAlarm(data);
-        } catch (err) {
-          console.error("❌ Error SSE:", err);
-        }
-      };
+    const url = `https://todoapprroll.onrender.com/api/alarms/events?token=${encodeURIComponent(token)}`;
+    const es = new EventSource(url);
 
-      es.onerror = () => {
-        console.warn("⚠️ SSE desconectado, reintentando en 3s…");
-        es?.close();
-        setTimeout(connect, 3000);
-      };
+    es.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        onAlarmRef.current(data);
+      } catch (err) {
+        console.error("Error SSE:", err);
+      }
     };
 
-    connect();
+    es.onerror = (err) => {
+      console.error("SSE error:", err);
+    };
 
-    return () => es?.close();
-  }, [onAlarm]);
+    return () => es.close();
+  }, []);
 }
