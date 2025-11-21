@@ -1,3 +1,4 @@
+// Axios client and interceptor configuration
 import axios from "axios";
 import { API_URL } from "./tasks";
 import { getToken } from "./auth";
@@ -13,7 +14,7 @@ client.interceptors.request.use((config) => {
     if (config.headers) {
       (config.headers as any)["Authorization"] = `Bearer ${token}`;
     } else {
-      config.headers = { Authorization: `Bearer ${token}` };
+      config.headers = { Authorization: `Bearer ${token}` } as any;
     }
   }
   return config;

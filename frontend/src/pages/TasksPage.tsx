@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getTasks, createTask, deleteTask, updateTask } from "../services/task";
+import { getTasks, createTask, deleteTask, updateTask } from "../services/tasks";
 import "../styles/tasks.css";
 
 export default function TasksPage(){

@@ -1,7 +1,7 @@
 // frontend/src/components/alarms/AlarmTriggerContent.tsx
 // Popup de disparo de Pomodoro con aplazos
 
-import React, { useEffect, useRef, useState } from "react";
+/*import React, { useEffect, useRef, useState } from "react";*/
 import type { Alarm } from "../../services/alarmService";
 import { updateAlarm } from "../../services/alarmService";
 

@@ -1,9 +1,10 @@
-import React from "react";
+// AlarmModal component
+import type { ReactNode } from "react";
 
 type Props = {
   open: boolean;
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
   onClose: () => void;
 };
 

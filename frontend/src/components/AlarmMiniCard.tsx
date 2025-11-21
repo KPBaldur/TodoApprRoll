@@ -1,5 +1,4 @@
 // src/components/alarms/AlarmMiniCard.tsx
-import React from "react";
 import type { Alarm } from "../services/alarmService";
 
 type Props = {
