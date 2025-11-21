@@ -1,6 +1,4 @@
 import React from "react";
-// App component and ProtectedRoute
-import type { ReactNode } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { getToken } from "./services/auth";
 
@@ -17,11 +15,13 @@ import "./styles/sidebar.css";
 import "./styles/dashboard.css";
 
 // Componente para proteger rutas
-function ProtectedRoute({ children }: { children: ReactNode }) {
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = getToken();
+  
   if (!token) {
     return <Navigate to="/" replace />;
   }
+  
   return <>{children}</>;
 }
 

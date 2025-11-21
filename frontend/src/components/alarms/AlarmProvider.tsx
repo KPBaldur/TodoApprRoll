@@ -108,6 +108,30 @@ function AlarmProvider({ children }: { children: React.ReactNode }) {
       </AlarmModal>
     </AlarmContext.Provider>
   );
+
+  // Suscripción SSE global: convierte el payload del servidor a un objeto Alarm mínimo y lo encola
+  useAlarmEvents((payload) => {
+    try {
+      const { id, name, audioUrl } = payload || {};
+      if (!id || !name) return;
+  
+      const alarmFromServer: Alarm = {
+        id,
+        name,
+        enabled: true,
+        scheduleAt: null,
+        snoozeMins: 5,
+        audioId: null,
+        imageId: null,
+        audio: audioUrl ? { id: "event-audio", name: "Audio de alarma", url: audioUrl } : null,
+        image: null,
+      };
+  
+      enqueueAlarmTrigger(alarmFromServer);
+    } catch (err) {
+      console.error("Error procesando evento de alarma:", err);
+    }
+  });
 }
 
 export default AlarmProvider;

@@ -1,20 +1,17 @@
-// AlarmModal component
-import type { ReactNode } from "react";
+import React from "react";
 
 type Props = {
   open: boolean;
   title: string;
-  children: ReactNode;
+  children: React.ReactNode;
   onClose: () => void;
 };
 
 export default function AlarmModal({ open, title, children, onClose }: Props) {
   if (!open) return null;
-
   return (
-    <div className="alarm-modal" role="dialog" aria-modal="true">
+    <div className="alarm-modal">
       <div className="alarm-modal-card">
-
         <button
           type="button"
           onClick={onClose}
@@ -28,10 +25,7 @@ export default function AlarmModal({ open, title, children, onClose }: Props) {
           <h3 className="modal-title">{title}</h3>
         </div>
 
-        <div className="modal-body">
-          {children}
-        </div>
-
+        <div className="modal-body">{children}</div>
       </div>
     </div>
   );
