@@ -1,37 +1,39 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 export default function useAlarmEvents(onAlarm: (payload: any) => void) {
-  const onAlarmRef = useRef(onAlarm);
-
-  // mantener ref actualizada sin reiniciar SSE
   useEffect(() => {
-    onAlarmRef.current = onAlarm;
-  }, [onAlarm]);
+    const backend = import.meta.env.VITE_BACKEND_URL;
 
-  useEffect(() => {
-    const tokenRaw = localStorage.getItem("accessToken");
-    if (!tokenRaw) return;
+    if (!backend) {
+      console.error("❌ No VITE_BACKEND_URL configurado");
+      return;
+    }
 
-    const token = tokenRaw.startsWith("Bearer ")
-      ? tokenRaw.slice(7)
-      : tokenRaw;
+    console.log("🔌 Conectando SSE a:", `${backend}/api/alarms/events`);
 
-    const url = `https://todoapprroll.onrender.com/api/alarms/events?token=${encodeURIComponent(token)}`;
-    const es = new EventSource(url);
+    const es = new EventSource(`${backend}/api/alarms/events`);
+
+    es.onopen = () => {
+      console.log("🟢 SSE conectado");
+    };
 
     es.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        onAlarmRef.current(data);
-      } catch (err) {
-        console.error("Error SSE:", err);
+        console.log("📨 Evento SSE recibido:", data);
+        onAlarm(data);
+      } catch (e) {
+        console.error("❌ Error parseando SSE:", e);
       }
     };
 
     es.onerror = (err) => {
-      console.error("SSE error:", err);
+      console.error("❌ SSE error:", err);
     };
 
-    return () => es.close();
-  }, []);
+    return () => {
+      es.close();
+      console.log("🔌 SSE desconectado");
+    };
+  }, [onAlarm]);
 }
