@@ -5,26 +5,30 @@ export default function useAlarmEvents(onAlarm: (payload: any) => void) {
     const token = localStorage.getItem("accessToken");
     if (!token) return;
 
-    const url = "https://todoapprroll.onrender.com/api/alarms/events";
-    const es = new EventSource(
-      `${url}?token=${encodeURIComponent(token || "")}`
-    );
+    let es: EventSource | null = null;
 
-    es.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        onAlarm(data);
-      } catch (err) {
-        console.error("Error SSE:", err);
-      }
+    const connect = () => {
+      const url = `https://todoapprroll.onrender.com/api/alarms/events?token=${encodeURIComponent(token)}`;
+      es = new EventSource(url);
+
+      es.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          onAlarm(data);
+        } catch (err) {
+          console.error("❌ Error SSE:", err);
+        }
+      };
+
+      es.onerror = () => {
+        console.warn("⚠️ SSE desconectado, reintentando en 3s…");
+        es?.close();
+        setTimeout(connect, 3000);
+      };
     };
 
-    es.onerror = (err) => {
-      console.error("SSE error:", err);
-    };
+    connect();
 
-    return () => {
-      es.close();
-    };
+    return () => es?.close();
   }, [onAlarm]);
 }
