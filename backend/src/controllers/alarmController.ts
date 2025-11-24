@@ -54,7 +54,6 @@ export const createAlarm = async (req: AuthRequest, res: Response) => {
         snoozeMins: effectiveSnooze,
         enabled: normalizedEnabled,
         scheduleAt: firstScheduleAt,
-        cronExpr: null,     // ya no se usa, pero se deja en null por compatibilidad
       },
       include: {
         audio: { select: { url: true } },
@@ -135,7 +134,6 @@ export const updateAlarm = async (req: AuthRequest, res: Response) => {
         enabled: normalizedEnabled,
         scheduleAt:
           typeof nextScheduleAt !== "undefined" ? nextScheduleAt : undefined,
-        cronExpr: null,
       },
       include: {
         audio: { select: { url: true } },
@@ -215,7 +213,6 @@ export const toggleAlarm = async (req: AuthRequest, res: Response) => {
       data: {
         enabled: newEnabled,
         scheduleAt: nextScheduleAt,
-        cronExpr: null,
       },
       include: {
         audio: { select: { url: true } },
