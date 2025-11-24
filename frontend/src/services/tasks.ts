@@ -50,7 +50,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
 /** Tipos básicos (ajustados al schema del backend) */
 export type Priority = "low" | "medium" | "high" | "LOW" | "MEDIUM" | "HIGH";
 export type Status = "pending" | "in_progress" | "completed" | "archived" |
-                     "PENDING" | "IN_PROGRESS" | "COMPLETED" | "ARCHIVED";
+  "PENDING" | "IN_PROGRESS" | "COMPLETED" | "ARCHIVED";
 
 export interface Subtask {
   id: string;
@@ -65,6 +65,7 @@ export interface Task {
   priority: Priority;
   status: Status;
   createdAt?: string;
+  completedAt?: string | null;
   subtasks?: Subtask[];
   alarmId?: string | null;
 }
@@ -74,7 +75,7 @@ export async function fetchTasks(params: {
   status?: string;
   priority?: string;
   search?: string;
-  sortBy?: "createdAt" | "priority" | "status";
+  sortBy?: "createdAt" | "priority" | "status" | "order";
   order?: "asc" | "desc";
 }) {
   const query = new URLSearchParams();
@@ -123,7 +124,7 @@ export async function updateTaskStatus(id: string, status: Status, currentTask?:
     task = tasks.find(t => t.id === id);
     if (!task) throw new Error("Tarea no encontrada");
   }
-  
+
   // Actualizamos solo el status usando PUT
   return updateTask(id, { ...task, status });
 }
@@ -185,4 +186,24 @@ export async function linkAlarm(taskId: string, alarmId: string | null) {
     throw new Error("No se pudo vincular la alarma");
   }
   return (await res.json()) as Task;
+}
+
+/** Reordenar tareas */
+export async function reorderTasks(tasks: { id: string; order: number }[]) {
+  const res = await fetchWithAuth(`${API_URL}/tasks/reorder`, {
+    method: "POST",
+    body: JSON.stringify({ tasks }),
+  });
+  if (!res.ok) throw new Error("No se pudo reordenar las tareas");
+  return await res.json();
+}
+
+/** Reordenar subtareas */
+export async function reorderSubtasks(taskId: string, subtasks: { id: string; order: number }[]) {
+  const res = await fetchWithAuth(`${API_URL}/tasks/${taskId}/subtasks/reorder`, {
+    method: "POST",
+    body: JSON.stringify({ subtasks }),
+  });
+  if (!res.ok) throw new Error("No se pudo reordenar las subtareas");
+  return await res.json();
 }

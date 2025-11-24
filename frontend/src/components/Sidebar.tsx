@@ -7,7 +7,7 @@ type Stats = {
   inProgress: number;
   completed: number;
   archived: number;
-  activeAlarms: number;
+  activeAlarms?: number;
 };
 
 export default function Sidebar({ stats }: { stats?: Stats }) {
@@ -22,7 +22,7 @@ export default function Sidebar({ stats }: { stats?: Stats }) {
         >
           Tareas
         </NavLink>
-        <NavLink
+        {/* <NavLink
           to="/alarms"
           className={({ isActive }) => `menu-item${isActive ? " active" : ""}`}
         >
@@ -33,7 +33,7 @@ export default function Sidebar({ stats }: { stats?: Stats }) {
           className={({ isActive }) => `menu-item${isActive ? " active" : ""}`}
         >
           Multimedia
-        </NavLink>
+        </NavLink> */}
         <NavLink
           to="/history"
           className={({ isActive }) => `menu-item${isActive ? " active" : ""}`}
@@ -57,13 +57,13 @@ export default function Sidebar({ stats }: { stats?: Stats }) {
           <li>Archivadas <span>{stats?.archived ?? 0}</span></li>
         </ul>
 
-        <div className="alarm-mini">
+        {/* <div className="alarm-mini">
           <div className="alarm-dot" />
           <div>
             <div className="alarm-title">Alarmas activas</div>
             <div className="alarm-count">{stats?.activeAlarms ?? 0}</div>
           </div>
-        </div>
+        </div> */}
       </div>
     </aside>
   );

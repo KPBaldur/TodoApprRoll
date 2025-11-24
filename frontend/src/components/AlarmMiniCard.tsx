@@ -1,5 +1,5 @@
 // src/components/alarms/AlarmMiniCard.tsx
-import React from "react";
+// import React from "react";
 import type { Alarm } from "../services/alarmService";
 
 type Props = {
@@ -17,9 +17,8 @@ export default function AlarmMiniCard({ alarm, onToggle, onClick, onTest }: Prop
 
   return (
     <div
-      className={`p-3 rounded-lg cursor-pointer bg-slate-800/60 border ${
-        alarm.enabled ? "border-green-500" : "border-slate-600"
-      } hover:bg-slate-700/60 transition`}
+      className={`p-3 rounded-lg cursor-pointer bg-slate-800/60 border ${alarm.enabled ? "border-green-500" : "border-slate-600"
+        } hover:bg-slate-700/60 transition`}
       onClick={() => onClick?.(alarm)}
     >
       {/* HEADER */}

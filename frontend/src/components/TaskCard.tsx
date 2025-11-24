@@ -8,7 +8,7 @@ import {
 import {
   ArchiveBoxIcon,
   ArrowDownIcon,
-  BellAlertIcon,
+  // BellAlertIcon,
   CheckCircleIcon,
   CircleStackIcon,
   ClockIcon,
@@ -19,6 +19,7 @@ import {
   PlusCircleIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
+import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import type { Alarm } from "../services/alarmService";
 import type { Status, Task } from "../services/tasks";
 
@@ -56,20 +57,22 @@ type TaskCardProps = {
     taskId: string,
     payload: { title?: string; description?: string | null },
   ) => void;
+  onReorderSubtasks?: (taskId: string, subtasks: any[]) => void;
 };
 
 export default function TaskCard({
   task,
   priorityLabel,
   statusLabel,
-  alarms,
+  // alarms,
   onChangeStatus,
   onDelete,
-  onLinkAlarm,
+  // onLinkAlarm,
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
   onUpdateTask,
+  onReorderSubtasks,
 }: TaskCardProps) {
   const normalizedPriority = String(task.priority).toLowerCase();
   const normalizedStatus = String(task.status).toLowerCase();
@@ -84,9 +87,8 @@ export default function TaskCard({
   const PriorityIcon = priorityInfo.Icon;
   const StatusIcon = statusInfo.Icon;
   const statusDropdownClass = `input-with-icon dropdown status-control status-${normalizedStatus}`;
-  const alarmDropdownClass = `input-with-icon dropdown alarm-control${
-    alarms.length === 0 ? " disabled" : ""
-  }`;
+  // const alarmDropdownClass = `input-with-icon dropdown alarm-control${alarms.length === 0 ? " disabled" : ""
+  //   }`;
 
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
@@ -127,6 +129,21 @@ export default function TaskCard({
     }
   };
 
+  const handleSubtaskDragEnd = (result: DropResult) => {
+    if (!result.destination || !onReorderSubtasks) return;
+
+    const sourceIndex = result.source.index;
+    const destinationIndex = result.destination.index;
+
+    if (sourceIndex === destinationIndex) return;
+
+    const reordered = Array.from(subtasks);
+    const [removed] = reordered.splice(sourceIndex, 1);
+    reordered.splice(destinationIndex, 0, removed);
+
+    onReorderSubtasks(task.id, reordered);
+  };
+
   return (
     <article className="task-card">
       <header className="task-card__header">
@@ -153,8 +170,15 @@ export default function TaskCard({
         </div>
       </header>
 
+      {/* Fecha de completado */}
+      {normalizedStatus === "completed" && task.completedAt && (
+        <div className="task-card__completed-date" style={{ fontSize: "0.8rem", color: "#666", marginTop: "0.25rem", marginLeft: "1rem" }}>
+          Completada el: {new Date(task.completedAt).toLocaleDateString()} {new Date(task.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </div>
+      )}
+
       <div className="task-card__controls">
-        <label className={alarmDropdownClass}>
+        {/* <label className={alarmDropdownClass}>
           <BellAlertIcon className="icon" aria-hidden />
           <select
             value={task.alarmId ?? ""}
@@ -174,7 +198,7 @@ export default function TaskCard({
               </>
             )}
           </select>
-        </label>
+        </label> */}
 
         <label className={statusDropdownClass}>
           <StatusIcon className="icon" aria-hidden />
@@ -272,37 +296,50 @@ export default function TaskCard({
         {subtasks.length === 0 ? (
           <p className="subtasks-empty">Sin subtareas registradas</p>
         ) : (
-          <ul className="subtask-list">
-            {subtasks.map((subtask) => (
-              <li
-                key={subtask.id}
-                className={`subtask-item ${subtask.done ? "completed" : ""}`}
-              >
-                <button
-                  className="subtask-toggle"
-                  type="button"
-                  onClick={() =>
-                    onToggleSubtask(task.id, subtask.id, !subtask.done)
-                  }
-                >
-                  {subtask.done ? (
-                    <CheckCircleIcon className="subtask-icon done" />
-                  ) : (
-                    <CircleStackIcon className="subtask-icon" />
-                  )}
-                </button>
-                <span className={subtask.done ? "done" : ""}>{subtask.title}</span>
-                <button
-                  className="icon-btn delete"
-                  type="button"
-                  title="Eliminar subtarea"
-                  onClick={() => onDeleteSubtask(task.id, subtask.id)}
-                >
-                  <TrashIcon className="icon" />
-                </button>
-              </li>
-            ))}
-          </ul>
+          <DragDropContext onDragEnd={handleSubtaskDragEnd}>
+            <Droppable droppableId={`subtasks-${task.id}`}>
+              {(provided) => (
+                <ul className="subtask-list" {...provided.droppableProps} ref={provided.innerRef}>
+                  {subtasks.map((subtask, index) => (
+                    <Draggable key={subtask.id} draggableId={subtask.id} index={index}>
+                      {(provided) => (
+                        <li
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          className={`subtask-item ${subtask.done ? "completed" : ""}`}
+                        >
+                          <button
+                            className="subtask-toggle"
+                            type="button"
+                            onClick={() =>
+                              onToggleSubtask(task.id, subtask.id, !subtask.done)
+                            }
+                          >
+                            {subtask.done ? (
+                              <CheckCircleIcon className="subtask-icon done" />
+                            ) : (
+                              <CircleStackIcon className="subtask-icon" />
+                            )}
+                          </button>
+                          <span className={subtask.done ? "done" : ""}>{subtask.title}</span>
+                          <button
+                            className="icon-btn delete"
+                            type="button"
+                            title="Eliminar subtarea"
+                            onClick={() => onDeleteSubtask(task.id, subtask.id)}
+                          >
+                            <TrashIcon className="icon" />
+                          </button>
+                        </li>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </ul>
+              )}
+            </Droppable>
+          </DragDropContext>
         )}
 
         <div className="subtask-adder inline">
@@ -325,4 +362,3 @@ export default function TaskCard({
     </article>
   );
 }
-

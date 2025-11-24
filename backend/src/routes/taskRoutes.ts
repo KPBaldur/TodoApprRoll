@@ -9,12 +9,17 @@ import {
     addSubtask,
     toggleSubtask,
     deleteSubtask,
+    reorderTasks,
+    reorderSubtasks,
 } from "../controllers/taskController";
 
 const router = express.Router();
 
 // Proteccion con middleware de autenticacion
 router.use(authenticateToken);
+
+// Reordenar (antes de /:id para evitar conflictos)
+router.post("/reorder", reorderTasks);
 
 // Crud de tareas
 router.get("/", getTasks);
@@ -25,6 +30,7 @@ router.post("/:id/link-alarm", linkAlarmToTask);
 
 // Crud de subtareas
 router.post("/:id/subtasks", addSubtask);
+router.post("/:id/subtasks/reorder", reorderSubtasks);
 router.put("/:id/subtasks/:subtaskId", toggleSubtask);
 router.delete("/:id/subtasks/:subtaskId", deleteSubtask);
 

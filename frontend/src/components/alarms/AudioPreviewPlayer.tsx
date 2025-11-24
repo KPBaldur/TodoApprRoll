@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Props = { url?: string | null };
 
@@ -14,7 +14,7 @@ export default function AudioPreviewPlayer({ url }: Props) {
         try {
           audio.pause();
           audio.currentTime = 0;
-        } catch {}
+        } catch { }
       }
       audioRef.current = null;
       setPlaying(false);
@@ -30,7 +30,7 @@ export default function AudioPreviewPlayer({ url }: Props) {
         try {
           audioRef.current.pause();
           audioRef.current.currentTime = 0;
-        } catch {}
+        } catch { }
       }
 
       const audio = new Audio(url);
@@ -55,7 +55,7 @@ export default function AudioPreviewPlayer({ url }: Props) {
       try {
         audio.pause();
         audio.currentTime = 0;
-      } catch {}
+      } catch { }
       audioRef.current = null;
       setPlaying(false);
     }

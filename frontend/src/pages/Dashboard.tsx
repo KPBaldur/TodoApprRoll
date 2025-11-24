@@ -1,5 +1,6 @@
 // src/pages/Dashboard.tsx
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import TaskForm from "../components/TaskForm";
@@ -14,6 +15,8 @@ import {
   deleteSubtask,
   updateTask,
   linkAlarm,
+  reorderTasks,
+  reorderSubtasks,
 } from "../services/tasks";
 import type { Task, Priority, Status } from "../services/tasks";
 import { getAlarms } from "../services/alarmService";
@@ -21,8 +24,8 @@ import type { Alarm } from "../services/alarmService";
 import "../styles/dashboard.css";
 
 // 🔔 SSE alarm events
-import useAlarmEvents from "../hooks/useAlarmEvents";
-import { useAlarmPopup } from "../components/alarms/AlarmProvider";
+// import useAlarmEvents from "../hooks/useAlarmEvents";
+// import { useAlarmPopup } from "../components/alarms/AlarmProvider";
 
 const priorityLabel: Record<string, string> = {
   low: "Baja",
@@ -46,55 +49,26 @@ const statusLabel: Record<string, string> = {
 
 export default function Dashboard() {
   // -------------------------------------------------------
-  // 🔔 INTEGRACIÓN SSE + POPUP DE ALARMAS
-  // -------------------------------------------------------
-  const { enqueueAlarmTrigger } = useAlarmPopup();
-
-  const onAlarm = useCallback((payload: any) => {
-  console.log("🔔 SSE recibido:", payload);
-
-  enqueueAlarmTrigger({
-    id: payload.id,
-    name: payload.name,
-    snoozeMins: 25,
-    enabled: true,
-    scheduleAt: null,
-    audioId: null,
-    imageId: null,
-    audio: payload.audioUrl
-      ? { id: "runtime", name: "Audio alarma", url: payload.audioUrl }
-      : null,
-    image: null,
-  });
-}, [enqueueAlarmTrigger]);
-
-useAlarmEvents(onAlarm);
-
-  // -------------------------------------------------------
-  // 🔧 STATES DE FILTROS
-  // -------------------------------------------------------
   const [status, setStatus] = useState<"all" | Status>("all");
   const [priority, setPriority] = useState<"all" | Priority>("all");
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<"createdAt" | "priority" | "status">(
-    "createdAt",
-  );
-  const [order, setOrder] = useState<"asc" | "desc">("desc");
+  const [sortBy, setSortBy] = useState<"createdAt" | "priority" | "status" | "order">("order");
+  const [order, setOrder] = useState<"asc" | "desc">("asc");
 
   // -------------------------------------------------------
   // 🔧 TASKS
   // -------------------------------------------------------
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [allTasks, setAllTasks] = useState<Task[]>([]);
+  const [allTasks, setAllTasks] = useState<Task[]>([]); // Para estadísticas
   const [loading, setLoading] = useState(false);
 
   const loadTasks = useCallback(async () => {
     setLoading(true);
     try {
       const normalizedPriority =
-        priority === "all" ? undefined : priority.toUpperCase();
+        priority === "all" ? undefined : priority; // Ya no upperCase, el backend espera lowercase
       const normalizedStatus =
-        status === "all" ? undefined : status.toUpperCase();
+        status === "all" ? undefined : status;
 
       const data = await fetchTasks({
         status: normalizedStatus,
@@ -106,6 +80,7 @@ useAlarmEvents(onAlarm);
 
       setTasks(data);
 
+      // Cargar todas para estadísticas (sin filtros)
       const allData = await fetchTasks({});
       setAllTasks(allData);
     } finally {
@@ -145,15 +120,15 @@ useAlarmEvents(onAlarm);
   const stats = useMemo(() => {
     const toK = (s: string) => s.toLowerCase();
     return {
-      pending: tasks.filter((t) => toK(String(t.status)) === "pending").length,
-      inProgress: tasks.filter((t) => toK(String(t.status)) === "in_progress")
+      pending: allTasks.filter((t) => toK(String(t.status)) === "pending").length,
+      inProgress: allTasks.filter((t) => toK(String(t.status)) === "in_progress")
         .length,
-      completed: tasks.filter((t) => toK(String(t.status)) === "completed")
+      completed: allTasks.filter((t) => toK(String(t.status)) === "completed")
         .length,
-      archived: tasks.filter((t) => toK(String(t.status)) === "archived").length,
-      activeAlarms: tasks.filter((t) => t.alarmId != null).length,
+      archived: allTasks.filter((t) => toK(String(t.status)) === "archived").length,
+      // activeAlarms: tasks.filter((t) => t.alarmId != null).length,
     };
-  }, [tasks]);
+  }, [allTasks]);
 
   const priorityStats = useMemo(() => {
     const toK = (s: string) => s.toLowerCase();
@@ -197,7 +172,10 @@ useAlarmEvents(onAlarm);
 
       const task = tasks.find((t) => t.id === id);
 
-      updateTaskStatus(id, st, task).catch(() => {
+      updateTaskStatus(id, st, task).then(() => {
+        // Recargar para actualizar completedAt si es necesario
+        loadTasks();
+      }).catch(() => {
         setTasks((prev) =>
           prev.map((t) =>
             t.id === id ? { ...t, status: task?.status || "pending" } : t,
@@ -239,11 +217,11 @@ useAlarmEvents(onAlarm);
         prev.map((t) =>
           t.id === taskId
             ? {
-                ...t,
-                subtasks: (t.subtasks || []).map((s) =>
-                  s.id === temp.id ? created : s,
-                ),
-              }
+              ...t,
+              subtasks: (t.subtasks || []).map((s) =>
+                s.id === temp.id ? created : s,
+              ),
+            }
             : t,
         ),
       );
@@ -264,11 +242,11 @@ useAlarmEvents(onAlarm);
       prev.map((t) =>
         t.id === taskId
           ? {
-              ...t,
-              subtasks: (t.subtasks || []).map((s) =>
-                s.id === subId ? { ...s, done } : s,
-              ),
-            }
+            ...t,
+            subtasks: (t.subtasks || []).map((s) =>
+              s.id === subId ? { ...s, done } : s,
+            ),
+          }
           : t,
       ),
     );
@@ -346,6 +324,59 @@ useAlarmEvents(onAlarm);
   }
 
   // -------------------------------------------------------
+  // 🔄 DRAG AND DROP
+  // -------------------------------------------------------
+  const handleDragEnd = async (result: DropResult) => {
+    if (!result.destination) return;
+
+    const sourceIndex = result.source.index;
+    const destinationIndex = result.destination.index;
+
+    if (sourceIndex === destinationIndex) return;
+
+    const reorderedTasks = Array.from(tasks);
+    const [removed] = reorderedTasks.splice(sourceIndex, 1);
+    reorderedTasks.splice(destinationIndex, 0, removed);
+
+    setTasks(reorderedTasks);
+
+    // Preparar payload para el backend: enviar id y nuevo orden (índice)
+    const orderPayload = reorderedTasks.map((t, index) => ({
+      id: t.id,
+      order: index,
+    }));
+
+    try {
+      await reorderTasks(orderPayload);
+    } catch (error) {
+      console.error("Error al guardar el orden:", error);
+      // Revertir si falla (opcional, por simplicidad solo logueamos)
+    }
+  };
+
+  const handleSubtaskReorder = async (taskId: string, subtasks: any[]) => {
+    // Actualizar estado local
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId ? { ...t, subtasks } : t
+      )
+    );
+
+    // Enviar al backend
+    const orderPayload = subtasks.map((s, index) => ({
+      id: s.id,
+      order: index,
+    }));
+
+    try {
+      await reorderSubtasks(taskId, orderPayload);
+    } catch (error) {
+      console.error("Error al guardar orden de subtareas", error);
+    }
+  };
+
+
+  // -------------------------------------------------------
   // 🖥️ RENDER
   // -------------------------------------------------------
   return (
@@ -362,7 +393,7 @@ useAlarmEvents(onAlarm);
               <div>
                 <label>Estado:</label>
                 <select value={status} onChange={(e) => setStatus(e.target.value as any)}>
-                  <option value="all">Todos</option>
+                  <option value="all">Todos (Activos)</option>
                   <option value="pending">Pendiente</option>
                   <option value="in_progress">En curso</option>
                   <option value="completed">Completado</option>
@@ -392,6 +423,7 @@ useAlarmEvents(onAlarm);
               <div>
                 <label>Ordenar por:</label>
                 <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}>
+                  <option value="order">Manual</option>
                   <option value="createdAt">Creación</option>
                   <option value="priority">Prioridad</option>
                   <option value="status">Estado</option>
@@ -401,8 +433,8 @@ useAlarmEvents(onAlarm);
               <div>
                 <label>Dirección:</label>
                 <select value={order} onChange={(e) => setOrder(e.target.value as any)}>
-                  <option value="desc">Descendente</option>
                   <option value="asc">Ascendente</option>
+                  <option value="desc">Descendente</option>
                 </select>
               </div>
             </div>
@@ -449,31 +481,55 @@ useAlarmEvents(onAlarm);
           </section>
 
           {/* LISTA ------------------------------------- */}
-          <h3 className="list-title">Tareas activas</h3>
+          <h3 className="list-title">
+            {status === "archived" ? "Tareas Archivadas" : "Tareas Activas"}
+          </h3>
           {loading ? <p className="muted">Cargando…</p> : null}
 
-          <div className="task-list">
-            {tasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                priorityLabel={priorityLabel}
-                statusLabel={statusLabel}
-                alarms={alarms}
-                onChangeStatus={onChangeStatus}
-                onDelete={onDelete}
-                onLinkAlarm={onLinkAlarmChange}
-                onAddSubtask={onAddSubtask}
-                onToggleSubtask={onToggleSubtask}
-                onDeleteSubtask={onDeleteSubtask}
-                onUpdateTask={onUpdateTaskMeta}
-              />
-            ))}
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="tasks-list">
+              {(provided) => (
+                <div
+                  className="task-list"
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                >
+                  {tasks.map((task, index) => (
+                    <Draggable key={task.id} draggableId={task.id} index={index}>
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          style={{ ...provided.draggableProps.style, marginBottom: '1rem' }}
+                        >
+                          <TaskCard
+                            task={task}
+                            priorityLabel={priorityLabel}
+                            statusLabel={statusLabel}
+                            alarms={alarms}
+                            onChangeStatus={onChangeStatus}
+                            onDelete={onDelete}
+                            onLinkAlarm={onLinkAlarmChange}
+                            onAddSubtask={onAddSubtask}
+                            onToggleSubtask={onToggleSubtask}
+                            onDeleteSubtask={onDeleteSubtask}
+                            onUpdateTask={onUpdateTaskMeta}
+                            onReorderSubtasks={handleSubtaskReorder}
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
 
-            {!loading && tasks.length === 0 && (
-              <p className="muted">No hay tareas que coincidan con los filtros.</p>
-            )}
-          </div>
+          {!loading && tasks.length === 0 && (
+            <p className="muted">No hay tareas que coincidan con los filtros.</p>
+          )}
         </div>
       </main>
     </div>

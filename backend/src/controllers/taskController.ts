@@ -1,15 +1,62 @@
 import { Request, Response } from "express";
 import prisma from "../services/prismaService";
 import { AuthRequest } from "../middleware/authMiddleware";
-import { logHistory } from "../services/historyService";                                                                    
+import { logHistory } from "../services/historyService";
 
 // Obtener las tareas con el usuario autenticado
 export const getTasks = async (req: AuthRequest, res: Response) => {
     try {
+        const { status, priority, search, sortBy, order } = req.query;
+
+        const where: any = { userId: req.userId };
+
+        // Filtro por estado
+        if (status && status !== "all") {
+            where.status = String(status).toLowerCase();
+        } else {
+            // Si no se pide explícitamente "archived" o "all", excluimos las archivadas
+            if (status !== "archived") {
+                where.status = { not: "archived" };
+            }
+        }
+
+        // Filtro por prioridad
+        if (priority && priority !== "all") {
+            where.priority = String(priority).toLowerCase();
+        }
+
+        // Búsqueda por título
+        if (search) {
+            where.title = { contains: String(search), mode: "insensitive" };
+        }
+
+        // Ordenamiento
+        let orderBy: any = {};
+        if (sortBy === "priority") {
+            // Prioridad es string, así que el orden alfabético puede no ser el deseado (high, low, medium).
+            // Para un ordenamiento real por prioridad se necesitaría un mapeo o enum en DB.
+            // Por ahora ordenamos por string.
+            orderBy = { priority: order === "asc" ? "asc" : "desc" };
+        } else if (sortBy === "status") {
+            orderBy = { status: order === "asc" ? "asc" : "desc" };
+        } else if (sortBy === "order") {
+            orderBy = { order: order === "asc" ? "asc" : "desc" };
+        } else {
+            // Default: createdAt
+            orderBy = { createdAt: order === "asc" ? "asc" : "desc" };
+        }
+
+        // Siempre incluir ordenamiento secundario por fecha para consistencia
+        const finalOrderBy = [orderBy, { createdAt: "desc" }];
+
         const tasks = await prisma.task.findMany({
-            where: { userId: req.userId },
-            include: { subtasks: true },
-            orderBy: { createdAt: "desc" },
+            where,
+            include: {
+                subtasks: {
+                    orderBy: { order: 'asc' } // Subtareas ordenadas por orden manual
+                }
+            },
+            orderBy: finalOrderBy,
         });
         res.json(tasks);
     } catch (error) {
@@ -38,6 +85,15 @@ export const createTask = async (req: AuthRequest, res: Response) => {
             normalizedAlarmId = alarmId;
         }
 
+        // Obtener el último orden para poner la nueva al final (o al principio si se prefiere)
+        // Aquí la ponemos al principio (orden más bajo o simplemente 0 si no hay lógica compleja)
+        // O podemos buscar el max order.
+        const maxOrderTask = await prisma.task.findFirst({
+            where: { userId: req.userId },
+            orderBy: { order: 'desc' }
+        });
+        const newOrder = (maxOrderTask?.order ?? 0) + 1;
+
         const task = await prisma.task.create({
             data: {
                 userId: req.userId!,
@@ -46,6 +102,7 @@ export const createTask = async (req: AuthRequest, res: Response) => {
                 priority: priority || "medium",
                 status: status || "pending",
                 alarmId: normalizedAlarmId,
+                order: newOrder,
             },
         });
 
@@ -64,19 +121,22 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
         const { title, description, priority, status, alarmId } = req.body;
 
         const existing = await prisma.task.findFirst({
-            where: { id, userId: req.userId},
+            where: { id, userId: req.userId },
         });
 
         if (!existing)
             return res.status(404).json({ message: "Tarea no encontrada" });
 
-        const data: {
-            title?: string;
-            description?: string | null;
-            priority?: string;
-            status?: string;
-            alarmId?: string | null;
-        } = { title, description, priority, status };
+        const data: any = { title, description, priority, status };
+
+        // Lógica de completedAt
+        if (status) {
+            if (status === "completed" && existing.status !== "completed") {
+                data.completedAt = new Date();
+            } else if (status !== "completed" && existing.status === "completed") {
+                data.completedAt = null;
+            }
+        }
 
         if (alarmId === null || alarmId === "") {
             data.alarmId = null;
@@ -93,7 +153,7 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
         }
 
         const updated = await prisma.task.update({
-            where: { id},
+            where: { id },
             data,
         });
 
@@ -101,12 +161,12 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
         res.json(updated);
     } catch (error) {
         console.error("Error al actualizar la tarea:", error);
-        res.status(500).json({ message: "Error al actualizar la tarea"});
+        res.status(500).json({ message: "Error al actualizar la tarea" });
     }
 };
 
 // Eliminar una tarea
-export const deleteTask = async ( req: AuthRequest, res: Response) => {
+export const deleteTask = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
 
@@ -117,12 +177,12 @@ export const deleteTask = async ( req: AuthRequest, res: Response) => {
         if (!existing)
             return res.status(404).json({ message: "Tarea no encontrada" });
 
-        await prisma.task.delete({ where: { id }});
+        await prisma.task.delete({ where: { id } });
         await logHistory(req.userId!, "Task", "DELETE", existing);
-        res.json({ message: "Tarea eliminada correctamente"});
+        res.json({ message: "Tarea eliminada correctamente" });
     } catch (error) {
         console.error("Error al eliminar tarea: ", error);
-        res.status(500).json({ message: "Error al eliminar tarea"});
+        res.status(500).json({ message: "Error al eliminar tarea" });
     }
 };
 
@@ -187,11 +247,19 @@ export const addSubtask = async (req: AuthRequest, res: Response) => {
             return res.status(404).json({ message: "Tarea no encontrada" });
         }
 
+        // Obtener max order para subtareas
+        const maxOrderSub = await prisma.subtask.findFirst({
+            where: { taskId: id },
+            orderBy: { order: 'desc' }
+        });
+        const newOrder = (maxOrderSub?.order ?? 0) + 1;
+
         const subtask = await prisma.subtask.create({
             data: {
                 taskId: id,
                 title: title.trim(),
                 done: false,
+                order: newOrder,
             },
         });
 
@@ -272,5 +340,64 @@ export const deleteSubtask = async (req: AuthRequest, res: Response) => {
     } catch (error) {
         console.error("Error al eliminar subtarea:", error);
         res.status(500).json({ message: "Error al eliminar subtarea" });
+    }
+};
+
+// Reordenar tareas
+export const reorderTasks = async (req: AuthRequest, res: Response) => {
+    try {
+        const { tasks } = req.body; // Array de { id, order }
+
+        if (!Array.isArray(tasks)) {
+            return res.status(400).json({ message: "Formato inválido" });
+        }
+
+        // Transacción para actualizar todos
+        await prisma.$transaction(
+            tasks.map((t: any) =>
+                prisma.task.updateMany({
+                    where: { id: t.id, userId: req.userId },
+                    data: { order: t.order }
+                })
+            )
+        );
+
+        res.json({ message: "Orden actualizado" });
+    } catch (error) {
+        console.error("Error al reordenar tareas:", error);
+        res.status(500).json({ message: "Error al reordenar tareas" });
+    }
+};
+
+// Reordenar subtareas
+export const reorderSubtasks = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params; // Task ID
+        const { subtasks } = req.body; // Array de { id, order }
+
+        if (!Array.isArray(subtasks)) {
+            return res.status(400).json({ message: "Formato inválido" });
+        }
+
+        // Verificar propiedad de la tarea
+        const task = await prisma.task.findFirst({
+            where: { id, userId: req.userId }
+        });
+
+        if (!task) return res.status(404).json({ message: "Tarea no encontrada" });
+
+        await prisma.$transaction(
+            subtasks.map((s: any) =>
+                prisma.subtask.updateMany({
+                    where: { id: s.id, taskId: id },
+                    data: { order: s.order }
+                })
+            )
+        );
+
+        res.json({ message: "Orden de subtareas actualizado" });
+    } catch (error) {
+        console.error("Error al reordenar subtareas:", error);
+        res.status(500).json({ message: "Error al reordenar subtareas" });
     }
 };

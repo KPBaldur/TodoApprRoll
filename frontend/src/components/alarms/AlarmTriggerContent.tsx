@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Alarm } from "../../services/alarmService";
 
 type Props = { alarm: Alarm };
@@ -16,7 +16,7 @@ export default function AlarmTriggerContent({ alarm }: Props) {
         try {
           audio.pause();
           audio.currentTime = 0;
-        } catch {}
+        } catch { }
       }
       setPlaying(false);
       audioRef.current = null;
@@ -29,7 +29,7 @@ export default function AlarmTriggerContent({ alarm }: Props) {
       try {
         audio.pause();
         audio.currentTime = 0;
-      } catch {}
+      } catch { }
       setPlaying(false);
     }
   };

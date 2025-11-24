@@ -1,28 +1,28 @@
 import { useEffect, useState } from "react";
-import { getTasks, createTask, deleteTask, updateTask } from "../services/task";
+import { fetchTasks, createTask, deleteTask, updateTask } from "../services/tasks";
 import "../styles/tasks.css";
 
-export default function TasksPage(){
-    const [tasks, setTasks]= useState<any[]>([]);
-    const [newTask, setNewTask] = useState("");
+export default function TasksPage() {
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [newTask, setNewTask] = useState("");
 
-    const loadTasks = async () => {
-        try {
-            const data = await getTasks();
-            setTasks(data);
-        } catch(err) {
-            console.error("Error al cargar tareas", err);
-        }
-    };
+  const loadTasks = async () => {
+    try {
+      const data = await fetchTasks({});
+      setTasks(data);
+    } catch (err) {
+      console.error("Error al cargar tareas", err);
+    }
+  };
 
-    const handleAdd = async () => {
-        if (!newTask.trim()) return;
-        await createTask({ title: newTask });
-        setNewTask("");
-        loadTasks();
-    };
+  const handleAdd = async () => {
+    if (!newTask.trim()) return;
+    await createTask({ title: newTask, priority: "medium" });
+    setNewTask("");
+    loadTasks();
+  };
 
-    const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string) => {
     await deleteTask(id);
     loadTasks();
   };
@@ -62,4 +62,4 @@ export default function TasksPage(){
       </ul>
     </section>
   );
-};
+}
