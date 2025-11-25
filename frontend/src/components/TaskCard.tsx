@@ -10,6 +10,8 @@ import {
   ArrowDownIcon,
   // BellAlertIcon,
   CheckCircleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
   CircleStackIcon,
   ClockIcon,
   ExclamationTriangleIcon,
@@ -96,6 +98,7 @@ export default function TaskCard({
   const [savingEdit, setSavingEdit] = useState(false);
   const [newSubtask, setNewSubtask] = useState("");
   const [addingSubtask, setAddingSubtask] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     setEditTitle(task.title);
@@ -147,16 +150,30 @@ export default function TaskCard({
   return (
     <article className="task-card">
       <header className="task-card__header">
-        <div className="task-card__title">
-          {editing ? (
-            <input
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              placeholder="Título de la tarea"
-            />
-          ) : (
-            <h3 style={{ color: priorityInfo.color }}>{task.title}</h3>
-          )}
+        <div className="task-card__title-row">
+          <button
+            className="collapse-toggle"
+            type="button"
+            onClick={() => setCollapsed(!collapsed)}
+            title={collapsed ? "Expandir detalles" : "Ocultar detalles"}
+          >
+            {collapsed ? (
+              <ChevronDownIcon className="icon" />
+            ) : (
+              <ChevronUpIcon className="icon" />
+            )}
+          </button>
+          <div className="task-card__title">
+            {editing ? (
+              <input
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder="Título de la tarea"
+              />
+            ) : (
+              <h3 style={{ color: priorityInfo.color }}>{task.title}</h3>
+            )}
+          </div>
         </div>
         <div className="task-card__pills">
           <span className="task-card__pill" style={{ color: priorityInfo.color }}>
@@ -279,86 +296,90 @@ export default function TaskCard({
         </div>
       </div>
 
-      <div className="task-card__description">
-        {editing ? (
-          <textarea
-            value={editDesc}
-            onChange={(e) => setEditDesc(e.target.value)}
-            placeholder="Descripción de la tarea"
-          />
-        ) : (
-          <p>{task.description || "Sin descripción disponible."}</p>
-        )}
-      </div>
+      {!collapsed && (
+        <>
+          <div className="task-card__description">
+            {editing ? (
+              <textarea
+                value={editDesc}
+                onChange={(e) => setEditDesc(e.target.value)}
+                placeholder="Descripción de la tarea"
+              />
+            ) : (
+              <p>{task.description || "Sin descripción disponible."}</p>
+            )}
+          </div>
 
-      <div className="task-card__subtasks">
-        <h4>SUBTAREAS</h4>
-        {subtasks.length === 0 ? (
-          <p className="subtasks-empty">Sin subtareas registradas</p>
-        ) : (
-          <DragDropContext onDragEnd={handleSubtaskDragEnd}>
-            <Droppable droppableId={`subtasks-${task.id}`}>
-              {(provided) => (
-                <ul className="subtask-list" {...provided.droppableProps} ref={provided.innerRef}>
-                  {subtasks.map((subtask, index) => (
-                    <Draggable key={subtask.id} draggableId={subtask.id} index={index}>
-                      {(provided) => (
-                        <li
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className={`subtask-item ${subtask.done ? "completed" : ""}`}
-                        >
-                          <button
-                            className="subtask-toggle"
-                            type="button"
-                            onClick={() =>
-                              onToggleSubtask(task.id, subtask.id, !subtask.done)
-                            }
-                          >
-                            {subtask.done ? (
-                              <CheckCircleIcon className="subtask-icon done" />
-                            ) : (
-                              <CircleStackIcon className="subtask-icon" />
-                            )}
-                          </button>
-                          <span className={subtask.done ? "done" : ""}>{subtask.title}</span>
-                          <button
-                            className="icon-btn delete"
-                            type="button"
-                            title="Eliminar subtarea"
-                            onClick={() => onDeleteSubtask(task.id, subtask.id)}
-                          >
-                            <TrashIcon className="icon" />
-                          </button>
-                        </li>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </ul>
-              )}
-            </Droppable>
-          </DragDropContext>
-        )}
+          <div className="task-card__subtasks">
+            <h4>SUBTAREAS</h4>
+            {subtasks.length === 0 ? (
+              <p className="subtasks-empty">Sin subtareas registradas</p>
+            ) : (
+              <DragDropContext onDragEnd={handleSubtaskDragEnd}>
+                <Droppable droppableId={`subtasks-${task.id}`}>
+                  {(provided) => (
+                    <ul className="subtask-list" {...provided.droppableProps} ref={provided.innerRef}>
+                      {subtasks.map((subtask, index) => (
+                        <Draggable key={subtask.id} draggableId={subtask.id} index={index}>
+                          {(provided) => (
+                            <li
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className={`subtask-item ${subtask.done ? "completed" : ""}`}
+                            >
+                              <button
+                                className="subtask-toggle"
+                                type="button"
+                                onClick={() =>
+                                  onToggleSubtask(task.id, subtask.id, !subtask.done)
+                                }
+                              >
+                                {subtask.done ? (
+                                  <CheckCircleIcon className="subtask-icon done" />
+                                ) : (
+                                  <CircleStackIcon className="subtask-icon" />
+                                )}
+                              </button>
+                              <span className={subtask.done ? "done" : ""}>{subtask.title}</span>
+                              <button
+                                className="icon-btn delete"
+                                type="button"
+                                title="Eliminar subtarea"
+                                onClick={() => onDeleteSubtask(task.id, subtask.id)}
+                              >
+                                <TrashIcon className="icon" />
+                              </button>
+                            </li>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </ul>
+                  )}
+                </Droppable>
+              </DragDropContext>
+            )}
 
-        <div className="subtask-adder inline">
-          <input
-            value={newSubtask}
-            onChange={(e) => setNewSubtask(e.target.value)}
-            placeholder="Nueva subtarea"
-          />
-          <button
-            className="btn add-subtask"
-            type="button"
-            onClick={handleAddSubtask}
-            disabled={addingSubtask}
-          >
-            <PlusCircleIcon className="icon" />{" "}
-            {addingSubtask ? "Añadiendo..." : "Añadir subtarea"}
-          </button>
-        </div>
-      </div>
+            <div className="subtask-adder inline">
+              <input
+                value={newSubtask}
+                onChange={(e) => setNewSubtask(e.target.value)}
+                placeholder="Nueva subtarea"
+              />
+              <button
+                className="btn add-subtask"
+                type="button"
+                onClick={handleAddSubtask}
+                disabled={addingSubtask}
+              >
+                <PlusCircleIcon className="icon" />{" "}
+                {addingSubtask ? "Añadiendo..." : "Añadir subtarea"}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </article>
   );
 }

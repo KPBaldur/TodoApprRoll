@@ -1,6 +1,7 @@
 /* === Dashboard Layout === */
 .dashboard-main {
-  margin-left: 240px; /* espacio reservado para sidebar */
+  margin-left: 240px;
+  /* espacio reservado para sidebar */
   padding: 0;
   height: 100vh;
   color: var(--text-light);
@@ -17,7 +18,8 @@
 /* === Área de trabajo === */
 .work-area {
   padding: 2rem 2.5rem;
-  background: rgb(20, 27, 43); /* Fondo sólido sin transparencia */
+  background: rgb(20, 27, 43);
+  /* Fondo sólido sin transparencia */
   border-radius: 0;
   margin: 0;
   position: relative;
@@ -559,13 +561,15 @@ button:active,
 
 /* Estado completado: fondo verde suave y borde */
 .subtask-item.completed {
-  background: rgba(16, 185, 129, 0.18); /* verde */
+  background: rgba(16, 185, 129, 0.18);
+  /* verde */
   border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
 /* Texto de subtarea cuando está completada (ya tiene line-through por .done) */
 .subtask-item.completed span {
-  color: #d1fae5; /* verde muy claro, legible en dark */
+  color: #d1fae5;
+  /* verde muy claro, legible en dark */
 }
 
 /* Icono de subtarea completada en verde */
@@ -673,6 +677,7 @@ body {
   align-items: center;
   gap: 16px;
 }
+
 .alarm-new-btn {
   display: inline-flex;
   align-items: center;
@@ -685,7 +690,11 @@ body {
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
   transition: all .2s ease;
 }
-.alarm-new-btn:hover { filter: brightness(1.05); transform: translateY(-1px); }
+
+.alarm-new-btn:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
 
 /* Estado vacío: dos tarjetas grandes centradas */
 .alarms-empty-grid {
@@ -696,9 +705,14 @@ body {
   max-width: 1000px;
   margin: 40px auto;
 }
+
 @media (min-width: 1200px) {
-  .alarms-empty-grid { flex-direction: row; justify-content: center; }
+  .alarms-empty-grid {
+    flex-direction: row;
+    justify-content: center;
+  }
 }
+
 .alarms-empty-card {
   flex: 1;
   min-width: 380px;
@@ -708,22 +722,40 @@ body {
   border-radius: 12px;
   color: #cbd5e1;
   text-align: center;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
-.alarms-empty-card h4 { font-size: 18px; margin-bottom: 8px; }
-.alarms-empty-card p { margin: 0; }
+
+.alarms-empty-card h4 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.alarms-empty-card p {
+  margin: 0;
+}
 
 /* Formulario de alarmas */
-.alarm-form { margin-top: 8px; }
+.alarm-form {
+  margin-top: 8px;
+}
+
 .alarm-form-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 16px;
 }
+
 @media (min-width: 1024px) {
-  .alarm-form-grid { grid-template-columns: 1.2fr .8fr; }
+  .alarm-form-grid {
+    grid-template-columns: 1.2fr .8fr;
+  }
 }
-.alarm-form-left { display: grid; gap: 12px; }
+
+.alarm-form-left {
+  display: grid;
+  gap: 12px;
+}
+
 .alarm-form-right {
   background: #121826;
   border: 1px solid #263144;
@@ -733,11 +765,30 @@ body {
   gap: 16px;
 }
 
-.form-label { color: #e2e8f0; font-size: 13px; margin-bottom: 6px; }
-.grid-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.checkbox-row { display: flex; align-items: center; gap: 8px; }
+.form-label {
+  color: #e2e8f0;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
 
-.toggle-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.grid-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggle-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .toggle-btn {
   padding: 8px 12px;
   border-radius: 8px;
@@ -746,15 +797,20 @@ body {
   border: 1px solid #475569;
   transition: all .2s ease;
 }
+
 .toggle-btn.active {
   background: #0284c7;
   color: white;
   border-color: #38bdf8;
-  box-shadow: 0 0 0 2px rgba(2,132,199,.25);
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, .25);
 }
-.toggle-btn:hover { filter: brightness(1.05); }
 
-.input-modern, .select-modern {
+.toggle-btn:hover {
+  filter: brightness(1.05);
+}
+
+.input-modern,
+.select-modern {
   padding: 10px 12px;
   border-radius: 8px;
   background: #0b1220;
@@ -764,7 +820,9 @@ body {
   width: 100%;
   transition: box-shadow .2s ease, border-color .2s ease;
 }
-.input-modern:focus, .select-modern:focus {
+
+.input-modern:focus,
+.select-modern:focus {
   border-color: #38bdf8;
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
 }
@@ -779,7 +837,12 @@ body {
   position: relative;
   transition: background .2s ease, border-color .2s ease;
 }
-.checkbox-modern:checked { background: #059669; border-color: #34d399; }
+
+.checkbox-modern:checked {
+  background: #059669;
+  border-color: #34d399;
+}
+
 .checkbox-modern::after {
   content: "";
   position: absolute;
@@ -787,10 +850,15 @@ body {
   height: 18px;
   background: #e2e8f0;
   border-radius: 50%;
-  top: 2px; left: 2px;
+  top: 2px;
+  left: 2px;
   transition: transform .2s ease, background .2s ease;
 }
-.checkbox-modern:checked::after { transform: translateX(20px); background: #fff; }
+
+.checkbox-modern:checked::after {
+  transform: translateX(20px);
+  background: #fff;
+}
 
 /* Preview de imagen y audio */
 .image-preview-card {
@@ -806,16 +874,30 @@ body {
   min-height: 220px;
   color: #cbd5e1;
 }
-.image-preview-card.active { background: #065f46; border-color: #10b981; }
+
+.image-preview-card.active {
+  background: #065f46;
+  border-color: #10b981;
+}
+
 .image-preview-card img {
   max-width: 100%;
   max-height: 160px;
   border-radius: 10px;
   object-fit: contain;
 }
-.image-preview-card .file-name { font-size: 13px; color: #e2e8f0; }
 
-.audio-preview-actions { display: flex; align-items: center; gap: 8px; }
+.image-preview-card .file-name {
+  font-size: 13px;
+  color: #e2e8f0;
+}
+
+.audio-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .audio-preview-btn {
   padding: 8px 12px;
   border-radius: 8px;
@@ -824,8 +906,15 @@ body {
   border: 1px solid #38bdf8;
   transition: filter .2s ease;
 }
-.audio-preview-btn:hover { filter: brightness(1.05); }
-.audio-preview-btn.green { background: #059669; border-color: #34d399; }
+
+.audio-preview-btn:hover {
+  filter: brightness(1.05);
+}
+
+.audio-preview-btn.green {
+  background: #059669;
+  border-color: #34d399;
+}
 
 /* Botones generales */
 .btn {
@@ -837,12 +926,40 @@ body {
   border: 1px solid transparent;
   transition: all .2s ease;
 }
-.btn-primary { background: #0284c7; color: #fff; border-color: #38bdf8; }
-.btn-muted { background: #475569; color: #e2e8f0; border-color: #64748b; }
-.btn-green { background: #059669; color: #fff; border-color: #34d399; }
-.btn:hover { filter: brightness(1.05); }
-.alarm-form-actions { display: flex; align-items: center; gap: 8px; }
-.error-text { color: #fca5a5; font-size: 13px; }
+
+.btn-primary {
+  background: #0284c7;
+  color: #fff;
+  border-color: #38bdf8;
+}
+
+.btn-muted {
+  background: #475569;
+  color: #e2e8f0;
+  border-color: #64748b;
+}
+
+.btn-green {
+  background: #059669;
+  color: #fff;
+  border-color: #34d399;
+}
+
+.btn:hover {
+  filter: brightness(1.05);
+}
+
+.alarm-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-text {
+  color: #fca5a5;
+  font-size: 13px;
+}
+
 .task-card__description p {
   margin: 0;
   font-size: 0.95rem;
@@ -900,13 +1017,15 @@ body {
 
 /* Estado completado: fondo verde suave y borde */
 .subtask-item.completed {
-  background: rgba(16, 185, 129, 0.18); /* verde */
+  background: rgba(16, 185, 129, 0.18);
+  /* verde */
   border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
 /* Texto de subtarea cuando está completada (ya tiene line-through por .done) */
 .subtask-item.completed span {
-  color: #d1fae5; /* verde muy claro, legible en dark */
+  color: #d1fae5;
+  /* verde muy claro, legible en dark */
 }
 
 /* Icono de subtarea completada en verde */
@@ -1251,10 +1370,12 @@ body {
   cursor: pointer;
   transition: transform .15s ease, filter .15s ease, box-shadow .15s ease;
 }
+
 .alarm-modal-close:hover {
   filter: brightness(1.05);
   transform: translateY(-1px);
 }
+
 .alarm-modal-close:focus {
   outline: none;
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
@@ -1265,8 +1386,47 @@ body {
   align-items: center;
   justify-content: flex-start;
 }
+
 .modal-title {
   font-size: 20px;
   font-weight: 600;
 }
-.modal-body { margin-top: 16px; }
+
+.modal-body {
+  margin-top: 16px;
+}
+
+/* === Botón Colapsar Tarea === */
+.task-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.collapse-toggle {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.collapse-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+.collapse-toggle .icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: #cbd5e1;
+}

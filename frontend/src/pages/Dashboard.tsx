@@ -119,11 +119,14 @@ export default function Dashboard() {
   // -------------------------------------------------------
   const stats = useMemo(() => {
     const toK = (s: string) => s.toLowerCase();
+    // Filtrar tareas NO archivadas para el resumen de estados activos
+    const activeTasks = allTasks.filter((t) => toK(String(t.status)) !== "archived");
+
     return {
-      pending: allTasks.filter((t) => toK(String(t.status)) === "pending").length,
-      inProgress: allTasks.filter((t) => toK(String(t.status)) === "in_progress")
+      pending: activeTasks.filter((t) => toK(String(t.status)) === "pending").length,
+      inProgress: activeTasks.filter((t) => toK(String(t.status)) === "in_progress")
         .length,
-      completed: allTasks.filter((t) => toK(String(t.status)) === "completed")
+      completed: activeTasks.filter((t) => toK(String(t.status)) === "completed")
         .length,
       archived: allTasks.filter((t) => toK(String(t.status)) === "archived").length,
       // activeAlarms: tasks.filter((t) => t.alarmId != null).length,
@@ -132,8 +135,10 @@ export default function Dashboard() {
 
   const priorityStats = useMemo(() => {
     const toK = (s: string) => s.toLowerCase();
+    // Excluir tareas archivadas del conteo de prioridades
+    const activeTasks = allTasks.filter((t) => toK(String(t.status)) !== "archived");
     const getPriorityTasks = (prio: string) =>
-      allTasks.filter((t) => toK(String(t.priority)) === toK(prio));
+      activeTasks.filter((t) => toK(String(t.priority)) === toK(prio));
 
     return {
       low: {
