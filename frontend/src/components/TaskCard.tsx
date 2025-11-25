@@ -187,8 +187,8 @@ export default function TaskCard({
         </div>
       </header>
 
-      {/* Fecha de completado */}
-      {normalizedStatus === "completed" && task.completedAt && (
+      {/* Fecha de completado (visible en completadas y archivadas) */}
+      {(normalizedStatus === "completed" || normalizedStatus === "archived") && task.completedAt && (
         <div className="task-card__completed-date" style={{ fontSize: "0.8rem", color: "#666", marginTop: "0.25rem", marginLeft: "1rem" }}>
           Completada el: {new Date(task.completedAt).toLocaleDateString()} {new Date(task.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </div>
@@ -226,7 +226,13 @@ export default function TaskCard({
             <option value="pending">Pendiente</option>
             <option value="in_progress">Trabajando</option>
             <option value="completed">Completada</option>
-            <option value="archived">Archivada</option>
+            {/* Solo permitir seleccionar Archivada si ya está completada o archivada */}
+            <option
+              value="archived"
+              disabled={normalizedStatus !== "completed" && normalizedStatus !== "archived"}
+            >
+              Archivada {normalizedStatus !== "completed" && normalizedStatus !== "archived" ? "(Requiere completar)" : ""}
+            </option>
           </select>
         </label>
 
@@ -255,26 +261,30 @@ export default function TaskCard({
             </>
           ) : (
             <>
-              {normalizedStatus !== "archived" && (
+              {/* Botón Archivar: Solo visible si está COMPLETADA */}
+              {normalizedStatus === "completed" && (
                 <button
                   className="icon-btn archive"
                   type="button"
-                  title="Archivar tarea"
+                  title="Archivar tarea (Completada)"
                   onClick={() => onChangeStatus(task.id, "archived")}
                 >
                   <ArchiveBoxIcon className="icon" style={{ color: "currentColor" }} />
                 </button>
               )}
+
               {normalizedStatus === "archived" && (
                 <button
                   className="icon-btn unarchive"
                   type="button"
                   title="Desarchivar tarea"
-                  onClick={() => onChangeStatus(task.id, "pending")}
+                  onClick={() => onChangeStatus(task.id, "completed")}
                 >
+                  {/* Al desarchivar vuelve a completada para mantener coherencia */}
                   <ArchiveBoxIcon className="icon" style={{ color: "currentColor" }} />
                 </button>
               )}
+
               <button
                 className="icon-btn edit"
                 type="button"

@@ -14,8 +14,12 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
         if (status && status !== "all") {
             where.status = String(status).toLowerCase();
         } else {
-            // Si no se pide explícitamente "archived" o "all", excluimos las archivadas
-            if (status !== "archived") {
+            // Si es "all", NO filtramos nada (trae todo, incluyendo archived)
+            if (status === "all") {
+                // No agregar filtro, trae todas
+            }
+            // Si no se pide explícitamente "archived" (y no es "all"), excluimos las archivadas por defecto
+            else if (status !== "archived") {
                 where.status = { not: "archived" };
             }
         }
@@ -133,7 +137,8 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
         if (status) {
             if (status === "completed" && existing.status !== "completed") {
                 data.completedAt = new Date();
-            } else if (status !== "completed" && existing.status === "completed") {
+            } else if (status !== "completed" && status !== "archived" && existing.status === "completed") {
+                // Solo limpiar fecha si NO es completed Y NO es archived
                 data.completedAt = null;
             }
         }

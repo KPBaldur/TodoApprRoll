@@ -81,7 +81,7 @@ export default function Dashboard() {
       setTasks(data);
 
       // Cargar todas para estadísticas (sin filtros)
-      const allData = await fetchTasks({});
+      const allData = await fetchTasks({ status: "all" });
       setAllTasks(allData);
     } finally {
       setLoading(false);
@@ -126,8 +126,11 @@ export default function Dashboard() {
       pending: activeTasks.filter((t) => toK(String(t.status)) === "pending").length,
       inProgress: activeTasks.filter((t) => toK(String(t.status)) === "in_progress")
         .length,
-      completed: activeTasks.filter((t) => toK(String(t.status)) === "completed")
-        .length,
+      // Completadas incluye las que están en 'completed' Y las 'archived' (ya que para archivar deben completarse)
+      completed: allTasks.filter((t) => {
+        const s = toK(String(t.status));
+        return s === "completed" || s === "archived";
+      }).length,
       archived: allTasks.filter((t) => toK(String(t.status)) === "archived").length,
       // activeAlarms: tasks.filter((t) => t.alarmId != null).length,
     };
