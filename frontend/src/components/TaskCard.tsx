@@ -9,10 +9,12 @@ import {
   ArchiveBoxIcon,
   ChevronUpIcon,
   ChevronDownIcon,
+  BellAlertIcon,
 } from "@heroicons/react/24/outline";
 import { CircleStackIcon } from "@heroicons/react/24/outline";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Task, Status } from "../services/tasks";
+import type { Task, Status } from "../services/tasks";
+import type { Alarm } from "../services/alarmService";
 
 // Definición de colores y etiquetas para Prioridad
 const priorityVisual = {
@@ -33,10 +35,10 @@ type TaskCardProps = {
   task: Task;
   priorityLabel: Record<string, string>;
   statusLabel: Record<string, string>;
-  // alarms: Alarm[]; // Alarmas eliminadas temporalmente de la vista si no se usan
+  alarms: Alarm[];
   onChangeStatus: (taskId: string, newStatus: Status) => void;
   onDelete: (taskId: string) => void;
-  // onLinkAlarm: (taskId: string, alarmId: string | null) => void;
+  onLinkAlarm: (taskId: string, alarmId: string | null) => void;
   onAddSubtask: (taskId: string, title: string) => void;
   onToggleSubtask: (taskId: string, subtaskId: string, done: boolean) => void;
   onDeleteSubtask: (taskId: string, subtaskId: string) => void;
@@ -51,8 +53,10 @@ export default function TaskCard({
   task,
   priorityLabel,
   statusLabel,
+  alarms,
   onChangeStatus,
   onDelete,
+  onLinkAlarm,
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
@@ -72,6 +76,7 @@ export default function TaskCard({
   const PriorityIcon = priorityInfo.Icon;
   const StatusIcon = statusInfo.Icon;
   const statusDropdownClass = `input-with-icon dropdown status-control status-${normalizedStatus}`;
+  const alarmDropdownClass = `input-with-icon dropdown alarm-control${alarms.length === 0 ? " disabled" : ""}`;
 
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
@@ -262,6 +267,28 @@ export default function TaskCard({
       )}
 
       <div className="task-card__controls">
+        <label className={alarmDropdownClass}>
+          <BellAlertIcon className="icon" aria-hidden />
+          <select
+            value={task.alarmId ?? ""}
+            onChange={(e) => onLinkAlarm(task.id, e.target.value || null)}
+            disabled={alarms.length === 0}
+          >
+            {alarms.length === 0 ? (
+              <option value="">No hay alarmas creadas</option>
+            ) : (
+              <>
+                <option value="">Sin alarma</option>
+                {alarms.map((alarm) => (
+                  <option key={alarm.id} value={alarm.id}>
+                    {alarm.name}
+                  </option>
+                ))}
+              </>
+            )}
+          </select>
+        </label>
+
         <label className={statusDropdownClass}>
           <StatusIcon className="icon" aria-hidden />
           <select
