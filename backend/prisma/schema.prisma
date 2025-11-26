@@ -32,8 +32,9 @@ model Task {
   updatedAt   DateTime  @updatedAt
   title       String
   order       Int       @default(0)
-  completedAt DateTime?
-  subtasks    Subtask[]
+  completedAt    DateTime?
+  completionNote String?
+  subtasks       Subtask[]
   alarm       Alarm?    @relation("TaskAlarm", fields: [alarmId], references: [id])
   user        User      @relation(fields: [userId], references: [id])
 

@@ -122,7 +122,7 @@ export const createTask = async (req: AuthRequest, res: Response) => {
 export const updateTask = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        const { title, description, priority, status, alarmId } = req.body;
+        const { title, description, priority, status, alarmId, completionNote } = req.body;
 
         const existing = await prisma.task.findFirst({
             where: { id, userId: req.userId },
@@ -131,7 +131,7 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
         if (!existing)
             return res.status(404).json({ message: "Tarea no encontrada" });
 
-        const data: any = { title, description, priority, status };
+        const data: any = { title, description, priority, status, completionNote };
 
         // Lógica de completedAt
         if (status) {
