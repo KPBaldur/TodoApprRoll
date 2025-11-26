@@ -1,57 +1,42 @@
+import { useState, useEffect } from "react";
 import {
-  type ComponentType,
-  type SVGProps,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import {
-  ArchiveBoxIcon,
-  ArrowDownIcon,
-  // BellAlertIcon,
+  TrashIcon,
+  PencilSquareIcon,
   CheckCircleIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  CircleStackIcon,
+  PlusCircleIcon,
   ClockIcon,
   ExclamationTriangleIcon,
-  FlagIcon,
-  PencilSquareIcon,
-  PlayCircleIcon,
-  PlusCircleIcon,
-  TrashIcon,
+  ArchiveBoxIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
 } from "@heroicons/react/24/outline";
-import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
-import type { Alarm } from "../services/alarmService";
-import type { Status, Task } from "../services/tasks";
+import { CircleStackIcon } from "@heroicons/react/24/outline";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { Task, Status } from "../services/tasks";
 
-type IconEntry = {
-  color: string;
-  Icon: ComponentType<SVGProps<SVGSVGElement>>;
-  label: string;
+// Definición de colores y etiquetas para Prioridad
+const priorityVisual = {
+  low: { color: "#10b981", label: "Baja", Icon: CheckCircleIcon },
+  medium: { color: "#f59e0b", label: "Media", Icon: ClockIcon },
+  high: { color: "#ef4444", label: "Alta", Icon: ExclamationTriangleIcon },
 };
 
-const priorityVisual: Record<string, IconEntry> = {
-  high: { color: "#F44336", Icon: ExclamationTriangleIcon, label: "Alta" },
-  medium: { color: "#FFC107", Icon: FlagIcon, label: "Media" },
-  low: { color: "#4CAF50", Icon: ArrowDownIcon, label: "Baja" },
-};
-
-const statusVisual: Record<string, IconEntry> = {
-  pending: { color: "#f97316", Icon: ClockIcon, label: "Pendiente" },
-  in_progress: { color: "#38bdf8", Icon: PlayCircleIcon, label: "Trabajando" },
-  completed: { color: "#4ade80", Icon: CheckCircleIcon, label: "Completada" },
-  archived: { color: "#ec4899", Icon: ArchiveBoxIcon, label: "Archivada" },
+// Definición de colores y etiquetas para Estado
+const statusVisual = {
+  pending: { color: "#6b7280", label: "Pendiente", Icon: CircleStackIcon },
+  in_progress: { color: "#3b82f6", label: "En Curso", Icon: ClockIcon },
+  completed: { color: "#10b981", label: "Completada", Icon: CheckCircleIcon },
+  archived: { color: "#8b5cf6", label: "Archivada", Icon: ArchiveBoxIcon },
 };
 
 type TaskCardProps = {
   task: Task;
   priorityLabel: Record<string, string>;
   statusLabel: Record<string, string>;
-  alarms: Alarm[];
-  onChangeStatus: (id: string, status: Status) => void;
-  onDelete: (id: string) => void;
-  onLinkAlarm: (taskId: string, alarmId: string | null) => void;
+  // alarms: Alarm[]; // Alarmas eliminadas temporalmente de la vista si no se usan
+  onChangeStatus: (taskId: string, newStatus: Status) => void;
+  onDelete: (taskId: string) => void;
+  // onLinkAlarm: (taskId: string, alarmId: string | null) => void;
   onAddSubtask: (taskId: string, title: string) => void;
   onToggleSubtask: (taskId: string, subtaskId: string, done: boolean) => void;
   onDeleteSubtask: (taskId: string, subtaskId: string) => void;
@@ -66,10 +51,8 @@ export default function TaskCard({
   task,
   priorityLabel,
   statusLabel,
-  // alarms,
   onChangeStatus,
   onDelete,
-  // onLinkAlarm,
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
@@ -89,8 +72,6 @@ export default function TaskCard({
   const PriorityIcon = priorityInfo.Icon;
   const StatusIcon = statusInfo.Icon;
   const statusDropdownClass = `input-with-icon dropdown status-control status-${normalizedStatus}`;
-  // const alarmDropdownClass = `input-with-icon dropdown alarm-control${alarms.length === 0 ? " disabled" : ""
-  //   }`;
 
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
@@ -102,80 +83,78 @@ export default function TaskCard({
   // Estados para nota de finalización
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [noteText, setNoteText] = useState(task.completionNote || "");
+
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     setEditTitle(task.title);
     setEditDesc(task.description ?? "");
-  }, [task.id, task.title, task.description]);
+    setNoteText(task.completionNote || "");
+  }, [task]);
 
-  const subtasks = useMemo(() => task.subtasks ?? [], [task.subtasks]);
-
-  const handleSaveEdit = async () => {
-    if (!editTitle.trim()) return;
+  async function handleSaveEdit() {
     setSavingEdit(true);
     try {
-      await onUpdateTask(task.id, {
-        title: editTitle.trim(),
-        description: editDesc.trim() ? editDesc.trim() : null,
-      });
+      await onUpdateTask(task.id, { title: editTitle, description: editDesc });
       setEditing(false);
     } finally {
       setSavingEdit(false);
     }
-  };
+  }
 
-  const handleAddSubtask = async () => {
+  async function handleAddSubtask() {
     if (!newSubtask.trim()) return;
     setAddingSubtask(true);
     try {
-      await onAddSubtask(task.id, newSubtask.trim());
+      await onAddSubtask(task.id, newSubtask);
       setNewSubtask("");
     } finally {
       setAddingSubtask(false);
     }
-  };
+  }
 
-  const handleSubtaskDragEnd = (result: DropResult) => {
+  function handleSubtaskDragEnd(result: any) {
     if (!result.destination || !onReorderSubtasks) return;
+    const items = Array.from(task.subtasks || []);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
 
-    const sourceIndex = result.source.index;
-    const destinationIndex = result.destination.index;
+    // Optimistic update visual lo manejaría el padre si actualiza el estado rápido,
+    // pero aquí llamamos a la función de reordenamiento
+    onReorderSubtasks(task.id, items);
+  }
 
-    if (sourceIndex === destinationIndex) return;
-
-    const reordered = Array.from(subtasks);
-    const [removed] = reordered.splice(sourceIndex, 1);
-    reordered.splice(destinationIndex, 0, removed);
-
-    onReorderSubtasks(task.id, reordered);
-  };
+  const subtasks = task.subtasks || [];
 
   return (
-    <article className="task-card">
+    <article className={`task-card ${normalizedStatus} ${collapsed ? 'collapsed' : ''}`}>
       <header className="task-card__header">
         <div className="task-card__title-row">
-          <button
-            className="collapse-toggle"
-            type="button"
-            onClick={() => setCollapsed(!collapsed)}
-            title={collapsed ? "Expandir detalles" : "Ocultar detalles"}
-          >
-            {collapsed ? (
-              <ChevronDownIcon className="icon" />
-            ) : (
-              <ChevronUpIcon className="icon" />
-            )}
-          </button>
-          <div className="task-card__title">
+          <div className="collapse-toggle-container">
+            <button
+              className="collapse-toggle"
+              onClick={() => setCollapsed(!collapsed)}
+              title={collapsed ? "Expandir tarea" : "Colapsar tarea"}
+            >
+              {collapsed ? (
+                <ChevronDownIcon className="icon" />
+              ) : (
+                <ChevronUpIcon className="icon" />
+              )}
+            </button>
+          </div>
+
+          <div className="task-card__title-content">
             {editing ? (
               <input
+                className="edit-title-input"
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
                 placeholder="Título de la tarea"
+                autoFocus
               />
             ) : (
-              <h3 style={{ color: priorityInfo.color }}>{task.title}</h3>
+              <h3>{task.title}</h3>
             )}
           </div>
         </div>
@@ -191,10 +170,9 @@ export default function TaskCard({
         </div>
       </header>
 
-      {/* Fecha de completado (visible en completadas y archivadas) */}
       {/* Fecha de completado y Nota de Finalización */}
       {(normalizedStatus === "completed" || normalizedStatus === "archived") && (
-        <div style={{ marginTop: "0.5rem", marginLeft: "1rem" }}>
+        <div style={{ marginTop: "0.5rem", marginLeft: "1rem", marginRight: "1rem" }}>
           {task.completedAt && (
             <div className="task-card__completed-date" style={{ fontSize: "0.8rem", color: "#666" }}>
               Completada el: {new Date(task.completedAt).toLocaleDateString()} {new Date(task.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -284,28 +262,6 @@ export default function TaskCard({
       )}
 
       <div className="task-card__controls">
-        {/* <label className={alarmDropdownClass}>
-          <BellAlertIcon className="icon" aria-hidden />
-          <select
-            value={task.alarmId ?? ""}
-            onChange={(e) => onLinkAlarm(task.id, e.target.value || null)}
-            disabled={alarms.length === 0}
-          >
-            {alarms.length === 0 ? (
-              <option value="">No hay alarmas creadas</option>
-            ) : (
-              <>
-                <option value="">Sin alarma</option>
-                {alarms.map((alarm) => (
-                  <option key={alarm.id} value={alarm.id}>
-                    {alarm.name}
-                  </option>
-                ))}
-              </>
-            )}
-          </select>
-        </label> */}
-
         <label className={statusDropdownClass}>
           <StatusIcon className="icon" aria-hidden />
           <select
@@ -380,7 +336,7 @@ export default function TaskCard({
                 title="Editar tarea"
                 onClick={() => setEditing(true)}
               >
-                <PencilSquareIcon className="icon" style={{ color: "currentColor" }} />
+                <PencilSquareIcon className="icon" />
               </button>
               <button
                 className="icon-btn delete"
@@ -388,7 +344,7 @@ export default function TaskCard({
                 title="Eliminar tarea"
                 onClick={() => onDelete(task.id)}
               >
-                <TrashIcon className="icon" style={{ color: "currentColor" }} />
+                <TrashIcon className="icon" />
               </button>
             </>
           )}
