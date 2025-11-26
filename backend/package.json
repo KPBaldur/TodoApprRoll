@@ -6,7 +6,7 @@
     "dev": "tsx src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "postinstall": "prisma generate --schema ./prisma/schema.prisma"
+    "postinstall": "prisma generate --schema ./prisma/schema.prisma && prisma db push --schema ./prisma/schema.prisma --accept-data-loss"
   },
   "keywords": [],
   "author": "",
