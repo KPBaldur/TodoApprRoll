@@ -80,9 +80,24 @@ export default function Dashboard() {
 
       setTasks(data);
 
-      // Cargar todas para estadísticas (sin filtros)
-      const allData = await fetchTasks({ status: "all" });
-      setAllTasks(allData);
+      // Cargar datos para estadísticas de forma robusta
+      // Traemos "todas" (que podría excluir archivadas en backend viejo) Y "archivadas" explícitamente
+      const [allData, archivedData] = await Promise.all([
+        fetchTasks({ status: "all" }),
+        fetchTasks({ status: "archived" }),
+      ]);
+
+      // Combinar resultados asegurando no duplicar (por si el backend ya se actualizó y allData incluye todo)
+      const combinedTasks = [...allData];
+      const existingIds = new Set(allData.map((t) => t.id));
+
+      archivedData.forEach((t) => {
+        if (!existingIds.has(t.id)) {
+          combinedTasks.push(t);
+        }
+      });
+
+      setAllTasks(combinedTasks);
     } finally {
       setLoading(false);
     }
@@ -297,7 +312,7 @@ export default function Dashboard() {
     }
   }
 
-  async function onUpdateTaskMeta(taskId: string, payload: { title?: string; description?: string | null }) {
+  async function onUpdateTaskMeta(taskId: string, payload: { title?: string; description?: string | null; completionNote?: string | null }) {
     setTasks((prev) =>
       prev.map((t) =>
         t.id === taskId ? { ...t, ...payload } : t,

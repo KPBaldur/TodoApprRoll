@@ -68,6 +68,7 @@ export interface Task {
   completedAt?: string | null;
   subtasks?: Subtask[];
   alarmId?: string | null;
+  completionNote?: string | null;
 }
 
 /** Listar tareas con filtros */

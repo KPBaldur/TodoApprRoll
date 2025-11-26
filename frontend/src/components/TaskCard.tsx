@@ -57,7 +57,7 @@ type TaskCardProps = {
   onDeleteSubtask: (taskId: string, subtaskId: string) => void;
   onUpdateTask: (
     taskId: string,
-    payload: { title?: string; description?: string | null },
+    payload: { title?: string; description?: string | null; completionNote?: string | null },
   ) => void;
   onReorderSubtasks?: (taskId: string, subtasks: any[]) => void;
 };
@@ -98,6 +98,10 @@ export default function TaskCard({
   const [savingEdit, setSavingEdit] = useState(false);
   const [newSubtask, setNewSubtask] = useState("");
   const [addingSubtask, setAddingSubtask] = useState(false);
+
+  // Estados para nota de finalización
+  const [isEditingNote, setIsEditingNote] = useState(false);
+  const [noteText, setNoteText] = useState(task.completionNote || "");
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
@@ -188,9 +192,94 @@ export default function TaskCard({
       </header>
 
       {/* Fecha de completado (visible en completadas y archivadas) */}
-      {(normalizedStatus === "completed" || normalizedStatus === "archived") && task.completedAt && (
-        <div className="task-card__completed-date" style={{ fontSize: "0.8rem", color: "#666", marginTop: "0.25rem", marginLeft: "1rem" }}>
-          Completada el: {new Date(task.completedAt).toLocaleDateString()} {new Date(task.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+      {/* Fecha de completado y Nota de Finalización */}
+      {(normalizedStatus === "completed" || normalizedStatus === "archived") && (
+        <div style={{ marginTop: "0.5rem", marginLeft: "1rem" }}>
+          {task.completedAt && (
+            <div className="task-card__completed-date" style={{ fontSize: "0.8rem", color: "#666" }}>
+              Completada el: {new Date(task.completedAt).toLocaleDateString()} {new Date(task.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </div>
+          )}
+
+          {/* Nota de Finalización */}
+          <div style={{ marginTop: "0.5rem" }}>
+            {isEditingNote ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <textarea
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  placeholder="Añade un comentario sobre cómo finalizó la tarea..."
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem',
+                    borderRadius: '4px',
+                    border: '1px solid #444',
+                    background: '#2a2a2a',
+                    color: '#fff',
+                    fontSize: '0.9rem',
+                    resize: 'vertical'
+                  }}
+                  rows={3}
+                />
+                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={() => {
+                      setIsEditingNote(false);
+                      setNoteText(task.completionNote || "");
+                    }}
+                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', background: 'transparent', color: '#aaa', border: 'none', cursor: 'pointer' }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => {
+                      onUpdateTask(task.id, { completionNote: noteText });
+                      setIsEditingNote(false);
+                    }}
+                    style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                  >
+                    Guardar Nota
+                  </button>
+                </div>
+              </div>
+            ) : (
+              task.completionNote ? (
+                <div
+                  onClick={() => setIsEditingNote(true)}
+                  title="Clic para editar nota"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    padding: '0.5rem',
+                    borderRadius: '4px',
+                    fontSize: '0.9rem',
+                    color: '#ddd',
+                    borderLeft: '3px solid #10b981',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <strong>Nota:</strong> {task.completionNote}
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    setNoteText("");
+                    setIsEditingNote(true);
+                  }}
+                  style={{
+                    fontSize: '0.8rem',
+                    color: '#3b82f6',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    padding: 0
+                  }}
+                >
+                  + Añadir nota de finalización
+                </button>
+              )
+            )}
+          </div>
         </div>
       )}
 
