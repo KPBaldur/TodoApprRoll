@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import type { Express } from "express";
 import prisma from "../services/prismaService";
 import { AuthRequest } from "../middleware/authMiddleware";
 import fs from "fs/promises";
@@ -19,7 +20,7 @@ export const getMedia = async (req: AuthRequest, res: Response) => {
 
 export const uploadMedia = async (req: AuthRequest, res: Response) => {
   try {
-    const file = (req as any).file as Express.Multer.File | undefined;
+    const file = req.file as Express.Multer.File | undefined;
     const { type } = req.body;
 
     if (!file) {
@@ -45,7 +46,7 @@ export const uploadMedia = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    await fs.unlink(file.path).catch(() => {});
+    await fs.unlink(file.path).catch(() => { });
 
     res.status(201).json(newMedia);
   } catch (error) {
