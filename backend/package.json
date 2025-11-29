@@ -1,3 +1,18 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsx src/server.ts",
+    "build": "npx prisma generate && tsc",
+    "start": "node dist/server.js",
+    "postinstall": "npx prisma generate --schema ./prisma/schema.prisma && npx prisma db push --schema ./prisma/schema.prisma --accept-data-loss"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
     "@prisma/client": "^6.18.0",
     "@types/bcrypt": "^6.0.0",
     "@types/bcryptjs": "^2.4.6",
