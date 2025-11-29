@@ -25,17 +25,25 @@ model Task {
   id          String    @id @default(cuid())
   userId      String
   description String?
-  status      String    @default("pending")
-  priority    String    @default("medium")
+  status      String    @default("pending") // "pending" | "working" | "completed"
+  priority    String    @default("medium") // "low" | "medium" | "high"
   alarmId     String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   title       String
   order       Int       @default(0)
-  completedAt    DateTime?
-  completionNote String?
-  subtasks       Subtask[]
-  alarm       Alarm?    @relation("TaskAlarm", fields: [alarmId], references: [id])
+  completedAt DateTime?
+  
+  // Archiving
+  archived    Boolean   @default(false)
+  archivedAt  DateTime?
+
+  // Soft Delete
+  deleted     Boolean   @default(false)
+  deletedAt   DateTime?
+
+  subtasks    Subtask[]
+  alarm       Alarm?    @relation("TaskAlarm", fields: [alarmId], references: [id], onDelete: SetNull)
   user        User      @relation(fields: [userId], references: [id])
 
   @@index([userId, status])
@@ -43,14 +51,16 @@ model Task {
 }
 
 model Subtask {
-  id        String   @id @default(cuid())
-  taskId    String
-  title     String
-  order     Int      @default(0)
-  done      Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  taskId      String
+  title       String
+  order       Int      @default(0)
+  status      String   @default("pending") // "pending" | "cancelled" | "completed"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  completedAt DateTime?
+  
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
 }

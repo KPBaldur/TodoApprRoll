@@ -9,12 +9,12 @@ router.post("/register", register);
 router.post("/login", login);
 
 router.get("/me", authenticateToken, async (req, res) => {
-    const userId = (req as any).userID;
+    const userId = (req as any).userId;
     const user = await prisma.user.findUnique({
-        where: { id: userId},
-        select: { id: true, username: true, createdAt: true},
+        where: { id: userId },
+        select: { id: true, username: true, createdAt: true },
     });
-    res.json({ user});
+    res.json({ user });
 });
 
 export default router;

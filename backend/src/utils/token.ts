@@ -2,7 +2,7 @@ import jwt, { SignOptions, Secret } from "jsonwebtoken";
 import ms from "ms";
 
 const JWT_SECRET: Secret = process.env.JWT_SECRET || "super-secret-key";
-const ACCESS_TOKEN_EXPIRES = (process.env.ACCESS_TOKEN_EXPIRES || "30m") as ms.StringValue;
+const ACCESS_TOKEN_EXPIRES = (process.env.ACCESS_TOKEN_EXPIRES || "48h") as ms.StringValue;
 const REFRESH_TOKEN_EXPIRES = (process.env.REFRESH_TOKEN_EXPIRES || "2d") as ms.StringValue;
 
 // Generar Access Token

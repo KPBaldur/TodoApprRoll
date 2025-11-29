@@ -3,406 +3,377 @@ import prisma from "../services/prismaService";
 import { AuthRequest } from "../middleware/authMiddleware";
 import { logHistory } from "../services/historyService";
 
-// Obtener las tareas con el usuario autenticado
+const VALID_PRIORITIES = ["low", "medium", "high"];
+const VALID_STATUSES = ["pending", "working", "completed"];
+const VALID_SUBTASK_STATUSES = ["pending", "cancelled", "completed"];
+
+// Obtener tareas
 export const getTasks = async (req: AuthRequest, res: Response) => {
     try {
-        const { status, priority, search, sortBy, order } = req.query;
+        const { status, priority, search, sortBy, order, deleted, archived } = req.query;
+        const userId = req.userId!;
 
-        const where: any = { userId: req.userId };
+        const where: any = { userId };
 
-        // Filtro por estado
-        if (status && status !== "all") {
-            where.status = String(status).toLowerCase();
+        // Soft Delete Logic
+        if (deleted === 'true') {
+            where.deleted = true;
         } else {
-            // Si es "all", NO filtramos nada (trae todo, incluyendo archived)
-            if (status === "all") {
-                // No agregar filtro, trae todas
-            }
-            // Si no se pide explícitamente "archived" (y no es "all"), excluimos las archivadas por defecto
-            else if (status !== "archived") {
-                where.status = { not: "archived" };
+            where.deleted = false;
+        }
+
+        // Archiving Logic
+        if (archived === 'true') {
+            where.archived = true;
+        } else if (deleted !== 'true') {
+            // Default: hide archived unless specifically asked or viewing trash
+            if (status !== 'archived') {
+                where.archived = false;
             }
         }
 
-        // Filtro por prioridad
-        if (priority && priority !== "all") {
-            where.priority = String(priority).toLowerCase();
+        // Status Filter
+        if (status && status !== 'all' && status !== 'archived') {
+            where.status = String(status);
         }
 
-        // Búsqueda por título
+        // Priority Filter
+        if (priority && priority !== 'all') {
+            where.priority = String(priority);
+        }
+
+        // Search
         if (search) {
-            where.title = { contains: String(search), mode: "insensitive" };
+            where.OR = [
+                { title: { contains: String(search), mode: 'insensitive' } },
+                { description: { contains: String(search), mode: 'insensitive' } }
+            ];
         }
 
-        // Ordenamiento
+        // Sorting
         let orderBy: any = {};
-        if (sortBy === "priority") {
-            // Prioridad es string, así que el orden alfabético puede no ser el deseado (high, low, medium).
-            // Para un ordenamiento real por prioridad se necesitaría un mapeo o enum en DB.
-            // Por ahora ordenamos por string.
-            orderBy = { priority: order === "asc" ? "asc" : "desc" };
-        } else if (sortBy === "status") {
-            orderBy = { status: order === "asc" ? "asc" : "desc" };
-        } else if (sortBy === "order") {
-            orderBy = { order: order === "asc" ? "asc" : "desc" };
+        if (sortBy === 'priority') {
+            // Priority is string, so this is alphabetical. 
+            // Ideally we'd map low=1, medium=2, high=3 but for now string sort.
+            orderBy = { priority: order === 'asc' ? 'asc' : 'desc' };
+        } else if (sortBy === 'status') {
+            orderBy = { status: order === 'asc' ? 'asc' : 'desc' };
+        } else if (sortBy === 'order') {
+            orderBy = { order: order === 'asc' ? 'asc' : 'desc' };
         } else {
-            // Default: createdAt
-            orderBy = { createdAt: order === "asc" ? "asc" : "desc" };
+            // Default: createdAt desc (newest first)
+            orderBy = { createdAt: 'desc' };
         }
-
-        // Siempre incluir ordenamiento secundario por fecha para consistencia
-        const finalOrderBy = [orderBy, { createdAt: "desc" }];
 
         const tasks = await prisma.task.findMany({
             where,
             include: {
-                subtasks: {
-                    orderBy: { order: 'asc' } // Subtareas ordenadas por orden manual
-                }
+                subtasks: { orderBy: { order: 'asc' } },
+                alarm: true
             },
-            orderBy: finalOrderBy,
+            orderBy: [orderBy, { createdAt: 'desc' }]
         });
+
         res.json(tasks);
     } catch (error) {
-        console.error("Error al obtener tareas:", error);
+        console.error("Error getting tasks:", error);
         res.status(500).json({ message: "Error al obtener tareas" });
     }
 };
 
-// Crear tarea
+// Crear Tarea
 export const createTask = async (req: AuthRequest, res: Response) => {
     try {
         const { title, description, priority, status, alarmId } = req.body;
+        const userId = req.userId!;
 
-        if (!title) {
-            return res.status(400).json({ message: "El titulo es obligatorio" });
+        if (!title || title.length < 3 || title.length > 100) {
+            return res.status(400).json({ message: "El título es obligatorio (3-100 caracteres)" });
+        }
+        if (description && description.length > 1000) {
+            return res.status(400).json({ message: "La descripción no puede exceder 1000 caracteres" });
+        }
+        if (priority && !VALID_PRIORITIES.includes(priority)) {
+            return res.status(400).json({ message: "Prioridad inválida" });
+        }
+        if (status && !VALID_STATUSES.includes(status)) {
+            return res.status(400).json({ message: "Estado inválido" });
         }
 
-        let normalizedAlarmId: string | undefined;
+        let validAlarmId = null;
         if (alarmId) {
-            const alarm = await prisma.alarm.findFirst({
-                where: { id: alarmId, userId: req.userId },
-            });
-            if (!alarm) {
-                return res.status(404).json({ message: "La alarma seleccionada no existe" });
-            }
-            normalizedAlarmId = alarmId;
+            const alarm = await prisma.alarm.findFirst({ where: { id: alarmId, userId } });
+            if (!alarm) return res.status(400).json({ message: "Alarma no existe" });
+            validAlarmId = alarmId;
         }
 
-        // Obtener el último orden para poner la nueva al final (o al principio si se prefiere)
-        // Aquí la ponemos al principio (orden más bajo o simplemente 0 si no hay lógica compleja)
-        // O podemos buscar el max order.
-        const maxOrderTask = await prisma.task.findFirst({
-            where: { userId: req.userId },
-            orderBy: { order: 'desc' }
-        });
-        const newOrder = (maxOrderTask?.order ?? 0) + 1;
+        const maxOrder = await prisma.task.findFirst({ where: { userId }, orderBy: { order: 'desc' } });
+        const newOrder = (maxOrder?.order ?? 0) + 1;
 
         const task = await prisma.task.create({
             data: {
-                userId: req.userId!,
+                userId,
                 title,
                 description,
                 priority: priority || "medium",
                 status: status || "pending",
-                alarmId: normalizedAlarmId,
+                alarmId: validAlarmId,
                 order: newOrder,
-            },
+                completedAt: status === 'completed' ? new Date() : null
+            }
         });
 
-        await logHistory(req.userId!, "Task", "CREATE", task);
+        await logHistory(userId, "Task", "CREATE", task);
         res.status(201).json(task);
     } catch (error) {
-        console.error("Error al crear la tarea:", error);
-        res.status(500).json({ message: "Error al crear la tarea" });
+        console.error("Error creating task:", error);
+        res.status(500).json({ message: "Error al crear tarea" });
     }
 };
 
-// Actualizar tarea
+// Actualizar Tarea
 export const updateTask = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        const { title, description, priority, status, alarmId, completionNote } = req.body;
+        const { title, description, priority, status, alarmId, archived } = req.body;
+        const userId = req.userId!;
 
-        const existing = await prisma.task.findFirst({
-            where: { id, userId: req.userId },
-        });
+        const existing = await prisma.task.findFirst({ where: { id, userId } });
+        if (!existing) return res.status(404).json({ message: "Tarea no encontrada" });
 
-        if (!existing)
-            return res.status(404).json({ message: "Tarea no encontrada" });
+        if (existing.archived && archived !== false) {
+            return res.status(400).json({ message: "No se puede modificar una tarea archivada. Desarchívela primero." });
+        }
 
-        const data: any = { title, description, priority, status, completionNote };
+        const data: any = {};
 
-        // Lógica de completedAt
+        if (title) {
+            if (title.length < 3 || title.length > 100) return res.status(400).json({ message: "Título inválido" });
+            data.title = title;
+        }
+        if (description !== undefined) {
+            if (description && description.length > 1000) return res.status(400).json({ message: "Descripción muy larga" });
+            data.description = description;
+        }
+        if (priority) {
+            if (!VALID_PRIORITIES.includes(priority)) return res.status(400).json({ message: "Prioridad inválida" });
+            data.priority = priority;
+        }
+
         if (status) {
-            if (status === "completed" && existing.status !== "completed") {
+            if (!VALID_STATUSES.includes(status)) return res.status(400).json({ message: "Estado inválido" });
+            data.status = status;
+
+            if (status === 'completed' && existing.status !== 'completed') {
                 data.completedAt = new Date();
-            } else if (status !== "completed" && status !== "archived" && existing.status === "completed") {
-                // Solo limpiar fecha si NO es completed Y NO es archived
+            } else if (status !== 'completed' && existing.status === 'completed') {
                 data.completedAt = null;
             }
         }
 
-        if (alarmId === null || alarmId === "") {
-            data.alarmId = null;
-        } else if (typeof alarmId !== "undefined") {
-            const alarm = await prisma.alarm.findFirst({
-                where: { id: alarmId, userId: req.userId },
-            });
-
-            if (!alarm) {
-                return res.status(404).json({ message: "La alarma seleccionada no existe" });
+        if (alarmId !== undefined) {
+            if (alarmId) {
+                const alarm = await prisma.alarm.findFirst({ where: { id: alarmId, userId } });
+                if (!alarm) return res.status(400).json({ message: "Alarma no existe" });
+                data.alarmId = alarmId;
+            } else {
+                data.alarmId = null;
             }
-
-            data.alarmId = alarmId;
         }
 
-        const updated = await prisma.task.update({
-            where: { id },
-            data,
-        });
+        if (archived === true) {
+            if (existing.status !== 'completed' && data.status !== 'completed') {
+                return res.status(400).json({ message: "Solo se pueden archivar tareas completadas" });
+            }
+            data.archived = true;
+            data.archivedAt = new Date();
+        } else if (archived === false) {
+            data.archived = false;
+            data.archivedAt = null;
+        }
 
-        await logHistory(req.userId!, "Task", "UPDATE", updated);
+        const updated = await prisma.task.update({ where: { id }, data });
+        await logHistory(userId, "Task", "UPDATE", updated);
         res.json(updated);
+
     } catch (error) {
-        console.error("Error al actualizar la tarea:", error);
-        res.status(500).json({ message: "Error al actualizar la tarea" });
+        console.error("Error updating task:", error);
+        res.status(500).json({ message: "Error al actualizar tarea" });
     }
 };
 
-// Eliminar una tarea
+// Soft Delete
 export const deleteTask = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
+        const userId = req.userId!;
 
-        const existing = await prisma.task.findFirst({
-            where: { id, userId: req.userId },
+        const existing = await prisma.task.findFirst({ where: { id, userId } });
+        if (!existing) return res.status(404).json({ message: "Tarea no encontrada" });
+
+        const updated = await prisma.task.update({
+            where: { id },
+            data: { deleted: true, deletedAt: new Date() }
         });
 
-        if (!existing)
-            return res.status(404).json({ message: "Tarea no encontrada" });
-
-        await prisma.task.delete({ where: { id } });
-        await logHistory(req.userId!, "Task", "DELETE", existing);
-        res.json({ message: "Tarea eliminada correctamente" });
+        await logHistory(userId, "Task", "SOFT_DELETE", updated);
+        res.json({ message: "Tarea enviada a la papelera" });
     } catch (error) {
-        console.error("Error al eliminar tarea: ", error);
         res.status(500).json({ message: "Error al eliminar tarea" });
     }
 };
 
-export const linkAlarmToTask = async (req: AuthRequest, res: Response) => {
+// Restore
+export const restoreTask = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        const { alarmId } = req.body;
+        const userId = req.userId!;
 
-        const task = await prisma.task.findFirst({
-            where: { id, userId: req.userId },
-        });
-
-        if (!task) {
-            return res.status(404).json({ message: "Tarea no encontrada" });
-        }
-
-        if (!alarmId) {
-            const updated = await prisma.task.update({
-                where: { id },
-                data: { alarmId: null },
-            });
-            await logHistory(req.userId!, "Task", "LINK_ALARM", updated);
-            return res.json(updated);
-        }
-
-        const alarm = await prisma.alarm.findFirst({
-            where: { id: alarmId, userId: req.userId },
-        });
-
-        if (!alarm) {
-            return res.status(404).json({ message: "Alarma no encontrada" });
-        }
+        const existing = await prisma.task.findFirst({ where: { id, userId } });
+        if (!existing) return res.status(404).json({ message: "Tarea no encontrada" });
 
         const updated = await prisma.task.update({
             where: { id },
-            data: { alarmId },
+            data: { deleted: false, deletedAt: null }
         });
 
-        await logHistory(req.userId!, "Task", "LINK_ALARM", { taskId: id, alarmId });
-        res.json(updated);
+        await logHistory(userId, "Task", "RESTORE", updated);
+        res.json({ message: "Tarea restaurada" });
     } catch (error) {
-        console.error("Error al vincular alarma:", error);
-        res.status(500).json({ message: "Error al vincular alarma con la tarea" });
+        res.status(500).json({ message: "Error al restaurar tarea" });
     }
 };
 
-// Agregar subtarea
+// Permanent Delete
+export const permanentDeleteTask = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const userId = req.userId!;
+
+        const existing = await prisma.task.findFirst({ where: { id, userId } });
+        if (!existing) return res.status(404).json({ message: "Tarea no encontrada" });
+
+        await prisma.task.delete({ where: { id } });
+        await logHistory(userId, "Task", "PERMANENT_DELETE", existing);
+        res.json({ message: "Tarea eliminada permanentemente" });
+    } catch (error) {
+        res.status(500).json({ message: "Error al eliminar tarea permanentemente" });
+    }
+};
+
+// Subtasks
 export const addSubtask = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
         const { title } = req.body;
+        const userId = req.userId!;
 
-        if (!title || !title.trim()) {
-            return res.status(400).json({ message: "El título de la subtarea es obligatorio" });
-        }
+        if (!title) return res.status(400).json({ message: "Título requerido" });
 
-        const task = await prisma.task.findFirst({
-            where: { id, userId: req.userId },
-        });
+        const task = await prisma.task.findFirst({ where: { id, userId } });
+        if (!task) return res.status(404).json({ message: "Tarea no encontrada" });
 
-        if (!task) {
-            return res.status(404).json({ message: "Tarea no encontrada" });
-        }
-
-        // Obtener max order para subtareas
-        const maxOrderSub = await prisma.subtask.findFirst({
-            where: { taskId: id },
-            orderBy: { order: 'desc' }
-        });
-        const newOrder = (maxOrderSub?.order ?? 0) + 1;
+        const maxOrder = await prisma.subtask.findFirst({ where: { taskId: id }, orderBy: { order: 'desc' } });
+        const newOrder = (maxOrder?.order ?? 0) + 1;
 
         const subtask = await prisma.subtask.create({
             data: {
                 taskId: id,
-                title: title.trim(),
-                done: false,
-                order: newOrder,
-            },
+                title,
+                status: "pending",
+                order: newOrder
+            }
         });
 
-        await logHistory(req.userId!, "Subtask", "CREATE", subtask);
+        await logHistory(userId, "Subtask", "CREATE", subtask);
         res.status(201).json(subtask);
     } catch (error) {
-        console.error("Error al crear subtarea:", error);
         res.status(500).json({ message: "Error al crear subtarea" });
     }
 };
 
-// Toggle subtarea (marcar como completada/pendiente)
-export const toggleSubtask = async (req: AuthRequest, res: Response) => {
+export const updateSubtask = async (req: AuthRequest, res: Response) => {
     try {
         const { id, subtaskId } = req.params;
-        const { done } = req.body;
+        const { title, status } = req.body;
+        const userId = req.userId!;
 
-        if (typeof done !== "boolean") {
-            return res.status(400).json({ message: "El campo 'done' debe ser un booleano" });
+        const task = await prisma.task.findFirst({ where: { id, userId } });
+        if (!task) return res.status(404).json({ message: "Tarea no encontrada" });
+
+        const subtask = await prisma.subtask.findFirst({ where: { id: subtaskId, taskId: id } });
+        if (!subtask) return res.status(404).json({ message: "Subtarea no encontrada" });
+
+        const data: any = {};
+        if (title) data.title = title;
+        if (status) {
+            if (!VALID_SUBTASK_STATUSES.includes(status)) return res.status(400).json({ message: "Estado inválido" });
+            data.status = status;
+            if (status === 'completed' && subtask.status !== 'completed') {
+                data.completedAt = new Date();
+            } else if (status !== 'completed') {
+                data.completedAt = null;
+            }
         }
 
-        const task = await prisma.task.findFirst({
-            where: { id, userId: req.userId },
-        });
-
-        if (!task) {
-            return res.status(404).json({ message: "Tarea no encontrada" });
-        }
-
-        const subtask = await prisma.subtask.findFirst({
-            where: { id: subtaskId, taskId: id },
-        });
-
-        if (!subtask) {
-            return res.status(404).json({ message: "Subtarea no encontrada" });
-        }
-
-        const updated = await prisma.subtask.update({
-            where: { id: subtaskId },
-            data: { done },
-        });
-
-        await logHistory(req.userId!, "Subtask", "UPDATE", updated);
+        const updated = await prisma.subtask.update({ where: { id: subtaskId }, data });
+        await logHistory(userId, "Subtask", "UPDATE", updated);
         res.json(updated);
     } catch (error) {
-        console.error("Error al actualizar subtarea:", error);
         res.status(500).json({ message: "Error al actualizar subtarea" });
     }
 };
 
-// Eliminar subtarea
 export const deleteSubtask = async (req: AuthRequest, res: Response) => {
     try {
         const { id, subtaskId } = req.params;
+        const userId = req.userId!;
 
-        const task = await prisma.task.findFirst({
-            where: { id, userId: req.userId },
-        });
+        const task = await prisma.task.findFirst({ where: { id, userId } });
+        if (!task) return res.status(404).json({ message: "Tarea no encontrada" });
 
-        if (!task) {
-            return res.status(404).json({ message: "Tarea no encontrada" });
-        }
-
-        const subtask = await prisma.subtask.findFirst({
-            where: { id: subtaskId, taskId: id },
-        });
-
-        if (!subtask) {
-            return res.status(404).json({ message: "Subtarea no encontrada" });
-        }
-
-        await prisma.subtask.delete({
-            where: { id: subtaskId },
-        });
-
-        await logHistory(req.userId!, "Subtask", "DELETE", subtask);
-        res.json({ message: "Subtarea eliminada correctamente" });
+        await prisma.subtask.delete({ where: { id: subtaskId } });
+        res.json({ message: "Subtarea eliminada" });
     } catch (error) {
-        console.error("Error al eliminar subtarea:", error);
         res.status(500).json({ message: "Error al eliminar subtarea" });
     }
 };
 
-// Reordenar tareas
 export const reorderTasks = async (req: AuthRequest, res: Response) => {
     try {
-        const { tasks } = req.body; // Array de { id, order }
+        const { tasks } = req.body;
+        const userId = req.userId!;
+        if (!Array.isArray(tasks)) return res.status(400).json({ message: "Invalid format" });
 
-        if (!Array.isArray(tasks)) {
-            return res.status(400).json({ message: "Formato inválido" });
-        }
-
-        // Transacción para actualizar todos
         await prisma.$transaction(
-            tasks.map((t: any) =>
-                prisma.task.updateMany({
-                    where: { id: t.id, userId: req.userId },
-                    data: { order: t.order }
-                })
-            )
+            tasks.map((t: any) => prisma.task.updateMany({
+                where: { id: t.id, userId },
+                data: { order: t.order }
+            }))
         );
-
         res.json({ message: "Orden actualizado" });
     } catch (error) {
-        console.error("Error al reordenar tareas:", error);
-        res.status(500).json({ message: "Error al reordenar tareas" });
+        res.status(500).json({ message: "Error reordering" });
     }
 };
 
-// Reordenar subtareas
 export const reorderSubtasks = async (req: AuthRequest, res: Response) => {
     try {
-        const { id } = req.params; // Task ID
-        const { subtasks } = req.body; // Array de { id, order }
+        const { id } = req.params;
+        const { subtasks } = req.body;
+        const userId = req.userId!;
 
-        if (!Array.isArray(subtasks)) {
-            return res.status(400).json({ message: "Formato inválido" });
-        }
-
-        // Verificar propiedad de la tarea
-        const task = await prisma.task.findFirst({
-            where: { id, userId: req.userId }
-        });
-
+        const task = await prisma.task.findFirst({ where: { id, userId } });
         if (!task) return res.status(404).json({ message: "Tarea no encontrada" });
 
         await prisma.$transaction(
-            subtasks.map((s: any) =>
-                prisma.subtask.updateMany({
-                    where: { id: s.id, taskId: id },
-                    data: { order: s.order }
-                })
-            )
+            subtasks.map((s: any) => prisma.subtask.updateMany({
+                where: { id: s.id, taskId: id },
+                data: { order: s.order }
+            }))
         );
-
-        res.json({ message: "Orden de subtareas actualizado" });
+        res.json({ message: "Orden actualizado" });
     } catch (error) {
-        console.error("Error al reordenar subtareas:", error);
-        res.status(500).json({ message: "Error al reordenar subtareas" });
+        res.status(500).json({ message: "Error reordering" });
     }
 };

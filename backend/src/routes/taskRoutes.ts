@@ -5,9 +5,10 @@ import {
     createTask,
     updateTask,
     deleteTask,
-    linkAlarmToTask,
+    restoreTask,
+    permanentDeleteTask,
     addSubtask,
-    toggleSubtask,
+    updateSubtask,
     deleteSubtask,
     reorderTasks,
     reorderSubtasks,
@@ -15,23 +16,23 @@ import {
 
 const router = express.Router();
 
-// Proteccion con middleware de autenticacion
 router.use(authenticateToken);
 
-// Reordenar (antes de /:id para evitar conflictos)
+// Reorder
 router.post("/reorder", reorderTasks);
 
-// Crud de tareas
+// Tasks
 router.get("/", getTasks);
 router.post("/", createTask);
 router.put("/:id", updateTask);
-router.delete("/:id", deleteTask);
-router.post("/:id/link-alarm", linkAlarmToTask);
+router.delete("/:id", deleteTask); // Soft delete
+router.post("/:id/restore", restoreTask); // Restore from trash
+router.delete("/:id/permanent", permanentDeleteTask); // Hard delete
 
-// Crud de subtareas
+// Subtasks
 router.post("/:id/subtasks", addSubtask);
 router.post("/:id/subtasks/reorder", reorderSubtasks);
-router.put("/:id/subtasks/:subtaskId", toggleSubtask);
+router.put("/:id/subtasks/:subtaskId", updateSubtask);
 router.delete("/:id/subtasks/:subtaskId", deleteSubtask);
 
 export default router;
