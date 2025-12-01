@@ -22,12 +22,12 @@ export const getUserById = async (id: string) => {
                     select: {
                         id: true,
                         name: true,
-                        enabled: true,
+                        active: true,
                         scheduleAt: true,
                     },
                 },
             },
-        })    ;
+        });
     } catch (error) {
         console.error("[userService] Error al obtener al usuario por ID:", error);
         throw new Error("No se pudo obtener la informacion del usuario.");

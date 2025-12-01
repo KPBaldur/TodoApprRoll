@@ -1,5 +1,5 @@
 // backend/src/services/schedulerService.ts
-// Scheduler SOLO para Pomodoro (scheduleAt + snoozeMins)
+// Scheduler para Alarmas (Pomodoro y Datetime)
 
 import cron from "node-cron";
 import prisma from "./prismaService";
@@ -10,9 +10,10 @@ import eventBus from "./eventBus";
 interface ActiveAlarm {
   id: string;
   name: string;
-  enabled: boolean;
+  active: boolean;
+  type: string;
   scheduleAt: Date | null;
-  snoozeMins: number | null;
+  durationMin: number | null;
   audio?: { url?: string | null } | null;
 }
 
@@ -37,7 +38,7 @@ export const cancelAlarm = (alarmId: string) => {
   if (to) {
     try {
       clearTimeout(to);
-    } catch {}
+    } catch { }
     timeouts.delete(alarmId);
   }
   console.log(`🚫 Cancelada alarma ID '${alarmId}'`);
@@ -64,14 +65,12 @@ function scheduleTimeout(alarm: ActiveAlarm, when: Date) {
 
   timeouts.set(alarm.id, to);
   console.log(
-    `📅 Programada para: ${when.toLocaleString()} | Alarma '${alarm.name}'`
+    `📅 Programada para: ${when.toLocaleString()} | Alarma '${alarm.name}' (${alarm.type})`
   );
 }
 
 /**
- * Programa una alarma Pomodoro.
- * Regla: si está habilitada y no tiene scheduleAt futuro,
- * se recalcula: now + snoozeMins.
+ * Programa una alarma.
  */
 export const scheduleAlarm = async (alarmInput: ActiveAlarm) => {
   const { id } = alarmInput;
@@ -80,7 +79,7 @@ export const scheduleAlarm = async (alarmInput: ActiveAlarm) => {
   cancelAlarm(id);
 
   try {
-    // Leer estado fresco de BD (evita errores de datos viejos)
+    // Leer estado fresco de BD
     const fresh = await prisma.alarm.findUnique({
       where: { id },
       include: { audio: { select: { url: true } } },
@@ -91,43 +90,63 @@ export const scheduleAlarm = async (alarmInput: ActiveAlarm) => {
       return;
     }
 
-    if (!fresh.enabled) {
+    if (!fresh.active) {
       console.log(`⛔ Alarma '${fresh.name}' deshabilitada, no se programa.`);
       return;
     }
 
-    const snooze = fresh.snoozeMins && fresh.snoozeMins > 0 ? fresh.snoozeMins : 5;
-
     let when = toDate(fresh.scheduleAt);
     const now = Date.now();
 
-    // Si no hay scheduleAt o está en el pasado → recalcular
-    if (!when || when.getTime() <= now) {
-      when = new Date(now + snooze * 60000);
-      await prisma.alarm.update({
-        where: { id: fresh.id },
-        data: { scheduleAt: when },
-      });
+    // Lógica específica por tipo
+    if (fresh.type === "pomodoro") {
+      const duration = fresh.durationMin && fresh.durationMin > 0 ? fresh.durationMin : 25;
+
+      // Si no hay scheduleAt o está en el pasado → recalcular
+      if (!when || when.getTime() <= now) {
+        when = new Date(now + duration * 60000);
+        await prisma.alarm.update({
+          where: { id: fresh.id },
+          data: { scheduleAt: when },
+        });
+      }
+    } else {
+      // Datetime
+      if (!when || when.getTime() <= now) {
+        console.log(`⛔ Alarma Datetime '${fresh.name}' ya pasó o no tiene fecha.`);
+        // Opcional: desactivarla
+        if (fresh.active) {
+          await prisma.alarm.update({
+            where: { id: fresh.id },
+            data: { active: false }
+          });
+        }
+        return;
+      }
     }
 
-    scheduleTimeout(
-      {
-        id: fresh.id,
-        name: fresh.name,
-        enabled: fresh.enabled,
-        scheduleAt: when,
-        snoozeMins: fresh.snoozeMins,
-        audio: fresh.audio ? { url: fresh.audio.url } : null,
-      },
-      when
-    );
+    if (when) {
+      scheduleTimeout(
+        {
+          id: fresh.id,
+          name: fresh.name,
+          active: fresh.active,
+          type: fresh.type,
+          scheduleAt: when,
+          durationMin: fresh.durationMin,
+          audio: fresh.audio ? { url: fresh.audio.url } : null,
+        },
+        when
+      );
+    }
+
   } catch (error) {
     console.error(`❌ Error al programar alarma '${alarmInput.name}':`, error);
   }
 };
 
 /**
- * Dispara una alarma por ID, reproduce sonido y reprograma Pomodoro.
+ * Dispara una alarma por ID, reproduce sonido y reprograma si es Pomodoro.
  */
 const triggerAlarm = async (alarmId: string) => {
   try {
@@ -142,7 +161,7 @@ const triggerAlarm = async (alarmId: string) => {
       return;
     }
 
-    if (!fresh.enabled) {
+    if (!fresh.active) {
       console.log(`⛔ Alarma '${fresh.name}' está deshabilitada; no se ejecuta.`);
       cancelAlarm(alarmId);
       return;
@@ -165,42 +184,55 @@ const triggerAlarm = async (alarmId: string) => {
       console.log(`🔈 Alarma '${fresh.name}' sin audio asignado.`);
     }
 
-    // Reprogramar siguiente ciclo Pomodoro
-    const snooze = fresh.snoozeMins && fresh.snoozeMins > 0 ? fresh.snoozeMins : 5;
-    const next = new Date(Date.now() + snooze * 60000);
+    // Lógica post-disparo
+    if (fresh.type === "pomodoro") {
+      // Reprogramar siguiente ciclo Pomodoro
+      const duration = fresh.durationMin && fresh.durationMin > 0 ? fresh.durationMin : 25;
+      const next = new Date(Date.now() + duration * 60000);
 
-    const updated = await prisma.alarm.update({
-      where: { id: fresh.id },
-      data: { scheduleAt: next },
-      include: { audio: { select: { url: true } } },
-    });
+      const updated = await prisma.alarm.update({
+        where: { id: fresh.id },
+        data: { scheduleAt: next },
+        include: { audio: { select: { url: true } } },
+      });
 
-    console.log(
-      `🔁 Pomodoro: '${fresh.name}' repetirá a las ${next.toLocaleTimeString()} (+${snooze} min)`
-    );
+      console.log(
+        `🔁 Pomodoro: '${fresh.name}' repetirá a las ${next.toLocaleTimeString()} (+${duration} min)`
+      );
 
-    // Reprogramar en memoria
-    await scheduleAlarm({
-      id: updated.id,
-      name: updated.name,
-      enabled: updated.enabled,
-      scheduleAt: updated.scheduleAt,
-      snoozeMins: updated.snoozeMins,
-      audio: updated.audio ? { url: updated.audio.url } : null,
-    });
+      // Reprogramar en memoria
+      await scheduleAlarm({
+        id: updated.id,
+        name: updated.name,
+        active: updated.active,
+        type: updated.type,
+        scheduleAt: updated.scheduleAt,
+        durationMin: updated.durationMin,
+        audio: updated.audio ? { url: updated.audio.url } : null,
+      });
+    } else {
+      // Datetime: desactivar después de sonar
+      console.log(`🏁 Alarma Datetime '${fresh.name}' finalizada. Desactivando.`);
+      await prisma.alarm.update({
+        where: { id: fresh.id },
+        data: { active: false, scheduleAt: null }
+      });
+      cancelAlarm(fresh.id);
+    }
+
   } catch (error) {
     console.error(`❌ Error al activar alarma '${alarmId}':`, error);
   }
 };
 
 /**
- * Carga todas las alarmas habilitadas y las programa como Pomodoro.
+ * Carga todas las alarmas activas y las programa.
  */
 export const initializeAlarms = async () => {
-  console.log("⏳ Cargando alarmas activas (Pomodoro)…");
+  console.log("⏳ Cargando alarmas activas…");
 
   const alarms = await prisma.alarm.findMany({
-    where: { enabled: true },
+    where: { active: true },
     include: { audio: { select: { url: true } } },
     orderBy: { createdAt: "desc" },
   });
@@ -215,15 +247,16 @@ export const initializeAlarms = async () => {
     await scheduleAlarm({
       id: alarm.id,
       name: alarm.name,
-      enabled: alarm.enabled,
+      active: alarm.active,
+      type: alarm.type,
       scheduleAt: alarm.scheduleAt,
-      snoozeMins: alarm.snoozeMins,
+      durationMin: alarm.durationMin,
       audio: alarm.audio ? { url: alarm.audio.url } : null,
     });
   }
 };
 
-// Tarea de mantenimiento cada 48 horas (se mantiene igual)
+// Tarea de mantenimiento cada 48 horas
 cron.schedule("0 */48 * * *", async () => {
   console.log("Iniciando tarea programada de mantenimiento...");
   await runMaintenance();

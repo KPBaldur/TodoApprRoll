@@ -1,5 +1,5 @@
 // backend/src/controllers/alarmController.ts
-// Controlador de alarmas SOLO Pomodoro
+// Controlador de alarmas
 
 import { Response } from "express";
 import prisma from "../services/prismaService";
@@ -25,35 +25,42 @@ export const getAlarms = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Crear una nueva alarma Pomodoro
+// Crear una nueva alarma
 export const createAlarm = async (req: AuthRequest, res: Response) => {
   try {
-    const { name, snoozeMins, audioId, imageId, enabled } = req.body;
+    const { name, type, durationMin, scheduleAt, audioId, imageId, active } = req.body;
 
     if (!name?.trim()) {
       return res.status(400).json({ message: "El nombre es obligatorio" });
     }
 
-    const effectiveSnooze =
-      typeof snoozeMins === "number" && snoozeMins > 0 ? snoozeMins : 25;
+    if (!type || !["pomodoro", "datetime"].includes(type)) {
+      return res.status(400).json({ message: "Tipo de alarma inválido (pomodoro | datetime)" });
+    }
 
-    const normalizedEnabled =
-      typeof enabled === "boolean" ? enabled : true;
+    const normalizedActive = typeof active === "boolean" ? active : true;
 
-    // Primera ejecución: ahora + snoozeMins
-    const firstScheduleAt = normalizedEnabled
-      ? new Date(Date.now() + effectiveSnooze * 60000)
-      : null;
+    // Calcular scheduleAt inicial si es pomodoro y está activa
+    let finalScheduleAt: Date | null = null;
+
+    if (type === "datetime") {
+      if (!scheduleAt) return res.status(400).json({ message: "Fecha requerida para alarma datetime" });
+      finalScheduleAt = new Date(scheduleAt);
+    } else if (type === "pomodoro" && normalizedActive) {
+      const duration = typeof durationMin === "number" && durationMin > 0 ? durationMin : 25;
+      finalScheduleAt = new Date(Date.now() + duration * 60000);
+    }
 
     const alarm = await prisma.alarm.create({
       data: {
         userId: req.userId!,
         name: name.trim(),
+        type,
+        durationMin: type === "pomodoro" ? (durationMin || 25) : null,
+        scheduleAt: finalScheduleAt,
+        active: normalizedActive,
         audioId: audioId || null,
         imageId: imageId || null,
-        snoozeMins: effectiveSnooze,
-        enabled: normalizedEnabled,
-        scheduleAt: firstScheduleAt,
       },
       include: {
         audio: { select: { url: true } },
@@ -61,13 +68,14 @@ export const createAlarm = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    if (alarm.enabled) {
+    if (alarm.active && alarm.scheduleAt) {
       await scheduleAlarm({
         id: alarm.id,
         name: alarm.name,
-        enabled: alarm.enabled,
+        active: alarm.active,
+        type: alarm.type,
         scheduleAt: alarm.scheduleAt,
-        snoozeMins: alarm.snoozeMins,
+        durationMin: alarm.durationMin,
         audio: alarm.audio ? { url: alarm.audio.url } : null,
       });
     }
@@ -80,11 +88,11 @@ export const createAlarm = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Actualizar una alarma existente (Pomodoro-only)
+// Actualizar una alarma existente
 export const updateAlarm = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, audioId, imageId, snoozeMins, enabled, scheduleAt } = req.body;
+    const { name, type, durationMin, scheduleAt, audioId, imageId, active } = req.body;
 
     const existing = await prisma.alarm.findFirst({
       where: { id, userId: req.userId },
@@ -95,45 +103,42 @@ export const updateAlarm = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: "Alarma no encontrada" });
     }
 
-    if (typeof name !== "undefined" && !String(name).trim()) {
-      return res.status(400).json({ message: "El nombre es obligatorio" });
-    }
-
-    let normalizedEnabled =
-      typeof enabled === "boolean" ? enabled : existing.enabled;
-
-    let nextSnooze =
-      typeof snoozeMins === "number" && snoozeMins > 0
-        ? snoozeMins
-        : existing.snoozeMins || 25;
+    const nextActive = typeof active === "boolean" ? active : existing.active;
+    const nextType = type || existing.type;
 
     let nextScheduleAt: Date | null | undefined = undefined;
 
-    if (!normalizedEnabled) {
-      // Si se deshabilita → se limpia scheduleAt
+    if (!nextActive) {
       nextScheduleAt = null;
     } else {
-      // Seguimos habilitados
-      if (typeof scheduleAt !== "undefined") {
-        // Caso especial: botones de aplazo desde el popup
-        nextScheduleAt = scheduleAt ? new Date(scheduleAt) : null;
-      } else if (!existing.scheduleAt || existing.scheduleAt.getTime() <= Date.now()) {
-        // Si no había programación futura, recalcular
-        nextScheduleAt = new Date(Date.now() + nextSnooze * 60000);
+      // Si se activa o cambia parámetros de tiempo
+      if (nextType === "datetime") {
+        if (scheduleAt) nextScheduleAt = new Date(scheduleAt);
+        else if (existing.type === "datetime") nextScheduleAt = existing.scheduleAt;
+      } else {
+        // Pomodoro
+        // Si se pasa un nuevo duration o se reactiva, recalculamos desde ahora
+        // O si se pasa explícitamente scheduleAt (ej: snooze)
+        if (scheduleAt) {
+          nextScheduleAt = new Date(scheduleAt);
+        } else if (active === true || durationMin) {
+          // Reactivando o cambiando duración -> reset timer
+          const duration = durationMin || existing.durationMin || 25;
+          nextScheduleAt = new Date(Date.now() + duration * 60000);
+        }
       }
-      // Si sí tiene scheduleAt futuro y no mandaron uno nuevo, se mantiene
     }
 
     const updated = await prisma.alarm.update({
       where: { id },
       data: {
-        name: typeof name !== "undefined" ? String(name).trim() : undefined,
+        name: name ? String(name).trim() : undefined,
+        type: nextType,
+        durationMin: typeof durationMin !== "undefined" ? durationMin : undefined,
+        scheduleAt: nextScheduleAt,
+        active: nextActive,
         audioId: typeof audioId !== "undefined" ? (audioId || null) : undefined,
         imageId: typeof imageId !== "undefined" ? (imageId || null) : undefined,
-        snoozeMins: typeof snoozeMins !== "undefined" ? nextSnooze : undefined,
-        enabled: normalizedEnabled,
-        scheduleAt:
-          typeof nextScheduleAt !== "undefined" ? nextScheduleAt : undefined,
       },
       include: {
         audio: { select: { url: true } },
@@ -141,13 +146,15 @@ export const updateAlarm = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    if (updated.enabled && updated.scheduleAt) {
+    // Re-programar
+    if (updated.active && updated.scheduleAt) {
       await scheduleAlarm({
         id: updated.id,
         name: updated.name,
-        enabled: updated.enabled,
+        active: updated.active,
+        type: updated.type,
         scheduleAt: updated.scheduleAt,
-        snoozeMins: updated.snoozeMins,
+        durationMin: updated.durationMin,
         audio: updated.audio ? { url: updated.audio.url } : null,
       });
     } else {
@@ -186,7 +193,7 @@ export const deleteAlarm = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Activar/desactivar rápidamente (toggle Pomodoro)
+// Activar/desactivar rápidamente (toggle)
 export const toggleAlarm = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
@@ -200,18 +207,31 @@ export const toggleAlarm = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: "Alarma no encontrada" });
     }
 
-    const newEnabled = !alarm.enabled;
-
+    const newActive = !alarm.active;
     let nextScheduleAt: Date | null = null;
-    if (newEnabled) {
-      const snooze = alarm.snoozeMins && alarm.snoozeMins > 0 ? alarm.snoozeMins : 25;
-      nextScheduleAt = new Date(Date.now() + snooze * 60000);
+
+    if (newActive) {
+      if (alarm.type === "pomodoro") {
+        const duration = alarm.durationMin || 25;
+        nextScheduleAt = new Date(Date.now() + duration * 60000);
+      } else {
+        // Datetime: si ya pasó, no se puede activar sin nueva fecha.
+        // Si es futuro, se mantiene.
+        if (alarm.scheduleAt && alarm.scheduleAt.getTime() > Date.now()) {
+          nextScheduleAt = alarm.scheduleAt;
+        } else {
+          // No se puede activar una alarma de fecha pasada sin actualizar fecha
+          // Opcional: lanzar error o dejarla activa pero sin schedule
+          // Decisión: dejarla activa pero null schedule (no sonará)
+          nextScheduleAt = null;
+        }
+      }
     }
 
     const updated = await prisma.alarm.update({
       where: { id },
       data: {
-        enabled: newEnabled,
+        active: newActive,
         scheduleAt: nextScheduleAt,
       },
       include: {
@@ -220,13 +240,14 @@ export const toggleAlarm = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    if (updated.enabled && updated.scheduleAt) {
+    if (updated.active && updated.scheduleAt) {
       await scheduleAlarm({
         id: updated.id,
         name: updated.name,
-        enabled: updated.enabled,
+        active: updated.active,
+        type: updated.type,
         scheduleAt: updated.scheduleAt,
-        snoozeMins: updated.snoozeMins,
+        durationMin: updated.durationMin,
         audio: updated.audio ? { url: updated.audio.url } : null,
       });
     } else {
