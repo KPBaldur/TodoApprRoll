@@ -11,6 +11,7 @@ import {
     deleteSubtask,
     reorderTasks,
     reorderSubtasks,
+    archiveCompletedTasks,
 } from "../controllers/taskController";
 
 const router = express.Router();
@@ -20,6 +21,9 @@ router.use(authenticateToken);
 
 // Reordenar (antes de /:id para evitar conflictos)
 router.post("/reorder", reorderTasks);
+
+// Archivar completadas (antes de /:id)
+router.post("/archive-completed", archiveCompletedTasks);
 
 // Crud de tareas
 router.get("/", getTasks);

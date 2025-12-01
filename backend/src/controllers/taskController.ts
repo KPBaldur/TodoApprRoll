@@ -406,3 +406,24 @@ export const reorderSubtasks = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ message: "Error al reordenar subtareas" });
     }
 };
+
+// Archivar todas las tareas completadas
+export const archiveCompletedTasks = async (req: AuthRequest, res: Response) => {
+    try {
+        const result = await prisma.task.updateMany({
+            where: {
+                userId: req.userId,
+                status: "completed"
+            },
+            data: {
+                status: "archived"
+            }
+        });
+
+        await logHistory(req.userId!, "Task", "BULK_ARCHIVE", { count: result.count });
+        res.json({ message: `Se han archivado ${result.count} tareas completadas.`, count: result.count });
+    } catch (error) {
+        console.error("Error al archivar tareas completadas:", error);
+        res.status(500).json({ message: "Error al archivar tareas completadas" });
+    }
+};
