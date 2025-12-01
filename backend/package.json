@@ -45,6 +45,6 @@
     "@controllers": "dist/controllers"
   },
   "prisma": {
-  "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node prisma/seed.ts"
   }
 }

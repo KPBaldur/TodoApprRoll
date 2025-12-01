@@ -68,22 +68,34 @@ model Media {
 }
 
 model Alarm {
-  id         String    @id @default(cuid())
-  userId     String
-  name       String
-  audioId    String?
-  imageId    String?
-  scheduleAt DateTime?
-  enable     Boolean   @default(true)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  cronExpr   String?   @ignore
-  enabled    Boolean   @default(true)
-  snoozeMins Int       @default(5)
-  audio      Media?    @relation("AlarmAudio", fields: [audioId], references: [id])
-  image      Media?    @relation("AlarmImage", fields: [imageId], references: [id])
-  user       User      @relation(fields: [userId], references: [id])
-  task       Task[]    @relation("TaskAlarm")
+  id          String    @id @default(cuid())
+  userId      String
+  name        String
+
+  // "pomodoro" | "datetime"
+  type        String
+
+  // Para Pomodoro (ej: 25, 30, 45 minutos)
+  durationMin Int?
+
+  // Para alarma de fecha y hora exacta
+  scheduleAt  DateTime?
+
+  // Estado general de la alarma
+  active      Boolean   @default(true)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Personalización con Media
+  audioId     String?
+  imageId     String?
+
+  audio       Media?    @relation("AlarmAudio", fields: [audioId], references: [id])
+  image       Media?    @relation("AlarmImage", fields: [imageId], references: [id])
+
+  user        User      @relation(fields: [userId], references: [id])
+  task        Task[]    @relation("TaskAlarm")
 }
 
 model History {
