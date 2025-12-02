@@ -34,7 +34,7 @@ export const useAlarmPopup = () => {
 
 function AlarmProvider({ children }: { children: React.ReactNode }) {
   const [currentAlarm, setCurrentAlarm] = useState<Alarm | null>(null);
-  const [queue, setQueue] = useState<Alarm[]>([]);
+  const [, setQueue] = useState<Alarm[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const triggerAlarmPopup = useCallback((alarm: Alarm) => {
@@ -238,7 +238,7 @@ function AlarmProvider({ children }: { children: React.ReactNode }) {
         }
       };
 
-      es.onerror = async (err) => {
+      es.onerror = async () => {
         console.error("❌ [SSE] Error en conexión. Intentando recuperar...");
         es?.close();
         es = null;
