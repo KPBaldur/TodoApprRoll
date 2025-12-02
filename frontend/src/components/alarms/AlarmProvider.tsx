@@ -10,7 +10,6 @@ import React, {
 import { getAlarms, type Alarm } from "../../services/alarmService";
 import { updateAlarm, toggleAlarm } from "../../services/alarmService";
 import { getToken, refreshAccessToken } from "../../services/auth";
-import { API_URL } from "../../services/tasks";
 
 type AlarmContextType = {
   triggerAlarmPopup: (alarm: Alarm) => void;
@@ -141,7 +140,7 @@ function AlarmProvider({ children }: { children: React.ReactNode }) {
 
   // SSE Connection Logic
   useEffect(() => {
-    const backend = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
+    const backend = import.meta.env.VITE_BACKEND_URL || "https://todoapprroll.onrender.com";
     let es: EventSource | null = null;
     let reconnectTimeout: ReturnType<typeof setTimeout>;
 

@@ -2,7 +2,7 @@
 import { getToken, refreshAccessToken } from "./auth";
 
 // Usar variable de entorno o fallback a localhost
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://todoapprroll.onrender.com";
 export const API_URL = `${BACKEND_URL}/api`;
 
 function authHeaders() {
