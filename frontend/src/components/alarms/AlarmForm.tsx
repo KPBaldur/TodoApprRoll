@@ -90,14 +90,16 @@ export default function AlarmForm({ initial, media, onSubmit, onCancel }: Props)
               </select>
             </div>
 
-            <div className="checkbox-row">
+            <div className="checkbox-row toggle-switch-container">
               <label className="form-label">Activa</label>
-              <input
-                type="checkbox"
-                className="checkbox-modern"
-                checked={enabled}
-                onChange={(e) => setEnabled(e.target.checked)}
-              />
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={enabled}
+                  onChange={(e) => setEnabled(e.target.checked)}
+                />
+                <span className="slider round"></span>
+              </label>
             </div>
           </div>
 
@@ -152,14 +154,22 @@ export default function AlarmForm({ initial, media, onSubmit, onCancel }: Props)
         <div className="alarm-form-right">
           <div className="image-preview-card">
             {imageId ? (
-              <div className="file-name">
-                {imageList.find((i) => i.id === imageId)?.name ?? "Sin imagen"}
-              </div>
+              <img
+                src={imageList.find((i) => i.id === imageId)?.url}
+                alt="Preview"
+                className="preview-img"
+                onError={(e) => (e.currentTarget.style.display = 'none')}
+              />
             ) : (
-              <div className="file-name">Sin imagen</div>
+              <div className="preview-placeholder">
+                <span>🖼️</span>
+                <small>Sin imagen</small>
+              </div>
             )}
           </div>
-          <span className="muted">Audio: {audioList.find((a) => a.id === audioId)?.name ?? "Ninguno"}</span>
+          <div className="audio-preview-info">
+            <span className="muted">🎵 {audioList.find((a) => a.id === audioId)?.name ?? "Ninguno"}</span>
+          </div>
         </div>
       </div>
     </div>

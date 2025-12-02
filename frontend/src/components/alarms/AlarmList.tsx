@@ -1,5 +1,4 @@
 // src/components/alarms/AlarmList.tsx
-/*import React from "react";*/
 import type { Alarm } from "../../services/alarmService";
 import AlarmToggle from "./AlarmToggle";
 import AudioPreviewPlayer from "./AudioPreviewPlayer";
@@ -20,96 +19,112 @@ export default function AlarmList({
   onTest,
 }: Props) {
   if (!alarms.length) {
-    return <p className="text-sm text-gray-300">No hay alarmas creadas.</p>;
+    return (
+      <div className="alarms-empty-card">
+        <h4>No hay alarmas creadas</h4>
+        <p>Crea tu primera alarma para empezar a gestionar tu tiempo.</p>
+      </div>
+    );
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div className="alarms-grid">
       {alarms.map((a) => {
         // Próxima ejecución real
         const nextRun = a.scheduleAt
           ? new Date(a.scheduleAt)
           : new Date(Date.now() + (a.snoozeMins ?? 1) * 60000);
 
-        const nextRunStr = nextRun.toLocaleString();
+        const nextRunStr = nextRun.toLocaleString([], {
+          dateStyle: 'short',
+          timeStyle: 'short'
+        });
 
         return (
           <div
             key={a.id}
-            className={`p-4 rounded-lg border shadow-sm bg-slate-800/60 text-slate-100 ${
-              a.enabled ? "border-green-500" : "border-slate-600"
-            }`}
+            className={`alarm-card ${a.enabled ? "active" : "inactive"}`}
           >
-            {/* HEADER */}
-            <div className="flex items-center justify-between">
-              <h4 className="text-lg font-semibold flex items-center gap-2">
-                ⏳ {a.name}
-              </h4>
-
-              <AlarmToggle
-                enabled={a.enabled}
-                onToggle={() => onToggle(a)}
-              />
-            </div>
-
-            {/* TAGS */}
-            <div className="mt-2 flex flex-col gap-1 text-sm">
-              <span className="px-2 py-0.5 w-fit rounded bg-orange-700">
-                Pomodoro {a.snoozeMins} min
-              </span>
-
-              <span className="text-slate-300">
-                Próxima ejecución: {nextRunStr}
-              </span>
-            </div>
-
-            {/* RESOURCE INFO */}
-            <div className="mt-3 flex flex-col gap-2">
-              {/* Audio */}
-              <div className="flex items-center gap-2">
-                <span>🔊</span>
-                <span className="text-sm">
-                  {a.audio?.name ?? "Sin audio"}
-                </span>
-                <AudioPreviewPlayer url={a.audio?.url} />
-              </div>
-
-              {/* Imagen */}
-              <div className="flex items-center gap-2">
-                <span>🖼️</span>
-                <span className="text-sm">
-                  {a.image?.name ?? "Sin imagen"}
+            {/* IMAGE PREVIEW BANNER */}
+            <div className="alarm-card-image">
+              {a.image?.url ? (
+                <img src={a.image.url} alt={a.name} loading="lazy" />
+              ) : (
+                <div className="alarm-card-image-placeholder">
+                  <span>⏰</span>
+                </div>
+              )}
+              <div className="alarm-card-overlay">
+                <span className="alarm-type-badge">
+                  Pomodoro {a.snoozeMins} min
                 </span>
               </div>
             </div>
 
-            {/* ACTION BUTTONS */}
-            <div className="mt-4 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => onEdit(a)}
-                className="px-3 py-1 rounded bg-blue-600 text-white hover:opacity-90"
-              >
-                Editar
-              </button>
+            <div className="alarm-card-content">
+              {/* HEADER */}
+              <div className="alarm-card-header">
+                <h4 className="alarm-title" title={a.name}>
+                  {a.name}
+                </h4>
+                <AlarmToggle
+                  enabled={a.enabled}
+                  onToggle={() => onToggle(a)}
+                />
+              </div>
 
-              <button
-                type="button"
-                onClick={() => onDelete(a)}
-                className="px-3 py-1 rounded bg-red-600 text-white hover:opacity-90"
-              >
-                Eliminar
-              </button>
+              {/* INFO */}
+              <div className="alarm-info-row">
+                <span className="info-label">Próxima:</span>
+                <span className="info-value">{nextRunStr}</span>
+              </div>
 
-              {onTest && (
+              {/* RESOURCES */}
+              <div className="alarm-resources">
+                <div className="resource-item">
+                  <span className="resource-icon">🔊</span>
+                  <span className="resource-name text-truncate">
+                    {a.audio?.name ?? "Sin audio"}
+                  </span>
+                  {a.audio?.url && (
+                    <div className="mini-player-wrapper">
+                      <AudioPreviewPlayer url={a.audio.url} />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ACTIONS */}
+              <div className="alarm-card-actions">
                 <button
                   type="button"
-                  onClick={() => onTest(a)}
-                  className="px-3 py-1 rounded bg-green-600 text-white hover:opacity-90"
+                  onClick={() => onEdit(a)}
+                  className="btn-icon edit"
+                  title="Editar"
                 >
-                  Probar
+                  ✏️
                 </button>
-              )}
+
+                <button
+                  type="button"
+                  onClick={() => onDelete(a)}
+                  className="btn-icon delete"
+                  title="Eliminar"
+                >
+                  🗑️
+                </button>
+
+                {onTest && (
+                  <button
+                    type="button"
+                    onClick={() => onTest(a)}
+                    className="btn-icon test"
+                    title="Probar Alarma"
+                  >
+                    ▶️
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         );
