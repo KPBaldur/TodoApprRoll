@@ -7,6 +7,8 @@ import AlarmList from "../components/alarms/AlarmList";
 import AlarmModal from "../components/alarms/AlarmModal";
 import AlarmForm from "../components/alarms/AlarmForm";
 import { useAlarmPopup } from "../components/alarms/AlarmProvider";
+import { fetchTasks } from "../services/tasks";
+import type { Task } from "../services/tasks";
 import type { Alarm, AlarmCreatePayload, AlarmUpdatePayload } from "../services/alarmService";
 import "../styles/dashboard.css";
 
@@ -17,18 +19,44 @@ export default function AlarmsPage() {
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Alarm | null>(null);
+  const [allTasks, setAllTasks] = useState<Task[]>([]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  const stats = useMemo(() => ({
-    pending: 0,
-    inProgress: 0,
-    completed: 0,
-    archived: 0,
-    activeAlarms: alarms.filter((a) => a.enabled).length,
-  }), [alarms]);
+  // Cargar todas las tareas para estadísticas
+  useEffect(() => {
+    const loadTasks = async () => {
+      try {
+        const data = await fetchTasks({ status: "all" });
+        setAllTasks(data);
+      } catch (error) {
+        console.error("Error al cargar tareas:", error);
+        setAllTasks([]);
+      }
+    };
+    loadTasks();
+  }, []);
+
+  // Calcular estadísticas (igual que en Dashboard y MediaPage)
+  const stats = useMemo(() => {
+    const toK = (s: string) => s.toLowerCase();
+    // Filtrar tareas NO archivadas para el resumen de estados activos
+    const activeTasks = allTasks.filter((t) => toK(String(t.status)) !== "archived");
+
+    return {
+      pending: activeTasks.filter((t) => toK(String(t.status)) === "pending").length,
+      inProgress: activeTasks.filter((t) => toK(String(t.status)) === "in_progress")
+        .length,
+      // Completadas incluye las que están en 'completed' Y las 'archived'
+      completed: allTasks.filter((t) => {
+        const s = toK(String(t.status));
+        return s === "completed" || s === "archived";
+      }).length,
+      archived: allTasks.filter((t) => toK(String(t.status)) === "archived").length,
+    };
+  }, [allTasks]);
 
   const openCreate = () => {
     setEditing(null);

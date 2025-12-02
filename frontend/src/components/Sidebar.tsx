@@ -27,14 +27,14 @@ export default function Sidebar({ stats }: { stats?: Stats }) {
           className={({ isActive }) => `menu-item${isActive ? " active" : ""}`}
         >
           Alarmas
-        </NavLink>
+        </NavLink> */}
         <NavLink
           to="/media"
           className={({ isActive }) => `menu-item${isActive ? " active" : ""}`}
         >
           Multimedia
-        </NavLink> */}
-        <NavLink
+        </NavLink>
+        {/* <NavLink
           to="/history"
           className={({ isActive }) => `menu-item${isActive ? " active" : ""}`}
         >
@@ -45,7 +45,7 @@ export default function Sidebar({ stats }: { stats?: Stats }) {
           className={({ isActive }) => `menu-item${isActive ? " active" : ""}`}
         >
           Configuración
-        </NavLink>
+        </NavLink> */}
       </nav>
 
       <div className="sidebar-meta">

@@ -6,7 +6,7 @@ import { getToken } from "./services/auth";
 import LoginPage from "./pages/LoginPage";
 import Dashboard from "./pages/Dashboard";
 // import AlarmsPage from "./pages/AlarmsPage";
-// import MediaPage from "./pages/MediaPage";
+import MediaPage from "./pages/MediaPage";
 
 // Estilos especificos del proyecto
 import "./styles/login.css";
@@ -52,15 +52,15 @@ const App: React.FC = () => {
             <AlarmsPage />
           </ProtectedRoute>
         } 
-      />
-      <Route 
-        path="/media" 
+      /> */}
+      <Route
+        path="/media"
         element={
           <ProtectedRoute>
             <MediaPage />
           </ProtectedRoute>
-        } 
-      /> */}
+        }
+      />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
