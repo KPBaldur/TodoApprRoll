@@ -26,6 +26,8 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
   "https://todoapproll-frontend.vercel.app",
+  "https://todo-appr-roll-eyuk.vercel.app",
+  "https://todo-appr-roll.vercel.app",
 ];
 
 // ✅ Middleware CORS limpio y sin duplicaciones
