@@ -22,12 +22,12 @@ export default function Sidebar({ stats }: { stats?: Stats }) {
         >
           Tareas
         </NavLink>
-        {/* <NavLink
+        <NavLink
           to="/alarms"
           className={({ isActive }) => `menu-item${isActive ? " active" : ""}`}
         >
           Alarmas
-        </NavLink> */}
+        </NavLink>
         <NavLink
           to="/media"
           className={({ isActive }) => `menu-item${isActive ? " active" : ""}`}

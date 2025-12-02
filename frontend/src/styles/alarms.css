@@ -1,0 +1,228 @@
+/* ========================================
+   PÁGINA DE ALARMAS
+   ======================================== */
+
+.alarms-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.alarm-new-btn {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.alarm-new-btn:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+/* Empty state */
+.alarms-empty-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 24px;
+}
+
+@media (max-width: 768px) {
+    .alarms-empty-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.alarms-empty-card {
+    background: linear-gradient(135deg, #1e2636 0%, #2a3548 100%);
+    border: 1px solid #374151;
+    border-radius: 12px;
+    padding: 32px;
+    text-align: center;
+    color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.alarms-empty-card h4 {
+    margin: 0 0 12px 0;
+    color: #e2e8f0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.alarms-empty-card p {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+/* ========================================
+   FORMULARIO DE ALARMA
+   ======================================== */
+
+.alarm-form {
+    background: #111827;
+    border: 1px solid #263144;
+    border-radius: 12px;
+    padding: 20px;
+    color: #e2e8f0;
+}
+
+.alarm-form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+}
+
+@media (min-width: 768px) {
+    .alarm-form-grid {
+        grid-template-columns: 2fr 1fr;
+    }
+}
+
+.alarm-form-left {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 6px;
+    color: #cbd5e1;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.input-modern,
+.select-modern {
+    width: 100%;
+    padding: 10px 14px;
+    background: #1e2636;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    color: #e2e8f0;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.input-modern:focus,
+.select-modern:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.grid-two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.checkbox-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.checkbox-modern {
+    width: 20px;
+    height: 20px;
+    accent-color: #3b82f6;
+    cursor: pointer;
+}
+
+.alarm-form-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-green {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-green:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-1px);
+}
+
+.btn-green:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-muted {
+    background: #475569;
+    color: #e2e8f0;
+}
+
+.btn-muted:hover {
+    background: #64748b;
+}
+
+.alarm-form-right {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+}
+
+.image-preview-card {
+    width: 100%;
+    background: #0b1220;
+    border: 1px solid #2a3548;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+
+.file-name {
+    color: #94a3b8;
+    font-size: 13px;
+    text-align: center;
+}
+
+.muted {
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.error-text {
+    color: #fca5a5;
+    font-size: 13px;
+    margin: 8px 0;
+}
+
+.error {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    margin: 12px 0;
+}

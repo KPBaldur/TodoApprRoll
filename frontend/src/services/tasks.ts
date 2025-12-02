@@ -1,9 +1,9 @@
 // src/services/tasks.ts
 import { getToken, refreshAccessToken } from "./auth";
 
-// Usar URL absoluta para cloud (Render)
-export const API_URL = "https://todoapprroll.onrender.com/api";
-// En desarrollo local, usar: const API_URL = "/api";
+// Usar variable de entorno o fallback a localhost
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
+export const API_URL = `${BACKEND_URL}/api`;
 
 function authHeaders() {
   const token = getToken();

@@ -14,7 +14,7 @@ type Props = {
 };
 
 const defaultSnooze = 25;
-const snoozeOptions = [5, 10, 15, 20, 25, 30, 45, 60];
+const snoozeOptions = [1, 5, 10, 15, 20, 25, 30, 45, 60];
 
 export default function AlarmForm({ initial, media, onSubmit, onCancel }: Props) {
   const [name, setName] = useState(initial?.name ?? "");

@@ -5,7 +5,7 @@ import { getToken } from "./services/auth";
 // Paginas
 import LoginPage from "./pages/LoginPage";
 import Dashboard from "./pages/Dashboard";
-// import AlarmsPage from "./pages/AlarmsPage";
+import AlarmsPage from "./pages/AlarmsPage";
 import MediaPage from "./pages/MediaPage";
 
 // Estilos especificos del proyecto
@@ -45,14 +45,14 @@ const App: React.FC = () => {
           </ProtectedRoute>
         }
       />
-      {/* <Route 
-        path="/alarms" 
+      <Route
+        path="/alarms"
         element={
           <ProtectedRoute>
             <AlarmsPage />
           </ProtectedRoute>
-        } 
-      /> */}
+        }
+      />
       <Route
         path="/media"
         element={

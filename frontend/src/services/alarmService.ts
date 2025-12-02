@@ -16,9 +16,9 @@ export interface Media {
 export interface Alarm {
   id: string;
   name: string;
-  enabled: boolean;
+  enabled: boolean; // mapped from backend "active"
   scheduleAt: string | null;
-  snoozeMins: number; // siempre numérico en el front
+  snoozeMins: number; // mapped from backend "durationMin"
   audioId: string | null;
   imageId: string | null;
   audio?: { id: string; name: string; url: string } | null;
@@ -47,42 +47,94 @@ export type AlarmUpdatePayload = Partial<AlarmCreatePayload> & {
   scheduleAt?: string | null;
 };
 
+// Mapeo de backend a frontend
+function mapAlarmFromBackend(backendAlarm: any): Alarm {
+  return {
+    id: backendAlarm.id,
+    name: backendAlarm.name,
+    enabled: backendAlarm.active, // backend uses "active"
+    scheduleAt: backendAlarm.scheduleAt,
+    snoozeMins: backendAlarm.durationMin || 25, // backend uses "durationMin"
+    audioId: backendAlarm.audioId,
+    imageId: backendAlarm.imageId,
+    audio: backendAlarm.audio || null,
+    image: backendAlarm.image || null,
+  };
+}
+
+// Mapeo de frontend a backend
+function mapAlarmToBackend(frontendPayload: AlarmCreatePayload | AlarmUpdatePayload): any {
+  const payload: any = {
+    name: frontendPayload.name,
+    type: "pomodoro", // Always pomodoro
+  };
+
+  if (frontendPayload.snoozeMins !== undefined) {
+    payload.durationMin = frontendPayload.snoozeMins; // frontend uses "snoozeMins"
+  }
+
+  if (frontendPayload.enabled !== undefined) {
+    payload.active = frontendPayload.enabled; // frontend uses "enabled"
+  }
+
+  if (frontendPayload.scheduleAt !== undefined) {
+    payload.scheduleAt = frontendPayload.scheduleAt;
+  }
+
+  if (frontendPayload.audioId !== undefined) {
+    payload.audioId = frontendPayload.audioId;
+  }
+
+  if (frontendPayload.imageId !== undefined) {
+    payload.imageId = frontendPayload.imageId;
+  }
+
+  return payload;
+}
+
 export async function getAlarms(): Promise<Alarm[]> {
   const res = await fetchWithAuth(`${API_URL}/alarms`);
   if (!res.ok) {
     const error = await res.json().catch(() => ({}));
     throw new Error(error.message || "No se pudieron obtener las alarmas");
   }
-  return (await res.json()) as Alarm[];
+  const backendAlarms = await res.json();
+  return backendAlarms.map(mapAlarmFromBackend);
 }
 
 export async function createAlarm(payload: AlarmCreatePayload): Promise<Alarm> {
+  const backendPayload = mapAlarmToBackend(payload);
+
   const res = await fetchWithAuth(`${API_URL}/alarms`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(backendPayload),
   });
   if (!res.ok) {
     const error = await res.json().catch(() => ({}));
     throw new Error(error.message || "Error al crear alarma");
   }
-  return (await res.json()) as Alarm;
+  const backendAlarm = await res.json();
+  return mapAlarmFromBackend(backendAlarm);
 }
 
 export async function updateAlarm(
   id: string,
   payload: AlarmUpdatePayload
 ): Promise<Alarm> {
+  const backendPayload = mapAlarmToBackend(payload);
+
   const res = await fetchWithAuth(`${API_URL}/alarms/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(backendPayload),
   });
   if (!res.ok) {
     const error = await res.json().catch(() => ({}));
     throw new Error(error.message || "Error al actualizar alarma");
   }
-  return (await res.json()) as Alarm;
+  const backendAlarm = await res.json();
+  return mapAlarmFromBackend(backendAlarm);
 }
 
 export async function toggleAlarm(id: string): Promise<Alarm> {
@@ -93,7 +145,8 @@ export async function toggleAlarm(id: string): Promise<Alarm> {
     const error = await res.json().catch(() => ({}));
     throw new Error(error.message || "Error al activar/desactivar alarma");
   }
-  return (await res.json()) as Alarm;
+  const backendAlarm = await res.json();
+  return mapAlarmFromBackend(backendAlarm);
 }
 
 export async function deleteAlarm(id: string): Promise<boolean> {

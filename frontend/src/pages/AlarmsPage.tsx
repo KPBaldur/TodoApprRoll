@@ -11,6 +11,7 @@ import { fetchTasks } from "../services/tasks";
 import type { Task } from "../services/tasks";
 import type { Alarm, AlarmCreatePayload, AlarmUpdatePayload } from "../services/alarmService";
 import "../styles/dashboard.css";
+import "../styles/alarms.css";
 
 export default function AlarmsPage() {
   const { alarms, media, loading, error, refresh, create, update, toggle, remove } = useAlarms();

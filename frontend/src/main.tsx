@@ -7,6 +7,7 @@ import AlarmProvider from "./components/alarms/AlarmProvider";
 // Estilos base
 import "./styles/globalReset.css";
 import "./styles/variables.css";
+import "./styles/alarmPopup.css";
 
 // Render principal
 ReactDOM.createRoot(document.getElementById("root")!).render(

@@ -42,12 +42,15 @@ router.get("/events", (req, res) => {
   res.setHeader("Connection", "keep-alive");
   res.flushHeaders();
 
-  console.log("👂 Nuevo listener SSE para user:", userId);
+  console.log(`👂 [SSE] Nuevo listener conectado. UserID: ${userId}`);
 
   const listener = (data: any) => {
+    console.log(`⚡ [BUS] Evento recibido en bus. Destino: ${data.userId} | Listener: ${userId}`);
     if (data.userId === userId) {
-      console.log("➡️ Enviando SSE a:", userId);
+      console.log(`➡️ [SSE] Enviando evento al cliente ${userId}`);
       res.write(`data: ${JSON.stringify(data)}\n\n`);
+    } else {
+      console.log(`⛔ [SSE] Evento ignorado (ID no coincide): ${data.userId} !== ${userId}`);
     }
   };
 

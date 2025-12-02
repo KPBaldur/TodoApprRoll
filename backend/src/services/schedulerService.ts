@@ -167,7 +167,7 @@ const triggerAlarm = async (alarmId: string) => {
       return;
     }
 
-    console.log(`🔔 ACTIVANDO ALARMA: ${fresh.name}`);
+    console.log(`🔔 ACTIVANDO ALARMA: ${fresh.name} | UserID: ${fresh.userId}`);
 
     eventBus.emit("alarmTriggered", {
       id: fresh.id,
